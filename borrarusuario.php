@@ -59,7 +59,7 @@ function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDe
     $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
   }
 
-  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+  $theValue = function_exists("mysqli_real_escape_string") ? mysqli_real_escape_string($theValue) : mysqli_escape_string($theValue);
 
   switch ($theType) {
     case "text":
@@ -87,11 +87,11 @@ $colname_sexo = "-1";
 if (isset($_SESSION['MM_Username'])) {
   $colname_sexo = $_SESSION['MM_Username'];
 }
-mysql_select_db($database_sgstec, $sgstec);
+mysqli_select_db($sgstec,$database_sgstec);
 $query_sexo = sprintf("SELECT * FROM usuarios WHERE cedula = %s", GetSQLValueString($colname_sexo, "text"));
-$sexo = mysql_query($query_sexo, $sgstec) or die(mysql_error());
-$row_sexo = mysql_fetch_assoc($sexo);
-$totalRows_sexo = mysql_num_rows($sexo);
+$sexo = mysqli_query($sgstec,$query_sexo) or die(mysqli_error());
+$row_sexo = mysqli_fetch_assoc($sexo);
+$totalRows_sexo = mysqli_num_rows($sexo);
 $_SESSION['id'] = $row_sexo['id'];
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -167,8 +167,8 @@ function cargar_funciones(mensajes){
 <select style="width:100%;margin:auto;text-align:center;" name="sitio">
 <?php
 $query2="SELECT * FROM usuarios ORDER BY nombre ASC";
-$resultado2=mysql_query($query2);
-while ($row2 = mysql_fetch_array($resultado2)):;
+$resultado2=mysqli_query($sgstec,$query2);
+while ($row2 = mysqli_fetch_array($resultado2)):;
 ?>
 <option value="<?php echo $row2[1]; ?>"><?php echo $row2[2]." ".$row2[3]; ?></option>
 <?php endwhile; ?>
@@ -181,8 +181,8 @@ while ($row2 = mysql_fetch_array($resultado2)):;
 if($sitio)
 {	
 
-	mysql_query("Delete from usuarios WHERE cedula='$sitio'") or die(mysql_error());
-	mysql_query("Delete from aviso WHERE cedula='$sitio'") or die(mysql_error());
+	mysqli_query("Delete from usuarios WHERE cedula='$sitio'") or die(mysqli_error());
+	mysqli_query("Delete from aviso WHERE cedula='$sitio'") or die(mysqli_error());
 
 echo "El usuario de cedula: ".$sitio." ha sido eliminado con exito, presione F5 para actualizar la pagina";
 
@@ -204,5 +204,5 @@ echo "El usuario de cedula: ".$sitio." ha sido eliminado con exito, presione F5 
 
 </html>
 <?php
-mysql_free_result($sexo);
+mysqli_free_result($sexo);
 ?>

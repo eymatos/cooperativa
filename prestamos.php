@@ -59,7 +59,7 @@ function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDe
     $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
   }
 
-  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+  $theValue = function_exists("mysqli_real_escape_string") ? mysqli_real_escape_string($theValue) : mysqli_escape_string($theValue);
 
   switch ($theType) {
     case "text":
@@ -87,11 +87,11 @@ $colname_sexo = "-1";
 if (isset($_SESSION['MM_Username'])) {
   $colname_sexo = $_SESSION['MM_Username'];
 }
-mysql_select_db($database_sgstec, $sgstec);
+mysqli_select_db($sgstec,$database_sgstec);
 $query_sexo = sprintf("SELECT * FROM usuarios WHERE cedula = %s", GetSQLValueString($colname_sexo, "text"));
-$sexo = mysql_query($query_sexo, $sgstec) or die(mysql_error());
-$row_sexo = mysql_fetch_assoc($sexo);
-$totalRows_sexo = mysql_num_rows($sexo);
+$sexo = mysqli_query($sgstec,$query_sexo) or die(mysqli_error());
+$row_sexo = mysqli_fetch_assoc($sexo);
+$totalRows_sexo = mysqli_num_rows($sexo);
 $_SESSION['id'] = $row_sexo['id'];
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -178,12 +178,12 @@ Seleccione el tipo de préstamo:
 </form>
 <div id="ahorross">
 <?php
-$resultado=mysql_query($query_sexo);
-$row = mysql_fetch_assoc($resultado);
+$resultado=mysqli_query($sgstec,$query_sexo);
+$row = mysqli_fetch_assoc($resultado);
 $cedula= $row['cedula'];
 $queryaviso="SELECT * FROM aviso WHERE cedula='$cedula' AND estatus='1'";
-$resultadoaviso=mysql_query($queryaviso);
-$conteoaviso = mysql_num_rows($resultadoaviso);
+$resultadoaviso=mysqli_query($sgstec,$queryaviso);
+$conteoaviso = mysqli_num_rows($resultadoaviso);
 if($conteoaviso>0){
 ?>
 <script>
@@ -242,8 +242,8 @@ alertornot()
 @$sitio=$_POST['sitio'];
 if ($sitio === 'normales'){
 $query2=sprintf("SELECT * FROM prestamos_normales WHERE cedula LIKE '$cedula'");
-$resultado2=mysql_query($query2);
-$row2 = mysql_fetch_assoc($resultado2);
+$resultado2=mysqli_query($sgstec,$query2);
+$row2 = mysqli_fetch_assoc($resultado2);
 $deuda=$row2['monto'];
 $interes=$row2['interes'];
 $anos=$row2['plazo'];
@@ -317,8 +317,8 @@ if($deuda && $anos && $interes)
 <?php
 if ($sitio === 'educativos'){
 $query2=sprintf("SELECT * FROM prestamos_educativos WHERE cedula LIKE '$cedula'");
-$resultado2=mysql_query($query2);
-$row2 = mysql_fetch_assoc($resultado2);
+$resultado2=mysqli_query($sgstec,$query2);
+$row2 = mysqli_fetch_assoc($resultado2);
 $deuda=$row2['monto'];
 $interes=$row2['interes'];
 $anos=$row2['plazo'];
@@ -389,8 +389,8 @@ if($deuda && $anos && $interes)
 <?php
 if ($sitio === 'escolares'){
 $query2=sprintf("SELECT * FROM prestamos_escolares WHERE cedula LIKE '$cedula'");
-$resultado2=mysql_query($query2);
-$row2 = mysql_fetch_assoc($resultado2);
+$resultado2=mysqli_query($sgstec,$query2);
+$row2 = mysqli_fetch_assoc($resultado2);
 $deuda=$row2['monto'];
 $interes=$row2['interes'];
 $anos=$row2['plazo'];
@@ -461,8 +461,8 @@ if($deuda && $anos && $interes)
 <?php
 if ($sitio === 'gerenciales'){
 $query2=sprintf("SELECT * FROM prestamos_gerenciales WHERE cedula LIKE '$cedula'");
-$resultado2=mysql_query($query2);
-$row2 = mysql_fetch_assoc($resultado2);
+$resultado2=mysqli_query($sgstec,$query2);
+$row2 = mysqli_fetch_assoc($resultado2);
 $deuda=$row2['monto'];
 $interes=$row2['interes'];
 $anos=$row2['plazo'];
@@ -533,8 +533,8 @@ if($deuda && $anos && $interes)
 <?php
 if ($sitio === 'prestamo_especial_madres'){
 $query2=sprintf("SELECT * FROM prestamo_especial_madres WHERE cedula LIKE '$cedula'");
-$resultado2=mysql_query($query2);
-$row2 = mysql_fetch_assoc($resultado2);
+$resultado2=mysqli_query($sgstec,$query2);
+$row2 = mysqli_fetch_assoc($resultado2);
 $deuda=$row2['monto'];
 $interes=$row2['interes'];
 $anos=$row2['plazo'];
@@ -605,8 +605,8 @@ if($deuda && $anos && $interes)
 <?php
 if ($sitio === 'vacacionales'){
 $query2=sprintf("SELECT * FROM prestamos_vacacionales WHERE cedula LIKE '$cedula'");
-$resultado2=mysql_query($query2);
-$row2 = mysql_fetch_assoc($resultado2);
+$resultado2=mysqli_query($sgstec,$query2);
+$row2 = mysqli_fetch_assoc($resultado2);
 $deuda=$row2['monto'];
 $interes=$row2['interes'];
 $anos=$row2['plazo'];
@@ -688,5 +688,5 @@ if($deuda && $anos && $interes)
 
 </html>
 <?php
-mysql_free_result($sexo);
+mysqli_free_result($sexo);
 ?>

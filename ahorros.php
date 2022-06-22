@@ -59,7 +59,7 @@ function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDe
     $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
   }
 
-  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+  $theValue = function_exists("mysqli_real_escape_string") ? mysqli_real_escape_string($theValue) : mysqli_escape_string($theValue);
 
   switch ($theType) {
     case "text":
@@ -87,11 +87,11 @@ $colname_sexo = "-1";
 if (isset($_SESSION['MM_Username'])) {
   $colname_sexo = $_SESSION['MM_Username'];
 }
-mysql_select_db($database_sgstec, $sgstec);
+mysqli_select_db($sgstec,$database_sgstec);
 $query_sexo = sprintf("SELECT * FROM usuarios WHERE cedula = %s", GetSQLValueString($colname_sexo, "text"));
-$sexo = mysql_query($query_sexo, $sgstec) or die(mysql_error());
-$row_sexo = mysql_fetch_assoc($sexo);
-$totalRows_sexo = mysql_num_rows($sexo);
+$sexo = mysqli_query($sgstec,$query_sexo) or die(mysqli_error());
+$row_sexo = mysqli_fetch_assoc($sexo);
+$totalRows_sexo = mysqli_num_rows($sexo);
 $_SESSION['id'] = $row_sexo['id'];
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -139,8 +139,8 @@ function cargar_funciones(mensajes){
 </script>
 <body onload="cargar_funciones(<?php echo $row_sexo['id']; ?>)">
 <?php
-$resultado=mysql_query($query_sexo);
-$row = mysql_fetch_assoc($resultado);
+$resultado=mysqli_query($sgstec,$query_sexo);
+$row = mysqli_fetch_assoc($resultado);
 $cedula= $row['cedula'];
 $nombre=$row['nombre'];
 $apellido=$row['apellido'];
@@ -150,8 +150,8 @@ $aporte=$row['aporte_capital'];
 #Suma de Ahorro Retirable!
 
 $retirables2021=sprintf("SELECT * FROM retirable_2021 WHERE cedula LIKE '$cedula'");
-$resultable2021=mysql_query($retirables2021);
-$rowresult2021 = mysql_fetch_assoc($resultable2021);
+$resultable2021=mysqli_query($sgstec,$retirables2021);
+$rowresult2021 = mysqli_fetch_assoc($resultable2021);
 $deposito_enero2021=$rowresult2021['aporte_enero'];
 $retirable_enero2021=$rowresult2021['retiros_enero'];
 $deposito_febrero2021=$rowresult2021['aporte_febrero'];
@@ -178,8 +178,8 @@ $deposito_diciembre2021=$rowresult2021['aporte_diciembre'];
 $retirable_diciembre2021=$rowresult2021['retiros_diciembre'];
 
 $retirables2020=sprintf("SELECT * FROM retirable_2020 WHERE cedula LIKE '$cedula'");
-$resultable2020=mysql_query($retirables2020);
-$rowresult2020 = mysql_fetch_assoc($resultable2020);
+$resultable2020=mysqli_query($sgstec,$retirables2020);
+$rowresult2020 = mysqli_fetch_assoc($resultable2020);
 $deposito_enero2020=$rowresult2020['aporte_enero'];
 $retirable_enero2020=$rowresult2020['retiros_enero'];
 $deposito_febrero2020=$rowresult2020['aporte_febrero'];
@@ -205,8 +205,8 @@ $retirable_noviembre2020=$rowresult2020['retiros_noviembre'];
 $deposito_diciembre2020=$rowresult2020['aporte_diciembre'];
 $retirable_diciembre2020=$rowresult2020['retiros_diciembre'];
 $retirables2019=sprintf("SELECT * FROM retirable_2019 WHERE cedula LIKE '$cedula'");
-$resultable2019=mysql_query($retirables2019);
-$rowresult2019 = mysql_fetch_assoc($resultable2019);
+$resultable2019=mysqli_query($sgstec,$retirables2019);
+$rowresult2019 = mysqli_fetch_assoc($resultable2019);
 $deposito_enero2019=$rowresult2019['aporte_enero'];
 $retirable_enero2019=$rowresult2019['retiros_enero'];
 $deposito_febrero2019=$rowresult2019['aporte_febrero'];
@@ -232,8 +232,8 @@ $retirable_noviembre2019=$rowresult2019['retiros_noviembre'];
 $deposito_diciembre2019=$rowresult2019['aporte_diciembre'];
 $retirable_diciembre2019=$rowresult2019['retiros_diciembre'];
 $retirables2018=sprintf("SELECT * FROM retirable_2018 WHERE cedula LIKE '$cedula'");
-$resultable2018=mysql_query($retirables2018);
-$rowresult2018 = mysql_fetch_assoc($resultable2018);
+$resultable2018=mysqli_query($sgstec,$retirables2018);
+$rowresult2018 = mysqli_fetch_assoc($resultable2018);
 $deposito_enero2018=$rowresult2018['aporte_enero'];
 $retirable_enero2018=$rowresult2018['retiros_enero'];
 $deposito_febrero2018=$rowresult2018['aporte_febrero'];
@@ -259,8 +259,8 @@ $retirable_noviembre2018=$rowresult2018['retiros_noviembre'];
 $deposito_diciembre2018=$rowresult2018['aporte_diciembre'];
 $retirable_diciembre2018=$rowresult2018['retiros_diciembre'];
 $retirables2017=sprintf("SELECT * FROM retirable_2017 WHERE cedula LIKE '$cedula'");
-$resultable2017=mysql_query($retirables2017);
-$rowresult2017 = mysql_fetch_assoc($resultable2017);
+$resultable2017=mysqli_query($sgstec,$retirables2017);
+$rowresult2017 = mysqli_fetch_assoc($resultable2017);
 $deposito_enero2017=$rowresult2017['aporte_enero'];
 $retirable_enero2017=$rowresult2017['retiros_enero'];
 $deposito_febrero2017=$rowresult2017['aporte_febrero'];
@@ -286,8 +286,8 @@ $retirable_noviembre2017=$rowresult2017['retiros_noviembre'];
 $deposito_diciembre2017=$rowresult2017['aporte_diciembre'];
 $retirable_diciembre2017=$rowresult2017['retiros_diciembre'];
 $retirables2016=sprintf("SELECT * FROM retirable_2016 WHERE cedula LIKE '$cedula'");
-$resultable2016=mysql_query($retirables2016);
-$rowresult2016 = mysql_fetch_assoc($resultable2016);
+$resultable2016=mysqli_query($sgstec,$retirables2016);
+$rowresult2016 = mysqli_fetch_assoc($resultable2016);
 $deposito_enero2016=$rowresult2016['aporte_enero'];
 $retirable_enero2016=$rowresult2016['retiros_enero'];
 $deposito_febrero2016=$rowresult2016['aporte_febrero'];
@@ -313,8 +313,8 @@ $retirable_noviembre2016=$rowresult2016['retiros_noviembre'];
 $deposito_diciembre2016=$rowresult2016['aporte_diciembre'];
 $retirable_diciembre2016=$rowresult2016['retiros_diciembre'];
 $retirables2015=sprintf("SELECT * FROM retirable_2015 WHERE cedula LIKE '$cedula'");
-$resultable2015=mysql_query($retirables2015);
-$rowresult2015 = mysql_fetch_assoc($resultable2015);
+$resultable2015=mysqli_query($sgstec,$retirables2015);
+$rowresult2015 = mysqli_fetch_assoc($resultable2015);
 $deposito_enero2015=$rowresult2015['aporte_enero'];
 $retirable_enero2015=$rowresult2015['retiros_enero'];
 $deposito_febrero2015=$rowresult2015['aporte_febrero'];
@@ -343,8 +343,8 @@ $retirable_diciembre2015=$rowresult2015['retiros_diciembre'];
 #Suma de Ahorros!
 
 $query2021=sprintf("SELECT * FROM ahorros_2021 WHERE cedula LIKE '$cedula'");
-$resultado2021=mysql_query($query2021);
-$row2021 = mysql_fetch_assoc($resultado2021);
+$resultado2021=mysqli_query($sgstec,$query2021);
+$row2021 = mysqli_fetch_assoc($resultado2021);
 $aporte_enero2021=$row2021['aporte_enero'];
 $aporte_febrero2021=$row2021['aporte_febrero'];
 $aporte_marzo2021=$row2021['aporte_marzo'];
@@ -359,8 +359,8 @@ $aporte_noviembre2021=$row2021['aporte_noviembre'];
 $aporte_diciembre2021=$row2021['aporte_diciembre'];
 
 $query2020=sprintf("SELECT * FROM ahorros_2020 WHERE cedula LIKE '$cedula'");
-$resultado2020=mysql_query($query2020);
-$row2020 = mysql_fetch_assoc($resultado2020);
+$resultado2020=mysqli_query($sgstec,$query2020);
+$row2020 = mysqli_fetch_assoc($resultado2020);
 $aporte_enero2020=$row2020['aporte_enero'];
 $aporte_febrero2020=$row2020['aporte_febrero'];
 $aporte_marzo2020=$row2020['aporte_marzo'];
@@ -375,8 +375,8 @@ $aporte_noviembre2020=$row2020['aporte_noviembre'];
 $aporte_diciembre2020=$row2020['aporte_diciembre'];
 
 $query2019=sprintf("SELECT * FROM ahorros_2019 WHERE cedula LIKE '$cedula'");
-$resultado2019=mysql_query($query2019);
-$row2019 = mysql_fetch_assoc($resultado2019);
+$resultado2019=mysqli_query($sgstec,$query2019);
+$row2019 = mysqli_fetch_assoc($resultado2019);
 $aporte_enero2019=$row2019['aporte_enero'];
 $aporte_febrero2019=$row2019['aporte_febrero'];
 $aporte_marzo2019=$row2019['aporte_marzo'];
@@ -390,8 +390,8 @@ $aporte_octubre2019=$row2019['aporte_octubre'];
 $aporte_noviembre2019=$row2019['aporte_noviembre'];
 $aporte_diciembre2019=$row2019['aporte_diciembre'];
 $query2018=sprintf("SELECT * FROM ahorros_2018 WHERE cedula LIKE '$cedula'");
-$resultado2018=mysql_query($query2018);
-$row2018 = mysql_fetch_assoc($resultado2018);
+$resultado2018=mysqli_query($sgstec,$query2018);
+$row2018 = mysqli_fetch_assoc($resultado2018);
 $aporte_enero2018=$row2018['aporte_enero'];
 $aporte_febrero2018=$row2018['aporte_febrero'];
 $aporte_marzo2018=$row2018['aporte_marzo'];
@@ -405,8 +405,8 @@ $aporte_octubre2018=$row2018['aporte_octubre'];
 $aporte_noviembre2018=$row2018['aporte_noviembre'];
 $aporte_diciembre2018=$row2018['aporte_diciembre'];
 $query2017=sprintf("SELECT * FROM ahorros_2017 WHERE cedula LIKE '$cedula'");
-$resultado2017=mysql_query($query2017);
-$row2017 = mysql_fetch_assoc($resultado2017);
+$resultado2017=mysqli_query($sgstec,$query2017);
+$row2017 = mysqli_fetch_assoc($resultado2017);
 $aporte_enero2017=$row2017['aporte_enero'];
 $aporte_febrero2017=$row2017['aporte_febrero'];
 $aporte_marzo2017=$row2017['aporte_marzo'];
@@ -421,8 +421,8 @@ $aporte_noviembre2017=$row2017['aporte_noviembre'];
 $aporte_diciembre2017=$row2017['aporte_diciembre'];
 
 $query2016=sprintf("SELECT * FROM ahorros_2016 WHERE cedula LIKE '$cedula'");
-$resultado2016=mysql_query($query2016);
-$row2016 = mysql_fetch_assoc($resultado2016);
+$resultado2016=mysqli_query($sgstec,$query2016);
+$row2016 = mysqli_fetch_assoc($resultado2016);
 $aporte_enero2016=$row2016['aporte_enero'];
 $retiros_enero2016=$row2016['retiros_enero'];
 $aporte_febrero2016=$row2016['aporte_febrero'];
@@ -448,8 +448,8 @@ $retiros_noviembre2016=$row2016['retiros_noviembre'];
 $aporte_diciembre2016=$row2016['aporte_diciembre'];
 $retiros_diciembre2016=$row2016['retiros_diciembre'];
 $query2015=sprintf("SELECT * FROM ahorros_2015 WHERE cedula LIKE '$cedula'");
-$resultado2015=mysql_query($query2015);
-$row2015 = mysql_fetch_assoc($resultado2015);
+$resultado2015=mysqli_query($sgstec,$query2015);
+$row2015 = mysqli_fetch_assoc($resultado2015);
 $aporte_enero2015=$row2015['aporte_enero'];
 $retiros_enero2015=$row2015['retiros_enero'];
 $aporte_febrero2015=$row2015['aporte_febrero'];
@@ -474,8 +474,8 @@ $aporte_noviembre2015=$row2015['aporte_noviembre'];
 $retiros_noviembre2015=$row2015['retiros_noviembre'];
 $aporte_diciembre2015=$row2015['aporte_diciembre'];
 $query2014=sprintf("SELECT * FROM ahorros_2014 WHERE cedula LIKE '$cedula'");
-$resultado2014=mysql_query($query2014);
-$row2014 = mysql_fetch_assoc($resultado2014);
+$resultado2014=mysqli_query($sgstec,$query2014);
+$row2014 = mysqli_fetch_assoc($resultado2014);
 $aporte_enero2014=$row2014['aporte_enero'];
 $retiros_enero2014=$row2014['retiros_enero'];
 $aporte_febrero2014=$row2014['aporte_febrero'];
@@ -501,8 +501,8 @@ $retiros_noviembre2014=$row2014['retiros_noviembre'];
 $aporte_diciembre2014=$row2014['aporte_diciembre'];
 $retiros_diciembre2014=$row2014['retiros_diciembre'];
 $query2013=sprintf("SELECT * FROM ahorros_2013 WHERE cedula LIKE '$cedula'");
-$resultado2013=mysql_query($query2013);
-$row2013 = mysql_fetch_assoc($resultado2013);
+$resultado2013=mysqli_query($sgstec,$query2013);
+$row2013 = mysqli_fetch_assoc($resultado2013);
 $aporte_enero2013=$row2013['aporte_enero'];
 $retiros_enero2013=$row2013['retiros_enero'];
 $aporte_febrero2013=$row2013['aporte_febrero'];
@@ -528,8 +528,8 @@ $retiros_noviembre2013=$row2013['retiros_noviembre'];
 $aporte_diciembre2013=$row2013['aporte_diciembre'];
 $retiros_diciembre2013=$row2013['retiros_diciembre'];
 $query2012=sprintf("SELECT * FROM ahorros_2012 WHERE cedula LIKE '$cedula'");
-$resultado2012=mysql_query($query2012);
-$row2012 = mysql_fetch_assoc($resultado2012);
+$resultado2012=mysqli_query($sgstec,$query2012);
+$row2012 = mysqli_fetch_assoc($resultado2012);
 $aporte_enero2012=$row2012['aporte_enero'];
 $retiros_enero2012=$row2012['retiros_enero'];
 $aporte_febrero2012=$row2012['aporte_febrero'];
@@ -555,8 +555,8 @@ $retiros_noviembre2012=$row2012['retiros_noviembre'];
 $aporte_diciembre2012=$row2012['aporte_diciembre'];
 $retiros_diciembre2012=$row2012['retiros_diciembre'];
 $query2011=sprintf("SELECT * FROM ahorros_2011 WHERE cedula LIKE '$cedula'");
-$resultado2011=mysql_query($query2011);
-$row2011 = mysql_fetch_assoc($resultado2011);
+$resultado2011=mysqli_query($sgstec,$query2011);
+$row2011 = mysqli_fetch_assoc($resultado2011);
 $aporte_enero2011=$row2011['aporte_enero'];
 $retiros_enero2011=$row2011['retiros_enero'];
 $aporte_febrero2011=$row2011['aporte_febrero'];
@@ -703,10 +703,10 @@ Seleccione el año:
 if ($sitio === '2021'){
 $query2=sprintf("SELECT * FROM ahorros_2021 WHERE cedula LIKE '$cedula'");
 $query3=sprintf("SELECT * FROM retirable_2021 WHERE cedula LIKE '$cedula'");
-$resultado2=mysql_query($query2);
-$resultado3=mysql_query($query3);
-$row2 = mysql_fetch_assoc($resultado2);
-$row3 = mysql_fetch_assoc($resultado3);
+$resultado2=mysqli_query($sgstec,$query2);
+$resultado3=mysqli_query($sgstec,$query3);
+$row2 = mysqli_fetch_assoc($resultado2);
+$row3 = mysqli_fetch_assoc($resultado3);
 $aporte_enero=$row2['aporte_enero'];
 $comentarios_enero=$row2['comentarios_enero'];
 $aporte_febrero=$row2['aporte_febrero'];
@@ -766,10 +766,10 @@ $ahorro_2021=$aporte_enero+$aporte_febrero+$aporte_marzo+$aporte_abril+$aporte_m
 if ($sitio === '2020'){
 $query2=sprintf("SELECT * FROM ahorros_2020 WHERE cedula LIKE '$cedula'");
 $query3=sprintf("SELECT * FROM retirable_2020 WHERE cedula LIKE '$cedula'");
-$resultado2=mysql_query($query2);
-$resultado3=mysql_query($query3);
-$row2 = mysql_fetch_assoc($resultado2);
-$row3 = mysql_fetch_assoc($resultado3);
+$resultado2=mysqli_query($sgstec,$query2);
+$resultado3=mysqli_query($sgstec,$query3);
+$row2 = mysqli_fetch_assoc($resultado2);
+$row3 = mysqli_fetch_assoc($resultado3);
 $aporte_enero=$row2['aporte_enero'];
 $comentarios_enero=$row2['comentarios_enero'];
 $aporte_febrero=$row2['aporte_febrero'];
@@ -827,10 +827,10 @@ $ahorro_2020=$aporte_enero+$aporte_febrero+$aporte_marzo+$aporte_abril+$aporte_m
 if ($sitio === '2019'){
 $query2=sprintf("SELECT * FROM ahorros_2019 WHERE cedula LIKE '$cedula'");
 $query3=sprintf("SELECT * FROM retirable_2019 WHERE cedula LIKE '$cedula'");
-$resultado2=mysql_query($query2);
-$resultado3=mysql_query($query3);
-$row2 = mysql_fetch_assoc($resultado2);
-$row3 = mysql_fetch_assoc($resultado3);
+$resultado2=mysqli_query($sgstec,$query2);
+$resultado3=mysqli_query($sgstec,$query3);
+$row2 = mysqli_fetch_assoc($resultado2);
+$row3 = mysqli_fetch_assoc($resultado3);
 $aporte_enero=$row2['aporte_enero'];
 $comentarios_enero=$row2['comentarios_enero'];
 $aporte_febrero=$row2['aporte_febrero'];
@@ -888,10 +888,10 @@ $ahorro_2019=$aporte_enero+$aporte_febrero+$aporte_marzo+$aporte_abril+$aporte_m
 if ($sitio === '2018'){
 $query2=sprintf("SELECT * FROM ahorros_2018 WHERE cedula LIKE '$cedula'");
 $query3=sprintf("SELECT * FROM retirable_2018 WHERE cedula LIKE '$cedula'");
-$resultado2=mysql_query($query2);
-$resultado3=mysql_query($query3);
-$row2 = mysql_fetch_assoc($resultado2);
-$row3 = mysql_fetch_assoc($resultado3);
+$resultado2=mysqli_query($sgstec,$query2);
+$resultado3=mysqli_query($sgstec,$query3);
+$row2 = mysqli_fetch_assoc($resultado2);
+$row3 = mysqli_fetch_assoc($resultado3);
 $aporte_enero=$row2['aporte_enero'];
 $comentarios_enero=$row2['comentarios_enero'];
 $aporte_febrero=$row2['aporte_febrero'];
@@ -949,10 +949,10 @@ $ahorro_2018=$aporte_enero+$aporte_febrero+$aporte_marzo+$aporte_abril+$aporte_m
 if ($sitio === '2017'){
 $query2=sprintf("SELECT * FROM ahorros_2017 WHERE cedula LIKE '$cedula'");
 $query3=sprintf("SELECT * FROM retirable_2017 WHERE cedula LIKE '$cedula'");
-$resultado2=mysql_query($query2);
-$resultado3=mysql_query($query3);
-$row2 = mysql_fetch_assoc($resultado2);
-$row3 = mysql_fetch_assoc($resultado3);
+$resultado2=mysqli_query($sgstec,$query2);
+$resultado3=mysqli_query($sgstec,$query3);
+$row2 = mysqli_fetch_assoc($resultado2);
+$row3 = mysqli_fetch_assoc($resultado3);
 $aporte_enero=$row2['aporte_enero'];
 $comentarios_enero=$row2['comentarios_enero'];
 $retiros_enero=$row2['retiros_enero'];
@@ -1022,10 +1022,10 @@ $ahorro_2017=$aporte_enero+$aporte_febrero+$aporte_marzo+$aporte_abril+$aporte_m
 if ($sitio === '2016'){
 $query2=sprintf("SELECT * FROM ahorros_2016 WHERE cedula LIKE '$cedula'");
 $query3=sprintf("SELECT * FROM retirable_2016 WHERE cedula LIKE '$cedula'");
-$resultado2=mysql_query($query2);
-$resultado3=mysql_query($query3);
-$row2 = mysql_fetch_assoc($resultado2);
-$row3 = mysql_fetch_assoc($resultado3);
+$resultado2=mysqli_query($sgstec,$query2);
+$resultado3=mysqli_query($sgstec,$query3);
+$row2 = mysqli_fetch_assoc($resultado2);
+$row3 = mysqli_fetch_assoc($resultado3);
 $aporte_enero=$row2['aporte_enero'];
 $comentarios_enero=$row2['comentarios_enero'];
 $retiros_enero=$row2['retiros_enero'];
@@ -1095,10 +1095,10 @@ $ahorro_2016=$aporte_enero+$aporte_febrero+$aporte_marzo+$aporte_abril+$aporte_m
 if ($sitio === '2015'){
 $query2=sprintf("SELECT * FROM ahorros_2015 WHERE cedula LIKE '$cedula'");
 $query3=sprintf("SELECT * FROM retirable_2015 WHERE cedula LIKE '$cedula'");
-$resultado2=mysql_query($query2);
-$resultado3=mysql_query($query3);
-$row2 = mysql_fetch_assoc($resultado2);
-$row3 = mysql_fetch_assoc($resultado3);
+$resultado2=mysqli_query($sgstec,$query2);
+$resultado3=mysqli_query($sgstec,$query3);
+$row2 = mysqli_fetch_assoc($resultado2);
+$row3 = mysqli_fetch_assoc($resultado3);
 $aporte_enero=$row2['aporte_enero'];
 $comentarios_enero=$row2['comentarios_enero'];
 $retiros_enero=$row2['retiros_enero'];
@@ -1167,8 +1167,8 @@ $ahorro_2015=$aporte_enero+$aporte_febrero+$aporte_marzo+$aporte_abril+$aporte_m
 <?php
 if ($sitio === '2014'){
 $query2=sprintf("SELECT * FROM ahorros_2014 WHERE cedula LIKE '$cedula'");
-$resultado2=mysql_query($query2);
-$row2 = mysql_fetch_assoc($resultado2);
+$resultado2=mysqli_query($sgstec,$query2);
+$row2 = mysqli_fetch_assoc($resultado2);
 $aporte_enero=$row2['aporte_enero'];
 $retiros_enero=$row2['retiros_enero'];
 $aporte_febrero=$row2['aporte_febrero'];
@@ -1200,8 +1200,8 @@ $ahorro_2014=$aporte_enero+$aporte_febrero+$aporte_marzo+$aporte_abril+$aporte_m
 <?php
 if ($sitio === '2013'){
 $query2=sprintf("SELECT * FROM ahorros_2013 WHERE cedula LIKE '$cedula'");
-$resultado2=mysql_query($query2);
-$row2 = mysql_fetch_assoc($resultado2);
+$resultado2=mysqli_query($sgstec,$query2);
+$row2 = mysqli_fetch_assoc($resultado2);
 $aporte_enero=$row2['aporte_enero'];
 $retiros_enero=$row2['retiros_enero'];
 $aporte_febrero=$row2['aporte_febrero'];
@@ -1233,8 +1233,8 @@ $ahorro_2013=$aporte_enero+$aporte_febrero+$aporte_marzo+$aporte_abril+$aporte_m
 <?php
 if ($sitio === '2012'){
 $query2=sprintf("SELECT * FROM ahorros_2012 WHERE cedula LIKE '$cedula'");
-$resultado2=mysql_query($query2);
-$row2 = mysql_fetch_assoc($resultado2);
+$resultado2=mysqli_query($sgstec,$query2);
+$row2 = mysqli_fetch_assoc($resultado2);
 $aporte_enero=$row2['aporte_enero'];
 $retiros_enero=$row2['retiros_enero'];
 $aporte_febrero=$row2['aporte_febrero'];
@@ -1266,8 +1266,8 @@ $ahorro_2012=$aporte_enero+$aporte_febrero+$aporte_marzo+$aporte_abril+$aporte_m
 <?php
 if ($sitio === '2011'){
 $query2=sprintf("SELECT * FROM ahorros_2011 WHERE cedula LIKE '$cedula'");
-$resultado2=mysql_query($query2);
-$row2 = mysql_fetch_assoc($resultado2);
+$resultado2=mysqli_query($sgstec,$query2);
+$row2 = mysqli_fetch_assoc($resultado2);
 $aporte_enero=$row2['aporte_enero'];
 $retiros_enero=$row2['retiros_enero'];
 $aporte_febrero=$row2['aporte_febrero'];
@@ -1300,8 +1300,8 @@ $ahorro_2011=$aporte_enero+$aporte_febrero+$aporte_marzo+$aporte_abril+$aporte_m
 if ($sitio === 'Todos'){
 	
 			$query2021=sprintf("SELECT * FROM ahorros_2021 WHERE cedula LIKE '$cedula'");
-$resultado2021=mysql_query($query2021);
-$row2021 = mysql_fetch_assoc($resultado2021);
+$resultado2021=mysqli_query($sgstec,$query2021);
+$row2021 = mysqli_fetch_assoc($resultado2021);
 $aporte_enero=$row2021['aporte_enero'];
 $aporte_febrero=$row2021['aporte_febrero'];
 $aporte_marzo=$row2021['aporte_marzo'];
@@ -1318,8 +1318,8 @@ echo"<center><table class='table'><th style='border: none;'><b>Ahorros Normales 
 
 	
 		$query2020=sprintf("SELECT * FROM ahorros_2020 WHERE cedula LIKE '$cedula'");
-$resultado2020=mysql_query($query2020);
-$row2020 = mysql_fetch_assoc($resultado2020);
+$resultado2020=mysqli_query($sgstec,$query2020);
+$row2020 = mysqli_fetch_assoc($resultado2020);
 $aporte_enero=$row2020['aporte_enero'];
 $aporte_febrero=$row2020['aporte_febrero'];
 $aporte_marzo=$row2020['aporte_marzo'];
@@ -1336,8 +1336,8 @@ echo"<center><table class='table'><th style='border: none;'><b>Ahorros Normales 
 	
 	
 		$query2019=sprintf("SELECT * FROM ahorros_2019 WHERE cedula LIKE '$cedula'");
-$resultado2019=mysql_query($query2019);
-$row2019 = mysql_fetch_assoc($resultado2019);
+$resultado2019=mysqli_query($sgstec,$query2019);
+$row2019 = mysqli_fetch_assoc($resultado2019);
 $aporte_enero=$row2019['aporte_enero'];
 $aporte_febrero=$row2019['aporte_febrero'];
 $aporte_marzo=$row2019['aporte_marzo'];
@@ -1354,8 +1354,8 @@ echo"<center><table class='table'><th style='border: none;'><b>Ahorros Normales 
 
 	
 		$query2018=sprintf("SELECT * FROM ahorros_2018 WHERE cedula LIKE '$cedula'");
-$resultado2018=mysql_query($query2018);
-$row2018 = mysql_fetch_assoc($resultado2018);
+$resultado2018=mysqli_query($sgstec,$query2018);
+$row2018 = mysqli_fetch_assoc($resultado2018);
 $aporte_enero=$row2018['aporte_enero'];
 $aporte_febrero=$row2018['aporte_febrero'];
 $aporte_marzo=$row2018['aporte_marzo'];
@@ -1371,8 +1371,8 @@ $aporte_diciembre=$row2018['aporte_diciembre'];
 echo"<center><table class='table'><th style='border: none;'><b>Ahorros Normales 2018</b></th><tr><td><b>Mes</b></td><td><b>Ahorros</b></td></tr><tr><td>Enero</td><td>".number_format($aporte_enero,2,".",",")."</td></tr><tr><td>Febrero</td><td>".number_format($aporte_febrero,2,".",",")."</td></tr><tr><td>Marzo</td><td>".number_format($aporte_marzo,2,".",",")."</td></tr><tr><td>Abril</td><td>".number_format($aporte_abril,2,".",",")."</td></tr><tr><td>Mayo</td><td>".number_format($aporte_mayo,2,".",",")."</td></tr><tr><td>Junio</td><td>".number_format($aporte_junio,2,".",",")."</td></tr><tr><td>Julio</td><td>".number_format($aporte_julio,2,".",",")."</td></tr><tr><td>Agosto</td><td>".number_format($aporte_agosto,2,".",",")."</td></tr><tr><td>Septiembre</td><td>".number_format($aporte_septiembre,2,".",",")."</td></tr><tr><td>Octubre</td><td>".number_format($aporte_octubre,2,".",",")."</td></tr><tr><td>Noviembre</td><td>".number_format($aporte_noviembre,2,".",",")."</td></tr><tr><td>Diciembre</td><td>".number_format($aporte_diciembre,2,".",",")."</td></tr></table></center>";
 
 	$query2017=sprintf("SELECT * FROM ahorros_2017 WHERE cedula LIKE '$cedula'");
-$resultado2017=mysql_query($query2017);
-$row2017 = mysql_fetch_assoc($resultado2017);
+$resultado2017=mysqli_query($sgstec,$query2017);
+$row2017 = mysqli_fetch_assoc($resultado2017);
 $aporte_enero=$row2017['aporte_enero'];
 $aporte_febrero=$row2017['aporte_febrero'];
 $aporte_marzo=$row2017['aporte_marzo'];
@@ -1388,8 +1388,8 @@ $aporte_diciembre=$row2017['aporte_diciembre'];
 
 echo"<center><table class='table'><th style='border: none;'><b>Ahorros Normales 2017</b></th><tr><td><b>Mes</b></td><td><b>Ahorros</b></td></tr><tr><td>Enero</td><td>".number_format($aporte_enero,2,".",",")."</td></tr><tr><td>Febrero</td><td>".number_format($aporte_febrero,2,".",",")."</td></tr><tr><td>Marzo</td><td>".number_format($aporte_marzo,2,".",",")."</td></tr><tr><td>Abril</td><td>".number_format($aporte_abril,2,".",",")."</td></tr><tr><td>Mayo</td><td>".number_format($aporte_mayo,2,".",",")."</td></tr><tr><td>Junio</td><td>".number_format($aporte_junio,2,".",",")."</td></tr><tr><td>Julio</td><td>".number_format($aporte_julio,2,".",",")."</td></tr><tr><td>Agosto</td><td>".number_format($aporte_agosto,2,".",",")."</td></tr><tr><td>Septiembre</td><td>".number_format($aporte_septiembre,2,".",",")."</td></tr><tr><td>Octubre</td><td>".number_format($aporte_octubre,2,".",",")."</td></tr><tr><td>Noviembre</td><td>".number_format($aporte_noviembre,2,".",",")."</td></tr><tr><td>Diciembre</td><td>".number_format($aporte_diciembre,2,".",",")."</td></tr></table></center>";
 $query2016=sprintf("SELECT * FROM ahorros_2016 WHERE cedula LIKE '$cedula'");
-$resultado2016=mysql_query($query2016);
-$row2016 = mysql_fetch_assoc($resultado2016);
+$resultado2016=mysqli_query($sgstec,$query2016);
+$row2016 = mysqli_fetch_assoc($resultado2016);
 $aporte_enero=$row2016['aporte_enero'];
 $retiros_enero=$row2016['retiros_enero'];
 $aporte_febrero=$row2016['aporte_febrero'];
@@ -1416,8 +1416,8 @@ $aporte_diciembre=$row2016['aporte_diciembre'];
 $retiros_diciembre=$row2016['retiros_diciembre'];
 echo"<center><table class='table'><th style='border: none;'><b>Ahorros Normales 2016</b></th><tr><td><b>Mes</b></td><td><b>Ahorros</b></td></tr><tr><td>Enero</td><td>".number_format($aporte_enero,2,".",",")."</td></tr><tr><td>Febrero</td><td>".number_format($aporte_febrero,2,".",",")."</td></tr><tr><td>Marzo</td><td>".number_format($aporte_marzo,2,".",",")."</td></tr><tr><td>Abril</td><td>".number_format($aporte_abril,2,".",",")."</td></tr><tr><td>Mayo</td><td>".number_format($aporte_mayo,2,".",",")."</td></tr><tr><td>Junio</td><td>".number_format($aporte_junio,2,".",",")."</td></tr><tr><td>Julio</td><td>".number_format($aporte_julio,2,".",",")."</td></tr><tr><td>Agosto</td><td>".number_format($aporte_agosto,2,".",",")."</td></tr><tr><td>Septiembre</td><td>".number_format($aporte_septiembre,2,".",",")."</td></tr><tr><td>Octubre</td><td>".number_format($aporte_octubre,2,".",",")."</td></tr><tr><td>Noviembre</td><td>".number_format($aporte_noviembre,2,".",",")."</td></tr><tr><td>Diciembre</td><td>".number_format($aporte_diciembre,2,".",",")."</td></tr></table></center>";
 $query2015=sprintf("SELECT * FROM ahorros_2015 WHERE cedula LIKE '$cedula'");
-$resultado2015=mysql_query($query2015);
-$row2015 = mysql_fetch_assoc($resultado2015);
+$resultado2015=mysqli_query($sgstec,$query2015);
+$row2015 = mysqli_fetch_assoc($resultado2015);
 $aporte_enero=$row2015['aporte_enero'];
 $retiros_enero=$row2015['retiros_enero'];
 $aporte_febrero=$row2015['aporte_febrero'];
@@ -1445,8 +1445,8 @@ $retiros_diciembre=$row2015['retiros_diciembre'];
 echo"<center><table class='table'><th style='border: none;'><b>Ahorros Normales 2015</b></th><tr><td><b>Mes</b></td><td><b>Ahorros</b></td></tr><tr><td>Enero</td><td>".number_format($aporte_enero,2,".",",")."</td></tr><tr><td>Febrero</td><td>".number_format($aporte_febrero,2,".",",")."</td></tr><tr><td>Marzo</td><td>".number_format($aporte_marzo,2,".",",")."</td></tr><tr><td>Abril</td><td>".number_format($aporte_abril,2,".",",")."</td></tr><tr><td>Mayo</td><td>".number_format($aporte_mayo,2,".",",")."</td></tr><tr><td>Junio</td><td>".number_format($aporte_junio,2,".",",")."</td></tr><tr><td>Julio</td><td>".number_format($aporte_julio,2,".",",")."</td></tr><tr><td>Agosto</td><td>".number_format($aporte_agosto,2,".",",")."</td></tr><tr><td>Septiembre</td><td>".number_format($aporte_septiembre,2,".",",")."</td></tr><tr><td>Octubre</td><td>".number_format($aporte_octubre,2,".",",")."</td></tr><tr><td>Noviembre</td><td>".number_format($aporte_noviembre,2,".",",")."</td></tr><tr><td>Diciembre</td><td>".number_format($aporte_diciembre,2,".",",")."</td></tr></table></center>";
 
 $query2014=sprintf("SELECT * FROM ahorros_2014 WHERE cedula LIKE '$cedula'");
-$resultado2014=mysql_query($query2014);
-$row2014 = mysql_fetch_assoc($resultado2014);
+$resultado2014=mysqli_query($sgstec,$query2014);
+$row2014 = mysqli_fetch_assoc($resultado2014);
 $aporte_enero=$row2014['aporte_enero'];
 $retiros_enero=$row2014['retiros_enero'];
 $aporte_febrero=$row2014['aporte_febrero'];
@@ -1473,8 +1473,8 @@ $aporte_diciembre=$row2014['aporte_diciembre'];
 $retiros_diciembre=$row2014['retiros_diciembre'];
 echo"<center><table class='table'><th style='border: none;'><b>Ahorros Normales 2014</b></th><tr><td><b>Mes</b></td><td><b>Ahorros</b></td></tr><tr><td>Enero</td><td>".number_format($aporte_enero,2,".",",")."</td></tr><tr><td>Febrero</td><td>".number_format($aporte_febrero,2,".",",")."</td></tr><tr><td>Marzo</td><td>".number_format($aporte_marzo,2,".",",")."</td></tr><tr><td>Abril</td><td>".number_format($aporte_abril,2,".",",")."</td></tr><tr><td>Mayo</td><td>".number_format($aporte_mayo,2,".",",")."</td></tr><tr><td>Junio</td><td>".number_format($aporte_junio,2,".",",")."</td></tr><tr><td>Julio</td><td>".number_format($aporte_julio,2,".",",")."</td></tr><tr><td>Agosto</td><td>".number_format($aporte_agosto,2,".",",")."</td></tr><tr><td>Septiembre</td><td>".number_format($aporte_septiembre,2,".",",")."</td></tr><tr><td>Octubre</td><td>".number_format($aporte_octubre,2,".",",")."</td></tr><tr><td>Noviembre</td><td>".number_format($aporte_noviembre,2,".",",")."</td></tr><tr><td>Diciembre</td><td>".number_format($aporte_diciembre,2,".",",")."</td></tr></table></center>";
 $query2013=sprintf("SELECT * FROM ahorros_2013 WHERE cedula LIKE '$cedula'");
-$resultado2013=mysql_query($query2013);
-$row2013 = mysql_fetch_assoc($resultado2013);
+$resultado2013=mysqli_query($sgstec,$query2013);
+$row2013 = mysqli_fetch_assoc($resultado2013);
 $aporte_enero=$row2013['aporte_enero'];
 $retiros_enero=$row2013['retiros_enero'];
 $aporte_febrero=$row2013['aporte_febrero'];
@@ -1502,8 +1502,8 @@ $retiros_diciembre=$row2013['retiros_diciembre'];
 echo"<center><table class='table'><th style='border: none;'><b>Ahorros Normales 2013</b></th><tr><td><b>Mes</b></td><td><b>Ahorros</b></td></tr><tr><td>Enero</td><td>".number_format($aporte_enero,2,".",",")."</td></tr><tr><td>Febrero</td><td>".number_format($aporte_febrero,2,".",",")."</td></tr><tr><td>Marzo</td><td>".number_format($aporte_marzo,2,".",",")."</td></tr><tr><td>Abril</td><td>".number_format($aporte_abril,2,".",",")."</td></tr><tr><td>Mayo</td><td>".number_format($aporte_mayo,2,".",",")."</td></tr><tr><td>Junio</td><td>".number_format($aporte_junio,2,".",",")."</td></tr><tr><td>Julio</td><td>".number_format($aporte_julio,2,".",",")."</td></tr><tr><td>Agosto</td><td>".number_format($aporte_agosto,2,".",",")."</td></tr><tr><td>Septiembre</td><td>".number_format($aporte_septiembre,2,".",",")."</td></tr><tr><td>Octubre</td><td>".number_format($aporte_octubre,2,".",",")."</td></tr><tr><td>Noviembre</td><td>".number_format($aporte_noviembre,2,".",",")."</td></tr><tr><td>Diciembre</td><td>".number_format($aporte_diciembre,2,".",",")."</td></tr></table></center>";
 
 $query2012=sprintf("SELECT * FROM ahorros_2012 WHERE cedula LIKE '$cedula'");
-$resultado2012=mysql_query($query2012);
-$row2012 = mysql_fetch_assoc($resultado2012);
+$resultado2012=mysqli_query($sgstec,$query2012);
+$row2012 = mysqli_fetch_assoc($resultado2012);
 $aporte_enero=$row2012['aporte_enero'];
 $retiros_enero=$row2012['retiros_enero'];
 $aporte_febrero=$row2012['aporte_febrero'];
@@ -1531,8 +1531,8 @@ $retiros_diciembre=$row2012['retiros_diciembre'];
 echo"<center><table class='table'><th style='border: none;'><b>Ahorros Normales 2012</b></th><tr><td><b>Mes</b></td><td><b>Ahorros</b></td><td><b>Retiros</b></td></tr><tr><td>Enero</td><td>".number_format($aporte_enero,2,".",",")."</td><td>".number_format($retiros_enero,2,".",",")."</td></tr><tr><td>Febrero</td><td>".number_format($aporte_febrero,2,".",",")."</td><td>".number_format($retiros_febrero,2,".",",")."</td></tr><tr><td>Marzo</td><td>".number_format($aporte_marzo,2,".",",")."</td><td>".number_format($retiros_marzo,2,".",",")."</td></tr><tr><td>Abril</td><td>".number_format($aporte_abril,2,".",",")."</td><td>".number_format($retiros_abril,2,".",",")."</td></tr><tr><td>Mayo</td><td>".number_format($aporte_mayo,2,".",",")."</td><td>".number_format($retiros_mayo,2,".",",")."</td></tr><tr><td>Junio</td><td>".number_format($aporte_junio,2,".",",")."</td><td>".number_format($retiros_junio,2,".",",")."</td></tr><tr><td>Julio</td><td>".number_format($aporte_julio,2,".",",")."</td><td>".number_format($retiros_julio,2,".",",")."</td></tr><tr><td>Agosto</td><td>".number_format($aporte_agosto,2,".",",")."</td><td>".number_format($retiros_agosto,2,".",",")."</td></tr><tr><td>Septiembre</td><td>".number_format($aporte_septiembre,2,".",",")."</td><td>".number_format($retiros_septiembre,2,".",",")."</td></tr><tr><td>Octubre</td><td>".number_format($aporte_octubre,2,".",",")."</td><td>".number_format($retiros_octubre,2,".",",")."</td></tr><tr><td>Noviembre</td><td>".number_format($aporte_noviembre,2,".",",")."</td><td>".number_format($retiros_noviembre,2,".",",")."</td></tr><tr><td>Diciembre</td><td>".number_format($aporte_diciembre,2,".",",")."</td><td>".number_format($retiros_diciembre,2,".",",")."</td></tr></table></center>";
 
 $query2011=sprintf("SELECT * FROM ahorros_2011 WHERE cedula LIKE '$cedula'");
-$resultado2011=mysql_query($query2011);
-$row2011 = mysql_fetch_assoc($resultado2011);
+$resultado2011=mysqli_query($sgstec,$query2011);
+$row2011 = mysqli_fetch_assoc($resultado2011);
 $aporte_enero=$row2011['aporte_enero'];
 $retiros_enero=$row2011['retiros_enero'];
 $aporte_febrero=$row2011['aporte_febrero'];
@@ -1573,5 +1573,5 @@ echo"<center><table class='table'><th style='border: none;'><b>Ahorros Normales 
 
 </html>
 <?php
-mysql_free_result($sexo);
+mysqli_free_result($sexo);
 ?>

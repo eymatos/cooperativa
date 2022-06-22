@@ -570,7 +570,7 @@ function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDe
     $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
   }
 
-  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+  $theValue = function_exists("mysqli_real_escape_string") ? mysqli_real_escape_string($theValue) : mysqli_escape_string($theValue);
 
   switch ($theType) {
     case "text":
@@ -597,13 +597,13 @@ function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDe
 if (isset($_SESSION['MM_Username'])) {
   $colname_sexo = $_SESSION['MM_Username'];
 }
-mysql_select_db($database_sgstec, $sgstec);
+mysqli_select_db($sgstec,$database_sgstec);
 $query_sexo = sprintf("SELECT id, nombre, apellido, sexo, departamento, usuario FROM usuarios WHERE usuario = %s", GetSQLValueString($colname_sexo, "text"));
-$sexo = mysql_query($query_sexo, $sgstec) or die(mysql_error());
-$row_sexo = mysql_fetch_assoc($sexo);
-$totalRows_sexo = mysql_num_rows($sexo);
+$sexo = mysqli_query($sgstec,$query_sexo) or die(mysqli_error());
+$row_sexo = mysqli_fetch_assoc($sexo);
+$totalRows_sexo = mysqli_num_rows($sexo);
 
-mysql_free_result($sexo); */
+mysqli_free_result($sexo); */
 
 function sexo_check($val1,$val2){
 	if($val1==$val2){

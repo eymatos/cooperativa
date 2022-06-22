@@ -59,7 +59,7 @@ function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDe
     $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
   }
 
-  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+  $theValue = function_exists("mysqli_real_escape_string") ? mysqli_real_escape_string($theValue) : mysqli_escape_string($theValue);
 
   switch ($theType) {
     case "text":
@@ -87,11 +87,11 @@ $colname_sexo = "-1";
 if (isset($_SESSION['MM_Username'])) {
   $colname_sexo = $_SESSION['MM_Username'];
 }
-mysql_select_db($database_sgstec, $sgstec);
+mysqli_select_db($sgstec,$database_sgstec);
 $query_sexo = sprintf("SELECT * FROM usuarios WHERE cedula = %s", GetSQLValueString($colname_sexo, "text"));
-$sexo = mysql_query($query_sexo, $sgstec) or die(mysql_error());
-$row_sexo = mysql_fetch_assoc($sexo);
-$totalRows_sexo = mysql_num_rows($sexo);
+$sexo = mysqli_query($sgstec,$query_sexo) or die(mysqli_error());
+$row_sexo = mysqli_fetch_assoc($sexo);
+$totalRows_sexo = mysqli_num_rows($sexo);
 $_SESSION['id'] = $row_sexo['id'];
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -177,15 +177,15 @@ function cargar_funciones(mensajes){
 <?php @$cedula=$_POST['sitio'];
 @$guia_reti=$_POST['guia_reti'];
 $query30=sprintf("SELECT * FROM usuarios WHERE cedula LIKE '$sitio'");
-$resultado30=mysql_query($query30);
-$row30 = mysql_fetch_assoc($resultado30);
+$resultado30=mysqli_query($sgstec,$query30);
+$row30 = mysqli_fetch_assoc($resultado30);
 $nombre=$row30['nombre'];
 $apellido=$row30['apellido'];
 echo "Usted ha seleccionado a $nombre $apellido de cédula $sitio";
 if($cedula)
 {	
 
-mysql_query("UPDATE usuarios SET guia_reti='$guia_reti' WHERE cedula='$cedula'") or die(mysql_error());
+mysqli_query("UPDATE usuarios SET guia_reti='$guia_reti' WHERE cedula='$cedula'") or die(mysqli_error());
 	
 echo "El monto de aporte mensual para ".$cedula." ha sido modificado a ".$guia_reti." ";
 
@@ -206,5 +206,5 @@ echo "El monto de aporte mensual para ".$cedula." ha sido modificado a ".$guia_r
 
 </html>
 <?php
-mysql_free_result($sexo);
+mysqli_free_result($sexo);
 ?>

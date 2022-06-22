@@ -59,7 +59,7 @@ function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDe
     $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
   }
 
-  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+  $theValue = function_exists("mysqli_real_escape_string") ? mysqli_real_escape_string($theValue) : mysqli_escape_string($theValue);
 
   switch ($theType) {
     case "text":
@@ -87,11 +87,11 @@ $colname_sexo = "-1";
 if (isset($_SESSION['MM_Username'])) {
   $colname_sexo = $_SESSION['MM_Username'];
 }
-mysql_select_db($database_sgstec, $sgstec);
+mysqli_select_db($sgstec,$database_sgstec);
 $query_sexo = sprintf("SELECT * FROM usuarios WHERE cedula = %s", GetSQLValueString($colname_sexo, "text"));
-$sexo = mysql_query($query_sexo, $sgstec) or die(mysql_error());
-$row_sexo = mysql_fetch_assoc($sexo);
-$totalRows_sexo = mysql_num_rows($sexo);
+$sexo = mysqli_query($sgstec,$query_sexo) or die(mysqli_error());
+$row_sexo = mysqli_fetch_assoc($sexo);
+$totalRows_sexo = mysqli_num_rows($sexo);
 $_SESSION['id'] = $row_sexo['id'];
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -183,8 +183,8 @@ if (isset($_POST['submit'])) {
 
 //conectamos a la base de datos para almacenar los datos y la ruta del archivo 
 
-                 mysql_connect('localhost','cooproco_n','procon01')or die ('Ha fallado la conexión: '.mysql_error()); 
-                 mysql_select_db('cooproco_n')or die ('Error al seleccionar la Base de Datos: '.mysql_error()); 
+                 mysqli_connect('localhost','cooproco_n','procon01')or die ('Ha fallado la conexión: '.mysqli_error()); 
+                 mysqli_select_db('cooproco_n')or die ('Error al seleccionar la Base de Datos: '.mysqli_error()); 
 
 
   
@@ -197,7 +197,7 @@ if (isset($_POST['submit'])) {
                    $query = "INSERT INTO archivos  
     VALUES (0,'$nombre_archivo','$description' , '".$_FILES['fichero']['name']."','".$_FILES['fichero']['type']."', '".$_FILES['fichero']['size']."','".date('Y-m-d h:i:sa')."')"; 
 
-       mysql_query($query) or die(mysql_error()); 
+       mysqli_query($sgstec,$query) or die(mysqli_error()); 
        echo "El archivo '".$nombre_archivo."' ha sido registrado de manera satisfactoria.<br />"; 
                  
      
@@ -229,5 +229,5 @@ if (isset($_POST['submit'])) {
 
 </html>
 <?php
-mysql_free_result($sexo);
+mysqli_free_result($sexo);
 ?>

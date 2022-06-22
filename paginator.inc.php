@@ -16,7 +16,7 @@
                                              
  * $_pagi_propagar                OPCIONAL        Array de cadenas. Contiene los nombres de las variables que se quiere propagar 
                                 por el url. Por defecto se propagarán todas las que ya vengan por el url (GET). 
- * $_pagi_conteo_alternativo    OPCIONAL        Booleano. Define si se utiliza mysql_num_rows() (true) o COUNT(*) (false). 
+ * $_pagi_conteo_alternativo    OPCIONAL        Booleano. Define si se utiliza mysqli_num_rows() (true) o COUNT(*) (false). 
                                 Por defecto está en false. 
  * $_pagi_separador                OPCIONAL        Cadena. Cadena que separa los enlaces numéricos en la barra de navegación entre páginas. 
                                  Por defecto se utiliza la cadena " | ". 
@@ -131,19 +131,19 @@
  // La forma de hacer ese conteo dependerá de la variable $_pagi_conteo_alternativo 
  if($_pagi_conteo_alternativo == false){ 
      $_pagi_sqlConta = eregi_replace("select[[:space:]](.*)[[:space:]]from", "SELECT COUNT(*) FROM", $_pagi_sql); 
-     $_pagi_result2 = mysql_query($_pagi_sqlConta); 
+     $_pagi_result2 = mysqli_query($_pagi_sqlConta); 
     // Si ocurrió error y mostrar errores está activado 
      if($_pagi_result2 == false && $_pagi_mostrar_errores == true){ 
-        die (" Error en la consulta de conteo de registros: $_pagi_sqlConta. Mysql dijo: <b>".mysql_error()."</b>"); 
+        die (" Error en la consulta de conteo de registros: $_pagi_sqlConta. Mysql dijo: <b>".mysqli_error()."</b>"); 
      } 
-     $_pagi_totalReg = mysql_result($_pagi_result2,0,0);//total de registros 
+     $_pagi_totalReg = mysqli_result($_pagi_result2,0,0);//total de registros 
  }else{ 
-    $_pagi_result3 = mysql_query($_pagi_sql); 
+    $_pagi_result3 = mysqli_query($_pagi_sql); 
     // Si ocurrió error y mostrar errores está activado 
      if($_pagi_result3 == false && $_pagi_mostrar_errores == true){ 
-        die (" Error en la consulta de conteo alternativo de registros: $_pagi_sql. Mysql dijo: <b>".mysql_error()."</b>"); 
+        die (" Error en la consulta de conteo alternativo de registros: $_pagi_sql. Mysql dijo: <b>".mysqli_error()."</b>"); 
      } 
-    $_pagi_totalReg = mysql_num_rows($_pagi_result3); 
+    $_pagi_totalReg = mysqli_num_rows($_pagi_result3); 
  } 
  // Calculamos el número de páginas (saldrá un decimal) 
  // con ceil() redondeamos y $_pagi_totalPags será el número total (entero) de páginas que tendremos 
@@ -278,10 +278,10 @@
   
  // Consulta SQL. Devuelve $cantidad registros empezando desde $_pagi_inicial 
  $_pagi_sqlLim = $_pagi_sql." LIMIT $_pagi_inicial,$_pagi_cuantos"; 
- $_pagi_result = mysql_query($_pagi_sqlLim); 
+ $_pagi_result = mysqli_query($_pagi_sqlLim); 
  // Si ocurrió error y mostrar errores está activado 
  if($_pagi_result == false && $_pagi_mostrar_errores == true){ 
-     die ("Error en la consulta limitada: $_pagi_sqlLim. Mysql dijo: <b>".mysql_error()."</b>"); 
+     die ("Error en la consulta limitada: $_pagi_sqlLim. Mysql dijo: <b>".mysqli_error()."</b>"); 
  } 
 
 //------------------------------------------------------------------------ 
@@ -312,8 +312,8 @@
  * ------------------------------------------------------------------------ 
   
  * $_pagi_result        Identificador del resultado de la consulta a la BD para los registros de la página actual.  
-                 Listo para ser "pasado" por una función como mysql_fetch_row(), mysql_fetch_array(),  
-                mysql_fetch_assoc(), etc. 
+                 Listo para ser "pasado" por una función como mysqli_fetch_row(), mysqli_fetch_array(),  
+                mysqli_fetch_assoc(), etc. 
                              
  * $_pagi_navegacion        Cadena que contiene la barra de navegación con los enlaces a las diferentes páginas. 
                  Ejemplo: "<<primera | <anterior | 1 | 2 | 3 | 4 | siguiente> | última>>". 

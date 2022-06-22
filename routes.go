@@ -40,30 +40,6 @@ func handleRequest() {
 	publica.HandleFunc("/roles", c.GetRoles).Methods("GET")
 	publica.HandleFunc("/roles", c.CreateRoles).Methods("POST")
 	publica.HandleFunc("/roles", c.ActualizaRoles).Methods("PUT")
-	publica.HandleFunc("/contratistas", c.GetContratistas).Methods("GET")
-	publica.HandleFunc("/contratistas", c.CreateContratistas).Methods("POST")
-	publica.HandleFunc("/contratistas", c.ActualizaContratistas).Methods("PUT")
-	publica.HandleFunc("/seviciocontratistas", c.GetServContratistas).Methods("GET")
-	publica.HandleFunc("/seviciocontratistas", c.CreateServContratistas).Methods("POST")
-	publica.HandleFunc("/seviciocontratistas", c.ActualizaServContratistas).Methods("PUT")
-	publica.HandleFunc("/ubicacionservcontratistas", c.GetUbicacionServContratistas).Methods("GET")
-	publica.HandleFunc("/ubicacionservcontratistas", c.CreateUbicacionServContratistas).Methods("POST")
-	publica.HandleFunc("/ubicacionservcontratistas", c.ActualizaUbicacionServContratistas).Methods("PUT")
-
-	publica.HandleFunc("/listarticketscontratistas", c.GetListarTicketsContratistas).Methods("GET")
-
-	/*FeedBack y Clasificacion*/
-
-	publica.HandleFunc("/feedbackcalificacioncr", c.CreateFeedbackCalificacionContratista).Methods("POST")
-	publica.HandleFunc("/feedbackcalificacioncl", c.CreateFeedbackCalificacionCliente).Methods("POST")
-
-	/*Perfil Cliente*/
-	publica.HandleFunc("/feedbackcalificacion", c.GetFeedbackCalificacion).Methods("GET")
-	publica.HandleFunc("/listarpaisescliente", c.GetListarPaisesCliente).Methods("GET")
-	publica.HandleFunc("/listarciudadcliente", c.GetListarCiudadCliente).Methods("GET")
-	publica.HandleFunc("/listarprovinciacliente", c.GetListarProvinciaCliente).Methods("GET")
-	publica.HandleFunc("/listarhistoricocompletadocliente", c.GetListarHistoricoCompletadoCliente).Methods("GET")
-	publica.HandleFunc("/listaractivoscliente", c.GetListarActivosCliente).Methods("GET")
 
 	/*Listado de rutas Protegidas en la aplicacion
 

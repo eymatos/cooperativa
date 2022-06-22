@@ -59,7 +59,7 @@ function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDe
     $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
   }
 
-  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+  $theValue = function_exists("mysqli_real_escape_string") ? mysqli_real_escape_string($theValue) : mysqli_escape_string($theValue);
 
   switch ($theType) {
     case "text":
@@ -87,33 +87,33 @@ $colname_usuario = "-1";
 if (isset($_SESSION['MM_Username'])) {
   $colname_usuario = $_SESSION['MM_Username'];
 }
-mysql_select_db($database_sgstec, $sgstec);
+mysqli_select_db($sgstec,$database_sgstec);
 $query_usuario = sprintf("SELECT id, sexo, nombre, apellido, cedula, cedula FROM usuarios WHERE cedula = %s", GetSQLValueString($colname_usuario, "text"));
-$cedula = mysql_query($query_usuario, $sgstec) or die(mysql_error());
-$row_usuario = mysql_fetch_assoc($cedula);
-$totalRows_usuario = mysql_num_rows($cedula);
+$cedula = mysqli_query($sgstec,$query_usuario, $sgstec) or die(mysqli_error());
+$row_usuario = mysqli_fetch_assoc($cedula);
+$totalRows_usuario = mysqli_num_rows($cedula);
 
-mysql_select_db($database_sgstec, $sgstec);
+mysqli_select_db($sgstec,$database_sgstec);
 $query_Usuarios = "SELECT id, nombre, apellido FROM usuarios WHERE departamento = ".$row_usuario['departamento']." ORDER BY nombre ASC";
-$Usuarios = mysql_query($query_Usuarios, $sgstec) or die(mysql_error());
-$row_Usuarios = mysql_fetch_assoc($Usuarios);
-$totalRows_Usuarios = mysql_num_rows($Usuarios);
+$Usuarios = mysqli_query($sgstec,$query_Usuarios, $sgstec) or die(mysqli_error());
+$row_Usuarios = mysqli_fetch_assoc($Usuarios);
+$totalRows_Usuarios = mysqli_num_rows($Usuarios);
 
 $colname_editusuario = "-1";
 if (isset($_GET['user'])) {
   $colname_editusuario = $_GET['user'];
 }
-mysql_select_db($database_sgstec, $sgstec);
+mysqli_select_db($sgstec,$database_sgstec);
 $query_editusuario = sprintf("SELECT id, nombre, apellido, cedula, tipo_usuario FROM usuarios WHERE id = %s", GetSQLValueString($colname_editusuario, "int"));
-$editusuario = mysql_query($query_editusuario, $sgstec) or die(mysql_error());
-$row_editusuario = mysql_fetch_assoc($editusuario);
-$totalRows_editusuario = mysql_num_rows($editusuario);
+$editusuario = mysqli_query($sgstec,$query_editusuario, $sgstec) or die(mysqli_error());
+$row_editusuario = mysqli_fetch_assoc($editusuario);
+$totalRows_editusuario = mysqli_num_rows($editusuario);
 
-mysql_select_db($database_sgstec, $sgstec);
+mysqli_select_db($sgstec,$database_sgstec);
 $query_departamento = "SELECT localidad FROM departamentos WHERE id = ".$row_editusuario['departamento'];
-$departamento = mysql_query($query_departamento, $sgstec) or die(mysql_error());
-$row_departamento = mysql_fetch_assoc($departamento);
-$totalRows_departamento = mysql_num_rows($departamento);
+$departamento = mysqli_query($sgstec,$query_departamento, $sgstec) or die(mysqli_error());
+$row_departamento = mysqli_fetch_assoc($departamento);
+$totalRows_departamento = mysqli_num_rows($departamento);
 
 $cedula = $row_usuario['id'];
 
@@ -164,11 +164,11 @@ Si desea continuar haga click en Si, de lo contrario para cancelar haga click en
 </body>
 </html>
 <?php
-//mysql_free_result($cedula);
+//mysqli_free_result($cedula);
 
-mysql_free_result($Usuarios);
+mysqli_free_result($Usuarios);
 
-mysql_free_result($editusuario);
+mysqli_free_result($editusuario);
 
-mysql_free_result($departamento);
+mysqli_free_result($departamento);
 ?>

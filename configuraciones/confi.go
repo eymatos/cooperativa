@@ -22,7 +22,7 @@ package configuraciones
 2-ejecutar update ca-certificates
 3-con esto la pc que esta ejecutando el programa  ya esta certificada y puede conectarse
 */
-var ConnectionString string = "developer:AVNS_-VOrwRcsZd7Xjc_@tcp(db-mysql-arreglatap-do-user-11514964-0.b.db.ondigitalocean.com:25060)/arreglatappdb?parseTime=True"
+var ConnectionString string = "developer:AVNS_-VOrwRcsZd7Xjc_@tcp(db-mysql-arreglatap-do-user-11514964-0.b.db.ondigitalocean.com:25060)/cooperativav2?parseTime=True"
 var SecretKey string = "GuiltyGear-Heaven-or-hell"
 var JwtSecretKey = []byte("GuiltyGear-Heaven-or-hell")
 var PuertoApp string = ":8081"

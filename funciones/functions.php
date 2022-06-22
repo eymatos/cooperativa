@@ -342,8 +342,8 @@ function retornoadmin(){
 		
 }
 function retornoadminb(){
-	$sitio=$_GET['sitio'];
-	$temporal=$sitio;
+	//$sitio=$_GET['sitio'];
+	//$temporal=$sitio;
 	echo "<div style='float:right;margin:10px;position:fixed;    bottom: 250px;
     right: 5px; '>
         	<a href='administrador.php'>Retornar a administrador</a>
@@ -676,9 +676,9 @@ $sgstec = mysqli_connect($hostname_sgstec, $username_sgstec, $password_sgstec) o
 if (isset($_SESSION['MM_Username'])) {
   $colname_sexo = $_SESSION['MM_Username'];
 }
-mysqli_select_db($database_sgstec, $sgstec);
+mysqli_select_db($sgstec,$database_sgstec);
 $query_sexo = sprintf("SELECT id, nombre, apellido, sexo, departamento, usuario FROM usuarios WHERE usuario = %s", GetSQLValueString($colname_sexo, "text"));
-$sexo = mysqli_query($query_sexo, $sgstec) or die(mysqli_error());
+$sexo = mysqli_query($sgstec,$query_sexo) or die(mysqli_error());
 $row_sexo = mysqli_fetch_assoc($sexo);
 $totalRows_sexo = mysqli_num_rows($sexo);
 

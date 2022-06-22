@@ -61,7 +61,7 @@ function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDe
     $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
   }
 
-  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+  $theValue = function_exists("mysqli_real_escape_string") ? mysqli_real_escape_string($theValue) : mysqli_escape_string($theValue);
 
   switch ($theType) {
     case "text":
@@ -92,7 +92,7 @@ function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDe
     $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
   }
 
-  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+  $theValue = function_exists("mysqli_real_escape_string") ? mysqli_real_escape_string($theValue) : mysqli_escape_string($theValue);
 
   switch ($theType) {
     case "text":
@@ -119,43 +119,43 @@ $colname_usuario = "-1";
 if (isset($_SESSION['MM_Username'])) {
   $colname_usuario = $_SESSION['MM_Username'];
 }
-mysql_select_db($database_sgstec, $sgstec);
+mysqli_select_db($sgstec,$database_sgstec);
 $query_usuario = sprintf("SELECT id, sexo, nombre, apellido, cedula, cedula FROM usuarios WHERE cedula = %s", GetSQLValueString($colname_usuario, "text"));
-$cedula = mysql_query($query_usuario, $sgstec) or die(mysql_error());
-$row_usuario = mysql_fetch_assoc($cedula);
-$totalRows_usuario = mysql_num_rows($cedula);
+$cedula = mysqli_query($sgstec,$query_usuario, $sgstec) or die(mysqli_error());
+$row_usuario = mysqli_fetch_assoc($cedula);
+$totalRows_usuario = mysqli_num_rows($cedula);
 
-mysql_select_db($database_sgstec, $sgstec);
+mysqli_select_db($sgstec,$database_sgstec);
 $query_Usuarios = "SELECT id, nombre, apellido FROM usuarios WHERE departamento = ".$row_usuario['departamento']." ORDER BY nombre ASC";
-$Usuarios = mysql_query($query_Usuarios, $sgstec) or die(mysql_error());
-$row_Usuarios = mysql_fetch_assoc($Usuarios);
-$totalRows_Usuarios = mysql_num_rows($Usuarios);
+$Usuarios = mysqli_query($sgstec,$query_Usuarios, $sgstec) or die(mysqli_error());
+$row_Usuarios = mysqli_fetch_assoc($Usuarios);
+$totalRows_Usuarios = mysqli_num_rows($Usuarios);
 
-mysql_select_db($database_sgstec, $sgstec);
+mysqli_select_db($sgstec,$database_sgstec);
 $query_localidades = "SELECT DISTINCT localidad FROM departamentos";
-$localidades = mysql_query($query_localidades, $sgstec) or die(mysql_error());
-$row_localidades = mysql_fetch_assoc($localidades);
-$totalRows_localidades = mysql_num_rows($localidades);
+$localidades = mysqli_query($sgstec,$query_localidades, $sgstec) or die(mysqli_error());
+$row_localidades = mysqli_fetch_assoc($localidades);
+$totalRows_localidades = mysqli_num_rows($localidades);
 
 $colname_users_dept = "-1";
 if (isset($_GET['dept'])) {
   $colname_users_dept = $_GET['dept'];
 }
-mysql_select_db($database_sgstec, $sgstec);
+mysqli_select_db($sgstec,$database_sgstec);
 $query_users_dept = sprintf("SELECT id, nombre, apellido, cedula, tipo_usuario FROM usuarios WHERE departamento = %s ORDER BY id ASC", GetSQLValueString($colname_users_dept, "int"));
-$users_dept = mysql_query($query_users_dept, $sgstec) or die(mysql_error());
-$row_users_dept = mysql_fetch_assoc($users_dept);
-$totalRows_users_dept = mysql_num_rows($users_dept);
+$users_dept = mysqli_query($sgstec,$query_users_dept, $sgstec) or die(mysqli_error());
+$row_users_dept = mysqli_fetch_assoc($users_dept);
+$totalRows_users_dept = mysqli_num_rows($users_dept);
 
 $colname_dept_selected = "-1";
 if (isset($_GET['dept'])) {
   $colname_dept_selected = $_GET['dept'];
 }
-mysql_select_db($database_sgstec, $sgstec);
+mysqli_select_db($sgstec,$database_sgstec);
 $query_dept_selected = sprintf("SELECT localidad FROM departamentos WHERE id = %s", GetSQLValueString($colname_dept_selected, "int"));
-$dept_selected = mysql_query($query_dept_selected, $sgstec) or die(mysql_error());
-$row_dept_selected = mysql_fetch_assoc($dept_selected);
-$totalRows_dept_selected = mysql_num_rows($dept_selected);
+$dept_selected = mysqli_query($sgstec,$query_dept_selected, $sgstec) or die(mysqli_error());
+$row_dept_selected = mysqli_fetch_assoc($dept_selected);
+$totalRows_dept_selected = mysqli_num_rows($dept_selected);
 
 $cedula = $row_usuario['id'];
 
@@ -197,17 +197,17 @@ function MM_jumpMenu(targ,selObj,restore){ //v3.0
 						<?php do { ?>
                         <optgroup label="<?php echo $row_localidades['localidad']; ?>">
                         	<?php
-								mysql_select_db($database_sgstec, $sgstec);
+								mysqli_select_db($sgstec,$database_sgstec);
 								$query_departamentos = "SELECT id FROM departamentos WHERE localidad = '".$row_localidades['localidad']."'";
-								$departamentos = mysql_query($query_departamentos, $sgstec) or die(mysql_error());
-								$row_departamentos = mysql_fetch_assoc($departamentos);
-								$totalRows_departamentos = mysql_num_rows($departamentos);	
+								$departamentos = mysqli_query($sgstec,$query_departamentos, $sgstec) or die(mysqli_error());
+								$row_departamentos = mysqli_fetch_assoc($departamentos);
+								$totalRows_departamentos = mysqli_num_rows($departamentos);	
                             ?>
                             <?php do { ?>
                             	<option value="edituser.php?dept=<?php echo $row_departamentos['id'];?>" <?php if($_GET['dept']==$row_departamentos['id']){?> selected="selected" <?php }?>><?php echo htmlentities($row_departamentos['departamento'], ENT_QUOTES,'ISO-8859-1');?></option>
-                            <?php } while ($row_departamentos = mysql_fetch_assoc($departamentos)); ?>
+                            <?php } while ($row_departamentos = mysqli_fetch_assoc($departamentos)); ?>
                         </optgroup>
-						<?php } while ($row_localidades = mysql_fetch_assoc($localidades)); ?>
+						<?php } while ($row_localidades = mysqli_fetch_assoc($localidades)); ?>
                       </select>
            
       </form>
@@ -228,11 +228,11 @@ function MM_jumpMenu(targ,selObj,restore){ //v3.0
             </thead>
             <?php do { ?>
             <?php
-				mysql_select_db($database_sgstec, $sgstec);
+				mysqli_select_db($sgstec,$database_sgstec);
 				$query_depusuario = "SELECT departamento FROM departamentos WHERE id = ".$row_users_dept['departamento'];
-				$depusuario = mysql_query($query_depusuario, $sgstec) or die(mysql_error());
-				$row_depusuario = mysql_fetch_assoc($depusuario);
-				$totalRows_depusuario = mysql_num_rows($depusuario);
+				$depusuario = mysqli_query($sgstec,$query_depusuario, $sgstec) or die(mysqli_error());
+				$row_depusuario = mysqli_fetch_assoc($depusuario);
+				$totalRows_depusuario = mysqli_num_rows($depusuario);
             ?>
           <tr>
                   <td><?php echo $row_users_dept['cedula']; ?></td>
@@ -244,7 +244,7 @@ function MM_jumpMenu(targ,selObj,restore){ //v3.0
                   <td align="center" valign="middle"><a href="password.php?user=<?php echo $row_users_dept['id']; ?>"><img src="images/icons/passedit.png" width="16" height="16" /></a></td>
                   <td align="center" valign="middle"><a href="del_user.php?user=<?php echo $row_users_dept['id']; ?>"><img src="images/icons/deletuser.png" width="16" height="16" /></a></td>               
                 </tr>
-                <?php } while ($row_users_dept = mysql_fetch_assoc($users_dept)); ?>
+                <?php } while ($row_users_dept = mysqli_fetch_assoc($users_dept)); ?>
         </table>
         <?php } ?>
 
@@ -257,11 +257,11 @@ function MM_jumpMenu(targ,selObj,restore){ //v3.0
 </body>
 </html>
 <?php
-//mysql_free_result($cedula);
+//mysqli_free_result($cedula);
 
-mysql_free_result($localidades);
+mysqli_free_result($localidades);
 
-mysql_free_result($users_dept);
+mysqli_free_result($users_dept);
 
-mysql_free_result($dept_selected);
+mysqli_free_result($dept_selected);
 ?>

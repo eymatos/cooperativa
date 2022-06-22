@@ -61,7 +61,7 @@ function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDe
     $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
   }
 
-  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+  $theValue = function_exists("mysqli_real_escape_string") ? mysqli_real_escape_string($theValue) : mysqli_escape_string($theValue);
 
   switch ($theType) {
     case "text":
@@ -99,8 +99,8 @@ if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "actualizar_u")) {
                        GetSQLValueString($_POST['departamento'], "int"),
                        GetSQLValueString($_POST['id'], "int"));
 
-  mysql_select_db($database_sgstec, $sgstec);
-  $Result1 = mysql_query($updateSQL, $sgstec) or die(mysql_error());
+  mysqli_select_db($sgstec,$database_sgstec);
+  $Result1 = mysqli_query($updateSQL, $sgstec) or die(mysqli_error());
 
   $updateGoTo = "perfil_u.php";
   if (isset($_SERVER['QUERY_STRING'])) {
@@ -117,7 +117,7 @@ function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDe
     $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
   }
 
-  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+  $theValue = function_exists("mysqli_real_escape_string") ? mysqli_real_escape_string($theValue) : mysqli_escape_string($theValue);
 
   switch ($theType) {
     case "text":
@@ -145,11 +145,11 @@ $colname_sexo = "-1";
 if (isset($_SESSION['MM_Username'])) {
   $colname_sexo = $_SESSION['MM_Username'];
 }
-mysql_select_db($database_sgstec, $sgstec);
+mysqli_select_db($sgstec,$database_sgstec);
 $query_sexo = sprintf("SELECT * FROM usuarios WHERE cedula = %s", GetSQLValueString($colname_sexo, "text"));
-$sexo = mysql_query($query_sexo, $sgstec) or die(mysql_error());
-$row_sexo = mysql_fetch_assoc($sexo);
-$totalRows_sexo = mysql_num_rows($sexo);
+$sexo = mysqli_query($sgstec,$query_sexo) or die(mysqli_error());
+$row_sexo = mysqli_fetch_assoc($sexo);
+$totalRows_sexo = mysqli_num_rows($sexo);
 
 
 ?>
@@ -244,9 +244,9 @@ window.onload=funtion(){
 </body>
 </html>
 <?php
-mysql_free_result($sexo);
+mysqli_free_result($sexo);
 
-mysql_free_result($departamento);
+mysqli_free_result($departamento);
 
-mysql_free_result($Recordset1);
+mysqli_free_result($Recordset1);
 ?>

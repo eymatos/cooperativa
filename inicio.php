@@ -149,7 +149,7 @@ if ($clave==="e3b26fab2dbc855b1a5d84544ed6b601"){?><script language="javascript"
 <?php
 mysqli_query("SET NAMES 'utf8'");
 $query3="SELECT * FROM archivos ORDER BY id DESC limit 2";
-$resultado3=mysqli_query($query3);
+$resultado3=mysqli_query($sgstec,$query3);
 while ($row3 = mysqli_fetch_array($resultado3)):;
 $ruta=$row3[3];
 echo "<div style='width: 100%;height:auto;border: 1px double #232F3E;margin-bottom: 3px;text-align:left;padding:10px; display:inline-block;

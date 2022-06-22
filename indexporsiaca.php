@@ -17,7 +17,7 @@ function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDe
     $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
   }
 
-  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+  $theValue = function_exists("mysqli_real_escape_string") ? mysqli_real_escape_string($theValue) : mysqli_escape_string($theValue);
 
   switch ($theType) {
     case "text":
@@ -65,7 +65,7 @@ if (isset($_POST['cedula'])) {
   }
   $MM_redirectLoginFailed = "index.php";
   $MM_redirecttoReferrer = true;
-  mysql_select_db($database_sgstec, $sgstec);
+  mysqli_select_db($sgstec,$database_sgstec);
   
   if($tipo==0){
 	  	  $LoginRS__query=sprintf("SELECT cedula, clave FROM usuarios WHERE cedula=%s AND clave=%s", 
@@ -75,8 +75,8 @@ if (isset($_POST['cedula'])) {
 	  GetSQLValueString($loginUsername, "text"), GetSQLValueString($password, "text"));
   }
    
-  $LoginRS = mysql_query($LoginRS__query, $sgstec) or die(mysql_error());
-  $loginFoundUser = mysql_num_rows($LoginRS);
+  $LoginRS = mysqli_query($LoginRS__query, $sgstec) or die(mysqli_error());
+  $loginFoundUser = mysqli_num_rows($LoginRS);
   if ($loginFoundUser) {
      $loginStrGroup = "";
     
