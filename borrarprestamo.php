@@ -94,83 +94,11 @@ $row_sexo = mysqli_fetch_assoc($sexo);
 $totalRows_sexo = mysqli_num_rows($sexo);
 $_SESSION['id'] = $row_sexo['id'];
 ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head><!-- Global site tag (gtag.js) - Google Analytics --><script async src="https://www.googletagmanager.com/gtag/js?id=UA-60738677-4"></script><script> window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());gtag('config', 'UA-60738677-4');</script><link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-<style>
-form {width:250px;}
-form>div>span {width:100px;display: inline-block;text-align:left;}
-form input {background-color: #f5f5f5;
-    border: 1px solid #ddd;
-    box-shadow: 0 0 5px #ddd inset;
-    color: #727171;
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-size: 14px;
-    font-size: 1.4rem;
-    padding: 5px;
-    padding: 0.5rem;
-    text-align: right;}
-form>div {text-align:center;}
-</style>
-<script LANGUAGE="JavaScript">
-function abreSitio(){
-var URL = "http://";
-var web = document.form1.sitio.options[document.form1.sitio.selectedIndex].value;
-window.open(URL+web, '_self', '');
-}
-</script>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>COOPROCON</title>
 
-<link href="css/estilos1.css" rel="stylesheet" type="text/css" />
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-<script src="http://jqueryjs.googlecode.com/files/jquery-1.3.2.min.js" type="text/javascript" charset="utf-8"></script>
-<script src="scripts/libreria.js" type="text/javascript"></script>
-
-</head>
-<script>
-function cargar_funciones(mensajes){
-	cont_mensajes(mensajes);
-	cont_equipostaller(1);
-}
-</script>
-<body onload="cargar_funciones(<?php echo $row_sexo['id']; ?>)">
-<header>
-	<div id="secondbox">
-    	<a href="inicio.php"><div id="logo" class="fleft"></div></a>
-        <?php encabezados();?>
-<div class="fright">
-  
-        </div>
-       <div id="bienvenida">Hola <?php echo p_nombre($row_sexo['nombre']); ?> <?php echo p_nombre($row_sexo['apellido']); ?></div>
-	   
-        
-		</header>
-<section>     
-<div id="menu"><?php sidemenu();?></div>  
-        <div id="contenido">
-<div id="ahorros2" style="
-    width: 100%;
-    clear: both;
-    margin-top: 20px;
-    padding: 10px;
-    background: white;
-	border-radius: 10px;
-">
 <?php retornoadmin();
-@$sitio=$_GET['sitio'];
-@$sitio2=$_GET['sitio2'];?>
-<h1>Esta seguro que desea borrar <?php echo $sitio2 ?> para la persona de cedula <?php echo $sitio ?>?</h1>
-<form action="borrarprestamo.php?sitio=<?php echo $sitio; ?>&sitio2=<?php echo $sitio2; ?>" method="POST">
-<input type="text" name="sitio" value="<?php echo $sitio?>" style="display:none;">
-<input type="text" name="sitio2" value="<?php echo $sitio2?>" style="display:none;">
-<input style="margin-top:10px;" class="enviar" type="submit" value="Borrar Préstamo">
-</form>
-<?php @$cedula=$_POST['sitio'];
-@$sitio2=$_POST['sitio2'];
+@$cedula=$_GET['sitio'];
+@$sitio2=$_GET['sitio2'];
+
 if($cedula && $sitio2)
 {	
 
@@ -182,20 +110,3 @@ echo "El préstamos de cedula: ".$cedula." ha sido eliminado correctamente";
 
 }
  ?>
-
-</div>
-</div>
-
-</div>
-</div>
-</div>
-</section>
-	<footer>
-	<center style="background:#232f3e;color:white;font-weight:bold;">© 2021 COOPROCON<center>
-<div id="footer"></div></footer>
-</body>
-
-</html>
-<?php
-mysqli_free_result($sexo);
-?>

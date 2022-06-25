@@ -305,7 +305,7 @@ function sidemenu(){
 				<li><a href='perfil_u.php'>Mi Usuario</a></li>
 				<li><a href='ahorros.php'>Mis Ahorros</a></li>
 				<li><a href='prestamos.php'>Mis Préstamos</a></li>
-				<li><a href='calculo.php'>Calcula tu préstamo</a></li>
+				<li><a href='calculadora.php'>Calcula tu préstamo</a></li>
 				<li><a href='formularios.php'>Formularios</a></li>				<li><a href='contacto.php'>Contacto</a></li>";					
 				echo "<li><a href='logout.php'>Salir</a></li>
             </ul>
