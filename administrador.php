@@ -171,23 +171,23 @@ if ($cedula === '001-0078306-7' or $cedula === '001-1746512-0' or $cedula === '2
 
 <tr>
 <td style="padding:10px;">
-<img src="agregarusuario.png" title="Esta sección sirve para agregar nuevos usuarios" width="75" height="auto">
+<img src="images/agregarusuario.png" title="Esta sección sirve para agregar nuevos usuarios" width="75" height="auto">
 </td>
 <td style="padding:10px;">
-<img src="usuario.png" title="Ver todos los datos de todos los usuarios" width="75" height="auto">
+<img src="images/usuario.png" title="Ver todos los datos de todos los usuarios" width="75" height="auto">
 </td>
 <td style="padding:10px;">
-<img src="eliminar_usuario.png" title="Eliminar usuarios existentes" width="75" height="auto">
+<img src="images/eliminar_usuario.png" title="Eliminar usuarios existentes" width="75" height="auto">
 </td>
 <td style="padding:10px;">
-<img src="user_admin.png" title="Opciones de usuarios" width="100" height="auto">
+<img src="images/user_admin.png" title="Opciones de usuarios" width="100" height="auto">
 </td>
-<td style="padding:10px;"><img src="publica.png" title="Crear una nueva publicación" width="75" height="auto"></td>
-<td style="padding:10px;"><img src="files-png.png" title="Ver archivos en sistema" width="75" height="auto"></td>
-<td style="padding:10px;"><img src="upload.png" title="Subir archivos al sistema" width="75" height="auto"></td>
-<td style="padding:10px;"><img src="visita.png" title="Ver registro de visitas" width="75" height="auto"></td>
-<td style="padding:10px;"><img src="aviso.png" title="Agregar aviso" width="75" height="auto"></td>
-<td style="padding:10px;"><img src="eliminaraviso.png" title="Eliminar Aviso" width="75" height="auto"></td>
+<td style="padding:10px;"><img src="images/publica.png" title="Crear una nueva publicación" width="75" height="auto"></td>
+<td style="padding:10px;"><img src="images/files-png.png" title="Ver archivos en sistema" width="75" height="auto"></td>
+<td style="padding:10px;"><img src="images/upload.png" title="Subir archivos al sistema" width="75" height="auto"></td>
+<td style="padding:10px;"><img src="images/visita.png" title="Ver registro de visitas" width="75" height="auto"></td>
+<td style="padding:10px;"><img src="images/aviso.png" title="Agregar aviso" width="75" height="auto"></td>
+<td style="padding:10px;"><img src="images/eliminaraviso.png" title="Eliminar Aviso" width="75" height="auto"></td>
 </tr>
 <tr>
 <td style="padding:10px;width:75px;text-align:center;">

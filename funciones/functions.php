@@ -315,9 +315,9 @@ function sidemenu2(){
 	echo "<div class='sidemenu fleft'>
         	<ul>
 			    <li><a href='index.php'>Portada</a></li>
-				<li><a href='quienes2.php'>Quiénes somos?</a></li>
-				<li><a href='calculo2.php'>Calcula tu préstamo</a></li>
-				<li><a href='formularios2.php'>Formularios</a></li>			
+				<li><a href='menu2/quienes2.php'>Quiénes somos?</a></li>
+				<li><a href='menu2/calculo2.php'>Calcula tu préstamo</a></li>
+				<li><a href='menu2/formularios2.php'>Formularios</a></li>			
 				
             </ul>
         </div>";
