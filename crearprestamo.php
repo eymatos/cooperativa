@@ -232,24 +232,13 @@ function cargar_funciones(mensajes){
 @$desembolso=$_POST['desembolso'];
 @$prestamo_anterior=$_POST['prestamo_anterior'];
 
-echo $cedula." ";
-echo $sitio2." ";
-echo $monto." ";
-echo $interes." ";
-echo $plazo." ";
-echo $numero_prestamo." ";
-echo $fecha_prestamo." ";
-echo $primera_cuota." ";
-echo $total_pagar." ";
-echo $tipo." ";
-echo $desembolso." ";
-echo $prestamo_anterior." ";
 
 
-mysqli_query($sgstec,"INSERT INTO ".$sitio2." (cedula, monto, interes, plazo, numero_prestamo, fecha_prestamo, primera_cuota, total_pagar, tipo, desembolso, prestamo_anterior) VALUES ('".$cedula."', '".$monto."', '".$interes."', '".$plazo."', '".$numero_prestamo."','".$fecha_prestamo."', '".$primera_cuota."', '".$total_pagar."', '".$sitio2."', '".$desembolso."', '".$prestamo_anterior."')");
+
+
+mysqli_query($sgstec,"INSERT INTO $sitio2 (cedula, monto, interes, plazo, numero_prestamo, fecha_prestamo, primera_cuota, total_pagar, tipo, desembolso, prestamo_anterior) VALUES ('$cedula', '$monto', $interes, $plazo, '$numero_prestamo','$fecha_prestamo', '$primera_cuota', '$total_pagar', '$sitio2', $desembolso, '$prestamo_anterior')");
 
 echo "El prestamo ".$tipo." de #: ".$numero_prestamo." ha sido creado, por el monto de ".$monto." al socio de cedula ".$cedula." ";
-
 
 ?>
 
