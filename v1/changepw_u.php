@@ -1,5 +1,4 @@
 <?php require_once('Connections/sgstec.php'); ?>
-<?php require_once('Connections/sgstec.php'); ?>
 <?php
 include('funciones/functions.php');
 //initialize the session
@@ -96,7 +95,7 @@ if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "actualizar_u")) {
                        GetSQLValueString($_POST['id'], "int"));
 
   mysqli_select_db($sgstec,$database_sgstec);
-  $Result1 = mysqli_query($updateSQL, $sgstec) or die(mysqli_error());
+  $Result1 = mysqli_query($sgstec,$updateSQL) or die(mysqli_error());
 
   $updateGoTo = "perfil_u.php";
   if (isset($_SERVER['QUERY_STRING'])) {

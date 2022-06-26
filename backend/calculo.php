@@ -1,5 +1,5 @@
 <?php require_once('Connections/sgstec.php');
-include('funciones/functions.php');
+
 
 @$deuda=$_POST["importe"];
 @$anos=$_POST["anos"];
