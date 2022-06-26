@@ -124,12 +124,6 @@ form>div {text-align:center;}
 <script src="scripts/libreria.js" type="text/javascript"></script>
 
 </head>
-<script>
-function cargar_funciones(mensajes){
-	cont_mensajes(mensajes);
-	cont_equipostaller(1);
-}
-</script>
 <body onload="cargar_funciones(<?php echo $row_sexo['id']; ?>)">
 <header>
 	<div id="secondbox">

@@ -883,7 +883,7 @@ echo "<div style='width:40%;text-align:left;margin-right:5%;    float: left;bord
 /*Normal*/
 echo "<div><div style='width:50%;float:left;text-align:left;padding:0 5% ;    clear: both;'>
 <h4 style='margin:0;background-color:#009A00;padding: 5px;'>Normal</h4>
-<h6 style='margin:0;'><a href='crearprestamo.php?sitio=$sitio&sitio2=prestamos_normales'>Crear</a>   |   <a href='verproductos.php?sitio=$sitio&sitio2=normales'>Ver Tabla</a>   |   <a href='borrarprestamo.php?sitio=$sitio&sitio2=prestamos_normales'>Eliminar</a></h6>
+<h6 style='margin:0;'><a href='creacion_prestamo.php?sitio=$sitio&sitio2=prestamos_normales'>Crear</a>   |   <a href='verproductos.php?sitio=$sitio&sitio2=normales'>Ver Tabla</a>   |   <a href='borrarprestamo.php?sitio=$sitio&sitio2=prestamos_normales'>Eliminar</a></h6>
 </div>
 <div style='width:50%;float:left;text-align:left;padding:0 5% ;margin-bottom: 20px;'>
 <span style='padding:5px;float:left;'><b>RD$</b></span><span style='border:1px solid gray;padding:5px;width:150px;float:left;text-align:right;'>".number_format($mnor,2,".",",")."</span></h4>

@@ -3,52 +3,7 @@
 include('funciones/functions.php');
 //initialize the session
 mysqli_query("SET NAMES 'utf8'",$sgstec);
-?>
-
-<?php
-if (!function_exists("GetSQLValueString")) {
-function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
-{
-  if (PHP_VERSION < 6) {
-    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
-  }
-
-  $theValue = function_exists("mysqli_real_escape_string") ? mysqli_real_escape_string($theValue) : mysqli_escape_string($theValue);
-
-  switch ($theType) {
-    case "text":
-      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
-      break;    
-    case "long":
-    case "int":
-      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
-      break;
-    case "double":
-      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
-      break;
-    case "date":
-      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
-      break;
-    case "defined":
-      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
-      break;
-  }
-  return $theValue;
-}
-}
-
-$colname_sexo = "-1";
-if (isset($_SESSION['MM_Username'])) {
-  $colname_sexo = $_SESSION['MM_Username'];
-}
-mysqli_select_db($sgstec,$database_sgstec);
-$query_sexo = sprintf("SELECT id,nombre, apellido, sexo FROM usuarios WHERE cedula = %s", GetSQLValueString($colname_sexo, "text"));
-$sexo = mysqli_query($sgstec,$query_sexo) or die(mysqli_error());
-$row_sexo = mysqli_fetch_assoc($sexo);
-$totalRows_sexo = mysqli_num_rows($sexo);
-$_SESSION['id'] = $row_sexo['id'];
-?>
-<?php
+retornoadmin();
 if(isset($_POST['submit']) && !empty($_POST['submit'])) {
 @$cedula=$_POST['cedula'];
 @$nombre=$_POST['nombre'];
@@ -103,14 +58,3 @@ alert('Estimado socio, tu solicitud ha sido enviada con éxito. Un personal de l
 }
 
 ?>
-<html>
-<head>
-
-	<title>Autorizado</title>
-</head>
-
-<body>
-<P><b>Proceso completado</p>
-<p><a href="http://cooprocon.com/inicio.php">Regresar al menu principal</a></p>
-</body>
-</html>
