@@ -1,12 +1,9 @@
-<?php require_once('Connections/sgstec.php'); ?>
-<?php
+<?php require_once('Connections/sgstec.php');
 include('funciones/functions.php');
 //initialize the session
 if (!isset($_SESSION)) {
   session_start();
 }
-?>
-<?php
 if (!isset($_SESSION)) {
   session_start();
 }
@@ -50,8 +47,7 @@ if (!((isset($_SESSION['MM_Username'])) && (isAuthorized("",$MM_authorizedUsers,
   header("Location: ". $MM_restrictGoTo); 
   exit;
 }
-?>
-<?php
+
 if (!function_exists("GetSQLValueString")) {
 function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
 {

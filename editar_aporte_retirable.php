@@ -131,12 +131,7 @@ window.open(URL+web, '_self', '');
 <script src="scripts/libreria.js" type="text/javascript"></script>
 
 </head>
-<script>
-function cargar_funciones(mensajes){
-	cont_mensajes(mensajes);
-	cont_equipostaller(1);
-}
-</script>
+
 <body onload="cargar_funciones(<?php echo $row_sexo['id']; ?>)">
 <header>
 	<div id="secondbox">
@@ -163,8 +158,8 @@ function cargar_funciones(mensajes){
 <?php retornoadmin();
 @$sitio=$_GET['sitio'];?>
 <h1>Editar Aporte Mensual Retirable</h1>
-<form action="editar_aporte_retirable.php?sitio=<?php echo $sitio; ?>" method="POST">
-<input type="text" name="sitio" value="<?php echo $sitio?>" style="display:none;">
+<form action="editar_aporte_retirable_backend.php" method="POST">
+<input type="text" name="sitio" value="<?php echo $sitio; ?>" style="display:none;">
 <br><br>
 <div class="formulario2">
 		<span style="width:100%;"><b>Aporte mensual retirable nuevo</b></span>
@@ -174,23 +169,6 @@ function cargar_funciones(mensajes){
 
 <input class="enviar" type="submit" value="Cambiar Aporte">
 </form>
-<?php @$cedula=$_POST['sitio'];
-@$guia_reti=$_POST['guia_reti'];
-$query30=sprintf("SELECT * FROM usuarios WHERE cedula LIKE '$sitio'");
-$resultado30=mysqli_query($sgstec,$query30);
-$row30 = mysqli_fetch_assoc($resultado30);
-$nombre=$row30['nombre'];
-$apellido=$row30['apellido'];
-echo "Usted ha seleccionado a $nombre $apellido de cédula $sitio";
-if($cedula)
-{	
-
-mysqli_query("UPDATE usuarios SET guia_reti='$guia_reti' WHERE cedula='$cedula'") or die(mysqli_error());
-	
-echo "El monto de aporte mensual para ".$cedula." ha sido modificado a ".$guia_reti." ";
-
-}
- ?>
 
 </div>
 </div>
@@ -205,6 +183,3 @@ echo "El monto de aporte mensual para ".$cedula." ha sido modificado a ".$guia_r
 </body>
 
 </html>
-<?php
-mysqli_free_result($sexo);
-?>

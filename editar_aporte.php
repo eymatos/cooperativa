@@ -163,7 +163,7 @@ function cargar_funciones(mensajes){
 <?php retornoadmin();
 @$sitio=$_GET['sitio'];?>
 <h1>Editar Aporte Mensual</h1>
-<form action="editar_aporte.php?sitio=<?php echo $sitio; ?>" method="POST">
+<form action="editar_aporte_backend.php?sitio=<?php echo $sitio; ?>" method="POST">
 <input type="text" name="sitio" value="<?php echo $sitio?>" style="display:none;">
 <br><br>
 <div class="formulario2">
@@ -174,23 +174,6 @@ function cargar_funciones(mensajes){
 
 <input class="enviar" type="submit" value="Cambiar aporte">
 </form>
-<?php @$cedula=$_POST['sitio'];
-@$guia=$_POST['guia'];
-$query30=sprintf("SELECT * FROM usuarios WHERE cedula LIKE '$sitio'");
-$resultado30=mysqli_query($sgstec,$query30);
-$row30 = mysqli_fetch_assoc($resultado30);
-$nombre=$row30['nombre'];
-$apellido=$row30['apellido'];
-echo "Usted ha seleccionado a $nombre $apellido de cédula $sitio";
-if($cedula)
-{	
-
-mysqli_query("UPDATE usuarios SET guia='$guia' WHERE cedula='$cedula'") or die(mysqli_error());
-	
-echo "El monto de aporte mensual para ".$cedula." ha sido modificado a ".$guia." ";
-
-}
- ?>
 
 </div>
 </div>
@@ -205,6 +188,3 @@ echo "El monto de aporte mensual para ".$cedula." ha sido modificado a ".$guia."
 </body>
 
 </html>
-<?php
-mysqli_free_result($sexo);
-?>

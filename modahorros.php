@@ -164,7 +164,7 @@ function cargar_funciones(mensajes){
 ">
 
 <h1>Administrar ahorros</h1>
-<form action="modahorros.php?sitio=<?php echo $sitio; ?>" method="POST">
+<form action="modahorros_backend.php" method="POST">
 <input type="text" name="sitio" value="<?php echo $sitio?>" style="display:none;">
 <span><b>Seleccionar Año:</b></span>
 <select style="width:100%;margin:auto;text-align:center;" name="sitio2">
@@ -216,28 +216,6 @@ function cargar_funciones(mensajes){
 <span style="margin-bottom:15px;"><input class="form-control" type="textarea" rows="3" cols="8" name="comentario"  maxlength=50 style="margin-bottom:15px;"></span>
 <input class="enviar" type="submit" value="Agregar monto nuevo">
 </form>
-<?php @$cedula=$_POST['sitio'];
-@$sitio2=$_POST['sitio2'];
-@$sitio3=$_POST['sitio3'];
-@$sitio4=$_POST['sitio4'];
-$monto=$_POST["monto"];
-$comentario=$_POST["comentario"];
-$query30=sprintf("SELECT * FROM usuarios WHERE cedula LIKE '$sitio'");
-$resultado30=mysqli_query($sgstec,$query30);
-$row30 = mysqli_fetch_assoc($resultado30);
-$nombre=$row30['nombre'];
-$apellido=$row30['apellido'];
-echo "Usted ha seleccionado a $nombre $apellido de cédula $sitio";
-if($cedula && $sitio2 && $sitio3 && $monto)
-{	
-
-mysqli_query("UPDATE $sitio2 SET $sitio3='$monto' WHERE cedula='$cedula'") or die(mysqli_error());
-mysqli_query("UPDATE $sitio2 SET $sitio4='$comentario' WHERE cedula='$cedula'") or die(mysqli_error());
-	
-echo "El nuevo monto ahorrado para ".$cedula." es ".$monto." Aplicado en la seccion del mes ".$sitio3." de la tabla de año ".$sitio2;
-
-}
- ?>
 
 </div>
 </div>
