@@ -88,7 +88,7 @@ $_SESSION['id'] = $row_sexo['id'];
 <?php retornoadmin();?>
 <h1>AUTORIZACIÓN SUSPENSIÓN AHORRO RETIRABLE</h1>
 <br>
-<form style="width:75%;" action="suspension_retirable_backend.php" method="POST" style="margin-top: 10px;">
+<form style="width:75%;" action="backend/suspension_retirable_backend.php" method="POST" style="margin-top: 10px;">
 	<div class="formulario2">
 <span style="width:100%;">Yo <input type="text" name="nombre" > de cédula No. <input type="text" name="cedula" maxlength=13 >,
 en mi calidad de socio de la Cooperativa

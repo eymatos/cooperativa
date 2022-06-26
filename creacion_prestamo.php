@@ -164,7 +164,7 @@ function cargar_funciones(mensajes){
 ">
 <?php retornoadmin();?>
 <h1>Crear nuevo préstamo</h1>
-<form style="width:75%;" action="crearprestamo.php?sitio=<?php echo $sitio; ?>&sitio2=<?php echo $sitio2; ?>" method="POST" style="margin-top: 10px;">
+<form style="width:75%;" action="backend/crearprestamo.php?sitio=<?php echo $sitio; ?>&sitio2=<?php echo $sitio2; ?>" method="POST" style="margin-top: 10px;">
 <input type="text" name="sitio" value="<?php echo $sitio?>" style="display:none;">
 <input type="text" name="sitio2" value="<?php echo $sitio2?>" style="display:none;">
 

@@ -158,7 +158,7 @@ function cargar_funciones(mensajes){
     color: black;
 ">Ahorro total a la fecha </h1>
 <?php
-include('mostrar_ahorros.php');
+include('backend/mostrar_ahorros.php');
 ?>
 </div>
 <div id="ahorros2" style="

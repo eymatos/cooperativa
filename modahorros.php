@@ -164,7 +164,7 @@ function cargar_funciones(mensajes){
 ">
 
 <h1>Administrar ahorros</h1>
-<form action="modahorros_backend.php" method="POST">
+<form action="backend/modahorros_backend.php" method="POST">
 <input type="text" name="sitio" value="<?php echo $sitio?>" style="display:none;">
 <span><b>Seleccionar Año:</b></span>
 <select style="width:100%;margin:auto;text-align:center;" name="sitio2">

@@ -163,7 +163,7 @@ function cargar_funciones(mensajes){
 <?php retornoadmin();
 @$sitio=$_GET['sitio'];?>
 <h1>Editar Aporte Mensual</h1>
-<form action="editar_aporte_backend.php?sitio=<?php echo $sitio; ?>" method="POST">
+<form action="backend/editar_aporte_backend.php?sitio=<?php echo $sitio; ?>" method="POST">
 <input type="text" name="sitio" value="<?php echo $sitio?>" style="display:none;">
 <br><br>
 <div class="formulario2">

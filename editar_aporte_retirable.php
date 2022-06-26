@@ -158,7 +158,7 @@ window.open(URL+web, '_self', '');
 <?php retornoadmin();
 @$sitio=$_GET['sitio'];?>
 <h1>Editar Aporte Mensual Retirable</h1>
-<form action="editar_aporte_retirable_backend.php" method="POST">
+<form action="backend/editar_aporte_retirable_backend.php" method="POST">
 <input type="text" name="sitio" value="<?php echo $sitio; ?>" style="display:none;">
 <br><br>
 <div class="formulario2">

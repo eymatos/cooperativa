@@ -89,7 +89,7 @@ $_SESSION['id'] = $row_sexo['id'];
 
 <h1>SOLICITUD ENTREGA DE AHORRO RETIRABLE</h1>
 <br>
-<form style="width:75%;" action="entrega_ahorro_retirable_backend.php" method="POST" style="margin-top: 10px;">
+<form style="width:75%;" action="backend/entrega_ahorro_retirable_backend.php" method="POST" style="margin-top: 10px;">
 	<div class="formulario2">
 <span style="width:100%; text-align: justify;">Yo <input type="text" name="nombre" > de cédula No. <input type="text" name="cedula" maxlength=13 >,
 solicito se me haga

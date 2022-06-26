@@ -141,7 +141,7 @@ form>div {text-align:center;}
         <div id="contenido">
 <div id="Préstamo">
 <h1>Cálculo de préstamos</h1>
-<form action="calculo.php" method="POST" style="margin-top: 10px;">
+<form action="backend/calculo.php" method="POST" style="margin-top: 10px;">
 	<div class="formulario">
 		<span><b>Importe</b> :</span>
 		<span><input type="text" name="importe" maxlength=9></span>

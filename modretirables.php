@@ -163,7 +163,7 @@ function cargar_funciones(mensajes){
 <?php retornoadmin();
 @$sitio=$_GET['sitio'];?>
 <h1>Administrar retirables</h1>
-<form action="modretirables_backend.php" method="POST">
+<form action="backend/modretirables_backend.php" method="POST">
 <input type="text" name="sitio" value="<?php echo $sitio?>" style="display:none;">
 <span><b>Seleccionar Año:</b></span>
 <select style="width:100%;margin:auto;text-align:center;" name="sitio2">

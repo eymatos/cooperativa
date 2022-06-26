@@ -150,7 +150,7 @@ form>div {text-align:center;}
 ">
 <h1>Tus Préstamos</h1>
 <div>
-<form action= "ver_mis_prestamos.php" method="POST">
+<form action= "backend/ver_mis_prestamos.php" method="POST">
 Seleccione el tipo de préstamo:
 <select style="width:100%;margin:auto;text-align:center;" name="sitio">
 <option value="normales">Préstamos Normales</option>

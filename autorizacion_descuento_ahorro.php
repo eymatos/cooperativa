@@ -89,7 +89,7 @@ $_SESSION['id'] = $row_sexo['id'];
 <?php retornoadmin();?>
 <h1>AUTORIZACIÓN DE DESCUENTO AHORRO</h1>
 <br>
-<form style="width:75%;" action="autorizacion_descuento_ahorro_backend.php" method="POST" style="margin-top: 10px;">
+<form style="width:75%;" action="backend/autorizacion_descuento_ahorro_backend.php" method="POST" style="margin-top: 10px;">
 	<div class="formulario2">
 	<p>
 <span> Seleccione el tipo de ahorro:</span>

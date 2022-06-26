@@ -171,7 +171,7 @@ function cargar_funciones(mensajes){
 <h1>Ver ahorro de socio</h1>
 </div>
 <div>
-<form action="verahorros_backend.php" method="POST">
+<form action="backend/verahorros_backend.php" method="POST">
 <p>Seleccione el año:</p>
 <input type="text" name="cedula" value="<?php echo $sitio?>" style="display:none;">
 <select style="width:100%;margin:auto;text-align:center;padding: 2px;" name="sitio20">
