@@ -164,57 +164,57 @@ function cargar_funciones(mensajes){
 ">
 <?php retornoadmin();?>
 <h1>Crear nuevo préstamo</h1>
-<form style="width:75%;" action="backend/crearprestamo.php?sitio=<?php echo $sitio; ?>&sitio2=<?php echo $sitio2; ?>" method="POST" style="margin-top: 10px;">
-<input type="text" name="sitio" value="<?php echo $sitio?>" style="display:none;">
-<input type="text" name="sitio2" value="<?php echo $sitio2?>" style="display:none;">
+<form style="width:75%;"  style="margin-top: 10px;">
+<input type="text" id="cedula" name="sitio" value="<?php echo $sitio?>" style="display:none;">
+<input type="text" id="tipo_prestamo" name="sitio2" value="<?php echo $sitio2?>" style="display:none;">
 
 	<div class="formulario2">
 		<span style="width:100%;"><b>Monto</b> :</span>
-		<span style="width:100%;"><input type="text" name="monto"></span>
+		<span style="width:100%;"><input type="text" id="monto" name="monto"></span>
 	</div>
 	<br><br>
 	<div class="formulario2">
 		<span style="width:100%;"><b>Interes</b> :</span>
-		<span style="width:100%;"><input type="text" name="interes"></span>
+		<span style="width:100%;"><input type="text" id="interes" name="interes"></span>
 	</div>
     <br><br>
 	<div class="formulario2">
 		<span style="width:100%;"><b>Plazo</b> : (Cantidad de meses)</span>
-		<span style="width:100%;"><input type="text" name="plazo"></span>
+		<span style="width:100%;"><input type="text" id="plazo" name="plazo"></span>
 	</div>
 	<br><br>
 	<div class="formulario2">
 		<span style="width:100%;"><b>Numero de préstamo </b> :  (formato ##-###)</span>
-		<span style="width:100%;"><input type="text" name="numero_prestamo"></span>
+		<span style="width:100%;"><input type="text" id="numero_prestamo" name="numero_prestamo"></span>
 	</div>
 	<br><br>
 	<div class="formulario2">
 		<span style="width:100%;"><b>Fecha de préstamo</b> : (D/M/A)</span>
-		<span style="width:100%;"><input type="text" name="fecha_prestamo"></span>
+		<span style="width:100%;"><input type="text" id="fecha_prestamo" name="fecha_prestamo"></span>
 	</div>
 	<br><br>
 	<div class="formulario2">
 		<span style="width:100%;"><b>Fecha de Primera Cuota</b> :(01/M/A)</span>
-		<span style="width:100%;"><input type="text" name="primera_cuota"></span>
+		<span style="width:100%;"><input type="text" id="primera_cuota" name="primera_cuota"></span>
 	</div>
 	<br><br>
 <div class="formulario2">
 		<span style="width:100%;"><b>Desembolso </b> :  </span>
-		<span style="width:100%;"><input type="text" name="desembolso"></span>
+		<span style="width:100%;"><input type="text" id="desembolso" name="desembolso"></span>
 	</div>
 	<br><br>
 	<div class="formulario2">
 		<span style="width:100%;"><b>Numero de préstamo anterior </b> :  (formato ##-###)</span>
-		<span style="width:100%;"><input type="text" name="prestamo_anterior"></span>
+		<span style="width:100%;"><input type="text" id="prestamo_anterior" name="prestamo_anterior"></span>
 	</div>
 	<br><br>
 	<div class="formulario2">
 		<span style="width:100%;"><b>Total a pagar</b> : (formato con comas en los miles y comas en los decimales)</span>
-		<span style="width:100%;"><input type="text" name="total_pagar"></span>
+		<span style="width:100%;"><input type="text" id="total_pagar"  name="total_pagar"></span>
 	</div>
 			<br><br><br>
 	<div>
-		<p><input class="enviar" type="submit" value="Crear préstamo"></p>
+		<p><a id="myLink" title="Crear Prestamo" href="#" onclick="crearprestamo();return false;">Enviar</a></p>
 	</div>
 </form>
 
@@ -228,6 +228,7 @@ function cargar_funciones(mensajes){
 	<footer>
 	<center style="background:#232f3e;color:white;font-weight:bold;">© 2021 COOPROCON<center>
 <div id="footer"></div></footer>
+<script src="js/crearprestamo.js"></script>
 </body>
 
 </html>

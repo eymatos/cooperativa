@@ -1,52 +1,6 @@
-<?php require_once('Connections/sgstec.php'); ?>
-<?php
+<?php 
+require_once('Connections/sgstec.php');
 include('funciones/functions.php');
-//initialize the session
-
-?>
-
-<?php
-if (!function_exists("GetSQLValueString")) {
-function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
-{
-  if (PHP_VERSION < 6) {
-    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
-  }
-
-  $theValue = function_exists("mysqli_real_escape_string") ? mysqli_real_escape_string($theValue) : mysqli_escape_string($theValue);
-
-  switch ($theType) {
-    case "text":
-      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
-      break;    
-    case "long":
-    case "int":
-      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
-      break;
-    case "double":
-      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
-      break;
-    case "date":
-      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
-      break;
-    case "defined":
-      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
-      break;
-  }
-  return $theValue;
-}
-}
-
-$colname_sexo = "-1";
-if (isset($_SESSION['MM_Username'])) {
-  $colname_sexo = $_SESSION['MM_Username'];
-}
-mysqli_select_db($sgstec,$database_sgstec);
-$query_sexo = sprintf("SELECT id,nombre, apellido, sexo FROM usuarios WHERE cedula = %s", GetSQLValueString($colname_sexo, "text"));
-$sexo = mysqli_query($sgstec,$query_sexo) or die(mysqli_error());
-$row_sexo = mysqli_fetch_assoc($sexo);
-$totalRows_sexo = mysqli_num_rows($sexo);
-$_SESSION['id'] = $row_sexo['id'];
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -92,7 +46,7 @@ tr {padding:10px;}
 
 <h1>SOLICITUD DE PRÉSTAMO</h1>
 <br>
-<form style="width:75%;" action="autorizacion_prestamo.php" method="POST" style="margin-top: 10px;">
+<form style="width:75%;" action="backend/solicitud_prestamo_backend.php" method="POST" style="margin-top: 10px;">
 	<div class="formulario2">
 	<p>
 <span> Seleccione el tipo de préstamo:</span>
@@ -214,4 +168,3 @@ function NUM(s, dec) {
 <div id="footer"></div></footer> 
 </body>
 </html>
-
