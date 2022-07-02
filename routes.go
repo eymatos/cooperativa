@@ -34,6 +34,7 @@ func handleRequest() {
 	/*Listado de Rutas Publicas que no requieren login o permisos*/
 	publica.HandleFunc("/", homePage)
 	publica.HandleFunc("/login", seguridad.Login).Methods("POST")
+	publica.HandleFunc("/calculaprestamo", c.CalculaPrestamo).Methods("POST")
 	publica.HandleFunc("/prestamos", c.GetPrestamo).Methods("GET")
 	publica.HandleFunc("/prestamos", c.CreatePrestamo).Name("CrearPrestamo").Methods("POST")
 	publica.HandleFunc("/prestamos", c.ActualizaPrestamo).Methods("PUT")

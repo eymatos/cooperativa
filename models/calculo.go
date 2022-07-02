@@ -8,7 +8,7 @@ definido como sql.Null, ejemplo sql.NullString. La mejor practica es evitar envi
 */
 
 type Calculo struct {
-	Deuda   float64 `json:"deuda"`
-	Anos    int64   `json:"anos"`
-	Interes int64   `json:"interes"`
+	Importe float64 `json:"importe"`
+	Meses   float64 `json:"meses"`
+	Interes float64 `json:"interes"`
 }
