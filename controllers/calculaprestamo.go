@@ -8,12 +8,18 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
+	"strconv"
 	_ "test-app-v1/configuraciones"
 	"test-app-v1/models"
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jmoiron/sqlx"
 )
+
+func roundFloat(val float64, precision uint) float64 {
+	ratio := math.Pow(10, float64(precision))
+	return math.Round(val*ratio) / ratio
+}
 
 func CalculaPrestamo(w http.ResponseWriter, r *http.Request) {
 
@@ -32,9 +38,9 @@ func CalculaPrestamo(w http.ResponseWriter, r *http.Request) {
 		panic("fuck")
 	}
 
-	var interes_mensual = float64((calculaprestamo.Interes / 100) / 12)
-	calculopow := math.Pow((1 + interes_mensual), (calculaprestamo.Meses))
+	var interes_mensual = float64(calculaprestamo.Interes) / 100.00 / 12
+	calculopow := math.Pow((1 + interes_mensual), (float64(calculaprestamo.Meses)))
 	cuotaMensual := (calculaprestamo.Importe * interes_mensual * calculopow) / (calculopow - 1)
-	println(math.Round(calculopow*100) / 100)
-	println(math.Round(cuotaMensual*100) / 100)
+
+	fmt.Println(strconv.FormatFloat(roundFloat(cuotaMensual, 2), 'f', -1, 64))
 }
