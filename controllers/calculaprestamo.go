@@ -40,6 +40,7 @@ func CalculaPrestamo(w http.ResponseWriter, r *http.Request) {
 		panic("fuck")
 	}
 
+	//calculando el interes mensual.
 	var interes_mensual = float64(calculaprestamo.Interes) / 100.00 / 12
 	calculopow := math.Pow((1 + interes_mensual), (float64(calculaprestamo.Meses)))
 	cuotaMensual := (calculaprestamo.Importe * interes_mensual * calculopow) / (calculopow - 1)
