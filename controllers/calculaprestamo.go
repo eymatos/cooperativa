@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -16,6 +17,7 @@ import (
 	_ "github.com/jmoiron/sqlx"
 )
 
+//Funcion que redondea un float a los numeros de decimales que se le manden, ver linea 46 para ejemplo
 func roundFloat(val float64, precision uint) float64 {
 	ratio := math.Pow(10, float64(precision))
 	return math.Round(val*ratio) / ratio
@@ -43,4 +45,16 @@ func CalculaPrestamo(w http.ResponseWriter, r *http.Request) {
 	cuotaMensual := (calculaprestamo.Importe * interes_mensual * calculopow) / (calculopow - 1)
 
 	fmt.Println(strconv.FormatFloat(roundFloat(cuotaMensual, 2), 'f', -1, 64))
+
+	// Retorna respuesta en Json corrigiendo el error que tira postmant
+	w.Header().Set("Content-Type", "application/json")
+	resp := make(map[string]string)
+	resp["message"] = "Status Created"
+	jsonResp, err := json.Marshal(resp)
+	if err != nil {
+		log.Fatalf("Error happened in JSON marshal. Err: %s", err)
+	}
+	w.Write(jsonResp)
+	return
+
 }
