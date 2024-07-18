@@ -1,5 +1,4 @@
 {% load static %}
-{% extends "menu.html" %}
 <!doctype html>
 <html lang="en">
     <head>
@@ -12,7 +11,11 @@
     </head>
     <body>
         <nav class="navbar navbar-expand navbar-light bg-light">
-            {% block menu %}{% endblock %}
+            <div class="nav navbar-nav">
+                <a class="nav-item nav-link active" href="#">Inicio</a>
+                <a class="nav-item nav-link active" href="#">Libros</a>
+                <a class="nav-item nav-link active" href="#">Nosotros</a>
+            </div>
         </nav>
         <div class="container">
             <div class="row">
