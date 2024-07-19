@@ -3,6 +3,8 @@ from django.http import HttpResponse
 # Create your views here.
 def inicio(request):
     return render(request, 'paginas/inicio.html')
+def libros(request):
+    return render(request, 'paginas/libros.html')
 def nosotros(request):
     return render(request, 'paginas/nosotros.html')
 def crear(request):
