@@ -3,5 +3,12 @@
 {% block titulo %} Editara nuevo libro {% endblock %}
 
 {% block contenido %}
-    Formulario para editar un nuevo libro
+<div class="card">
+    <div class="card-header">Editar un libro</div>
+    <div class="card-body">
+        <h4 class="card-title">Datos del libro</h4>
+        {% include 'paginas/form.html' %}
+    </div>
+    <div class="card-footer text-muted">Footer</div>
+</div>
 {% endblock %}
