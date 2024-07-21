@@ -1,0 +1,14 @@
+{% extends "formulario_tipopago.html" %}
+
+{% block titulo %} Editar tipopago {% endblock %}
+
+{% block contenido %}
+<div class="card">
+    <div class="card-header">Editar tipo pago</div>
+    <div class="card-body">
+        <h4 class="card-title">Datos del tipo pago</h4>
+        {% include 'paginas/formulario_tipopago.html' %}
+    </div>
+    <div class="card-footer text-muted">Footer</div>
+</div>
+{% endblock %}

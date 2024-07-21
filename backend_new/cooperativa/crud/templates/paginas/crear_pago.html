@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block titulo %} Agregar pago {% endblock %}
+
+{% block contenido %}
+    <div class="card">
+        <div class="card-header">Crear un pago</div>
+        <div class="card-body">
+            <h4 class="card-title">Datos del pago</h4>
+            {% include 'paginas/formulario_pago.html' %}
+        </div>
+        <div class="card-footer text-muted">Footer</div>
+    </div>
+    
+{% endblock %}
