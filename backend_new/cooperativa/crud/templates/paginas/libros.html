@@ -33,16 +33,17 @@
                         </tr>
                     </thead>
                     <tbody>
+                        {%for libro in libros %}
                         <tr class="">
-                            <td >1</td>
-                            <td>Django con Pyhton</td>
-                            <td>Imagen.jpg</td>
-                            <td>Libro que habla sobre el framework de django</td>
-                            <td><a
+                            <td style="vertical-align: text-top;">{{ libro.id}}</td>
+                            <td style="vertical-align: text-top;">{{ libro.titulo}}</td>
+                            <td style="vertical-align: text-top;"><img src="{{libro.imagen.url}}" height="100"></td>
+                            <td style="vertical-align: text-top;">{{ libro.descripcion}}</td>
+                            <td style="vertical-align: text-top;"><a
                                 name=""
                                 id=""
                                 class="btn btn-info"
-                                href="/editar"
+                                href="{% url 'editar' libro.id %}"
                                 role="button"
                                 >Editar</a
                             >
@@ -50,10 +51,11 @@
                              name=""
                              id=""
                              class="btn btn-danger"
-                             href="/borrar"
+                             href="{% url 'eliminar' libro.id %"
                              role="button"
                              >Borrar</a> </td>
                         </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>

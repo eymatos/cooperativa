@@ -1,18 +1,34 @@
-from django.shortcuts import render
-from django.http import HttpResponse 
+from django.shortcuts import render, redirect
+from django.http import HttpResponse
+from .models import Libro, Pago, TipoPago, Prestamo, TipoPrestamo, Usuario, Ahorro,Retiro
+from .forms import LibroForm
 # Create your views here.
 def inicio(request):
     return render(request, 'paginas/inicio.html')
 def libros(request):
-    return render(request, 'paginas/libros.html')
+    libros=Libro.objects.all()
+    return render(request, 'paginas/libros.html', {'libros': libros})
 def nosotros(request):
     return render(request, 'paginas/nosotros.html')
 
 
 def crear(request):
-    return render(request, 'paginas/crear.html')
-def editar(request):
-    return render(request, 'paginas/editar.html')
+    formulario = LibroForm(request.POST or None, request.FILES or None)
+    if formulario.is_valid():
+        formulario.save()
+        return redirect('libros')
+    return render(request, 'paginas/crear.html', {'formulario': formulario})
+def editar(request,id):
+    libro = Libro.objects.get(id=id)
+    formulario = LibroForm(request.POST or None, request.FILES or None, instance = libro)
+    if formulario.is_valid() and request.POST:
+        formulario.save()
+        return redirect('libros')
+    return render(request, 'paginas/editar.html', {'formulario': formulario})
+def eliminar(request,id):
+    libro = Libro.objects.get(id=id)
+    libro.delete()
+    return redirect('libros')
 def form(request):
     return render(request, 'paginas/form.html')
 

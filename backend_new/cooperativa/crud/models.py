@@ -11,7 +11,7 @@ class Libro(models.Model):
         fila = "Titulo: " + self.titulo + " - " + " Descripcion: " + self.descripcion
         return fila
     def delete(self, using=None, keep_parents=False):
-        self.imagen.delete()
+        self.imagen.storage.delete(self.imagen.name)
         super().delete()
 
 class Usuario(models.Model):
