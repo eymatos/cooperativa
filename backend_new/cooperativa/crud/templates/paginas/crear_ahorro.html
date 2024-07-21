@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block titulo %} Agregar ahorro {% endblock %}
+
+{% block contenido %}
+    <div class="card">
+        <div class="card-header">Crear un ahorro</div>
+        <div class="card-body">
+            <h4 class="card-title">Datos del ahorro</h4>
+            {% include 'paginas/formulario_ahorro.html' %}
+        </div>
+        <div class="card-footer text-muted">Footer</div>
+    </div>
+    
+{% endblock %}

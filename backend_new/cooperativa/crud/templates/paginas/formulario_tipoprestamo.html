@@ -1,0 +1,13 @@
+<form enctype="multipart/form-data" method="post">
+    {% csrf_token %}
+    <label for="tipo_prestamo">Tipo de Préstamo:</label>
+    <input type="text" id="tipo_prestamo" name="tipo_prestamo" required><br>
+
+    <label for="interes">Interés:</label>
+    <input type="number" id="interes" name="interes" step="0.01" required><br>
+
+    <label for="mora">Mora:</label>
+    <input type="number" id="mora" name="mora" step="0.01"><br>
+
+    <input type="submit" value="Guardar">
+</form>

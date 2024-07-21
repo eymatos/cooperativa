@@ -1,0 +1,14 @@
+{% extends "formulario_prestamo" %}
+
+{% block titulo %} Editar prestamo {% endblock %}
+
+{% block contenido %}
+<div class="card">
+    <div class="card-header">Editar prestamo</div>
+    <div class="card-body">
+        <h4 class="card-title">Datos del prestamo</h4>
+        {% include 'paginas/formulario_prestamo.html' %}
+    </div>
+    <div class="card-footer text-muted">Footer</div>
+</div>
+{% endblock %}
