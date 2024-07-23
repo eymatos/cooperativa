@@ -1,7 +1,10 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
+from django.urls import reverse_lazy
+from django.views.generic.edit import DeleteView
 from .models import Libro, Pago, TipoPago, Prestamo, TipoPrestamo, Usuario, Ahorro,Retiro
-from .forms import LibroForm
+from .forms import LibroForm, UsuarioForm
+
 # Create your views here.
 def inicio(request):
     return render(request, 'paginas/inicio.html')
@@ -10,6 +13,9 @@ def libros(request):
     return render(request, 'paginas/libros.html', {'libros': libros})
 def nosotros(request):
     return render(request, 'paginas/nosotros.html')
+def usuarios(request):
+    usuarios=Usuario.objects.all()
+    return render(request, 'paginas/usuarios.html', {'usuarios': usuarios})
 
 
 def crear(request):
@@ -31,14 +37,20 @@ def eliminar(request,id):
     return redirect('libros')
 def form(request):
     return render(request, 'paginas/form.html')
+def form_usuario(request):
+    return render(request, 'paginas/form_usuario.html')
 
 
 def crear_usuario(request):
-    return render(request, 'paginas/crear_usuario.html')
+    formulario_usuario = UsuarioForm(request.POST or None, request.FILES or None)
+    if formulario_usuario.is_valid():
+        formulario_usuario.save()
+        return redirect('usuarios')    
+    return render(request, 'paginas/crear_usuario.html', {'formulario_usuario': formulario_usuario})
 def editar_usuario(request):
     return render(request, 'paginas/editar_usuario.html')
-def formulario_usuario(request):
-    return render(request, 'paginas/formulario_usuario.html')
+def formulario_usuarios(request):
+    return render(request, 'paginas/formulario_usuarios.html')
 
 def crear_ahorro(request):
     return render(request, 'paginas/crear_ahorro.html')
@@ -82,3 +94,39 @@ def editar_tipoprestamo(request):
     return render(request, 'paginas/editar_tipoprestamo.html')
 def formulario_tipoprestamo(request):
     return render(request, 'paginas/formulario_tipoprestamo.html')
+
+ 
+class UsuarioDeleteView(DeleteView):
+    model = Usuario
+    template_name = 'usuario_confirm_delete.html'
+    success_url = reverse_lazy('usuarios:list')  # Asegúrate de tener una URL nombrada para la lista de usuarios
+
+class AhorroDeleteView(DeleteView):
+    model = Ahorro
+    template_name = 'ahorro_confirm_delete.html'
+    success_url = reverse_lazy('ahorros:list')
+
+class RetiroDeleteView(DeleteView):
+    model = Retiro
+    template_name = 'retiro_confirm_delete.html'
+    success_url = reverse_lazy('retiros:list')
+
+class TipoPrestamoDeleteView(DeleteView):
+    model = TipoPrestamo
+    template_name = 'tipoprestamo_confirm_delete.html'
+    success_url = reverse_lazy('tiposprestamos:list')
+
+class PrestamoDeleteView(DeleteView):
+    model = Prestamo
+    template_name = 'prestamo_confirm_delete.html'
+    success_url = reverse_lazy('prestamos:list')
+
+class TipoPagoDeleteView(DeleteView):
+    model = TipoPago
+    template_name = 'tipopago_confirm_delete.html'
+    success_url = reverse_lazy('tipospagos:list')
+
+class PagoDeleteView(DeleteView):
+    model = Pago
+    template_name = 'pago_confirm_delete.html'
+    success_url = reverse_lazy('pagos:list')

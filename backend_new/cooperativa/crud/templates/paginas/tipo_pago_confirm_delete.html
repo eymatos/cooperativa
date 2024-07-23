@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Eliminar Tipo Pago</h2>
+  <p>¿Estás seguro de que deseas eliminar el tipo pago "{{ object.name }} {{ object.lastname }}"?</p>
+  <form method="post">{% csrf_token %}
+    <button type="submit">Confirmar eliminación</button>
+    <a href="{% url 'tipo_pagos:list' %}">Cancelar</a>
+  </form>
+{% endblock %}

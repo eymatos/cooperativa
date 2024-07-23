@@ -1,17 +1,22 @@
 from django.urls import path
-from .import views 
+from .import views
+from .views import (UsuarioDeleteView, AhorroDeleteView, RetiroDeleteView, TipoPrestamoDeleteView, 
+                    PrestamoDeleteView, TipoPagoDeleteView, PagoDeleteView)
+
 
 urlpatterns = [
     path('', views.inicio, name='inicio'),
     path('libros', views.libros, name='libros'),
+    path('usuarios', views.usuarios, name='usuarios'),
     path('nosotros', views.nosotros, name='nosotros'),
     path('crear', views.crear, name='crear'),
     path('editar/<int:id>', views.editar, name='editar'),
     path('eliminar/<int:id>', views.eliminar, name='eliminar'),
     path('form', views.form, name='form'),
+    path('form_usuario', views.form_usuario, name='form_usuario'),
     path('crear_usuario', views.crear_usuario, name='crear_usuario'),
     path('editar_usuario', views.editar_usuario, name='editar_usuario'),
-    path('formulario_usuario', views.formulario_usuario, name='formulario_usuario'),
+    path('formulario_usuarios', views.formulario_usuarios, name='formulario_usuarios'),
     path('crear_ahorro', views.crear_ahorro, name='crear_ahorro'),
     path('editar_ahorro', views.editar_ahorro, name='editar_ahorro'),
     path('formulario_ahorro', views.formulario_ahorro, name='formulario_ahorro'),
@@ -30,4 +35,11 @@ urlpatterns = [
     path('crear_tipoprestamo', views.crear_tipoprestamo, name='crear_tipoprestamo'),
     path('editar_tipoprestamo', views.editar_tipoprestamo, name='editar_tipoprestamo'),
     path('formulario_tipoprestamo', views.formulario_tipoprestamo, name='formulario_tipoprestamo'),
+    path('usuario/<int:pk>/eliminar/', UsuarioDeleteView.as_view(), name='usuario_eliminar'),
+    path('ahorro/<int:pk>/eliminar/', AhorroDeleteView.as_view(), name='ahorro_eliminar'),
+    path('retiro/<int:pk>/eliminar/', RetiroDeleteView.as_view(), name='retiro_eliminar'),
+    path('tipoprestamo/<int:pk>/eliminar/', TipoPrestamoDeleteView.as_view(), name='tipoprestamo_eliminar'),
+    path('prestamo/<int:pk>/eliminar/', PrestamoDeleteView.as_view(), name='prestamo_eliminar'),
+    path('tipopago/<int:pk>/eliminar/', TipoPagoDeleteView.as_view(), name='tipopago_eliminar'),
+    path('pago/<int:pk>/eliminar/', PagoDeleteView.as_view(), name='pago_eliminar'),
     ]
