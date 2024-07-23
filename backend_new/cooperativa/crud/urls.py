@@ -1,6 +1,6 @@
 from django.urls import path
 from .import views
-from .views import (UsuarioDeleteView, AhorroDeleteView, RetiroDeleteView, TipoPrestamoDeleteView, 
+from .views import (AhorroDeleteView, RetiroDeleteView, TipoPrestamoDeleteView, 
                     PrestamoDeleteView, TipoPagoDeleteView, PagoDeleteView)
 
 
@@ -34,8 +34,8 @@ urlpatterns = [
     path('formulario_tipopago', views.formulario_tipopago, name='formulario_tipopago'),
     path('crear_tipoprestamo', views.crear_tipoprestamo, name='crear_tipoprestamo'),
     path('editar_tipoprestamo', views.editar_tipoprestamo, name='editar_tipoprestamo'),
-    path('formulario_tipoprestamo', views.formulario_tipoprestamo, name='formulario_tipoprestamo'),
-    path('usuario/<int:pk>/eliminar/', UsuarioDeleteView.as_view(), name='usuario_eliminar'),
+    path('formulario_tipoprestamo', views.formulario_tipoprestamo, name='formulario_tipoprestamo'),   
+    path('eliminarusuario/<int:id>', views.eliminarusuario, name='eliminarusuario'),
     path('ahorro/<int:pk>/eliminar/', AhorroDeleteView.as_view(), name='ahorro_eliminar'),
     path('retiro/<int:pk>/eliminar/', RetiroDeleteView.as_view(), name='retiro_eliminar'),
     path('tipoprestamo/<int:pk>/eliminar/', TipoPrestamoDeleteView.as_view(), name='tipoprestamo_eliminar'),

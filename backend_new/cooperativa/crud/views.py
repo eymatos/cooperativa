@@ -35,6 +35,10 @@ def eliminar(request,id):
     libro = Libro.objects.get(id=id)
     libro.delete()
     return redirect('libros')
+def eliminarusuario(request,id):
+    usuario = Usuario.objects.get(id_user=id)
+    usuario.delete()
+    return redirect('usuarios')
 def form(request):
     return render(request, 'paginas/form.html')
 def form_usuario(request):
@@ -96,10 +100,7 @@ def formulario_tipoprestamo(request):
     return render(request, 'paginas/formulario_tipoprestamo.html')
 
  
-class UsuarioDeleteView(DeleteView):
-    model = Usuario
-    template_name = 'usuario_confirm_delete.html'
-    success_url = reverse_lazy('usuarios:list')  # Asegúrate de tener una URL nombrada para la lista de usuarios
+
 
 class AhorroDeleteView(DeleteView):
     model = Ahorro
