@@ -25,3 +25,8 @@ class PagoForm(forms.ModelForm):
         class Meta:
                 model = Pago
                 fields='__all__'
+
+class TipoPagoForm(forms.ModelForm):
+        class Meta:
+                model = TipoPago
+                fields='__all__'
