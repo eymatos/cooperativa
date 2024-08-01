@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block titulo %} Ahorros {% endblock %}
+
+{% block contenido %}
+    <div class="card">
+        <div class="card-header">
+                <a
+                    name=""
+                    id=""
+                    class="btn btn-success"
+                    href="/crear_ahorro"
+                    role="button"
+                    >Agregar Ahorro</a
+                >    
+        </div>
+        <div class="card-body">
+            <h4 class="card-title">ahorros</h4>
+
+            <div
+                class="table-responsive"
+            >
+                <table
+                    class="table table-primary"
+                >
+                    <thead>
+                        <tr>
+                            <th>Cédula</th>
+                            <th>Monto Ahorrado</th>
+                            <th>Fecha de ahorro</th>
+                            <th>Comentario</th>
+                            <th></th>
+                        </tr>
+                       
+                    </thead>
+                    <tbody>
+                        {%for ahorro in ahorro %}
+                        <tr class="">
+                            <td style="vertical-align: text-top;">{{ahorro.cedula }}</td>
+                            <td style="vertical-align: text-top;">{{ahorro.monto_ahorro}}</td>
+                            <td style="vertical-align: text-top;">{{ahorro.fecha_ahorro}}</td>
+                            <td style="vertical-align: text-top;">{{ahorro.comentario}}</td>
+                            <td style="vertical-align: text-top;">
+                                <a name="" id="" class="btn btn-info" href="{% url 'editar_ahorro' ahorro.id_ahorro %}" role="button">Editar</a>
+                                <a name="" id="" class="btn btn-danger" href="{% url 'eliminarahorro' ahorro.id_ahorro %}" role="button">Borrar</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+        </div>
+        <div class="card-footer text-muted">Bienvenido</div>
+    </div>
+    
+{% endblock %}

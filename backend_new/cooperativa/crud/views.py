@@ -1,9 +1,8 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.urls import reverse_lazy
-from django.views.generic.edit import DeleteView
-from .models import Libro, Pago, TipoPago, Prestamo, TipoPrestamo, Usuario, Ahorro,Retiro
-from .forms import LibroForm, UsuarioForm
+from .models import Libro, Pago,  Prestamo, Usuario, Ahorro
+from .forms import LibroForm, PagoForm, UsuarioForm, AhorroForm, PrestamoForm
 
 # Create your views here.
 def inicio(request):
@@ -16,7 +15,15 @@ def nosotros(request):
 def usuarios(request):
     usuarios=Usuario.objects.all()
     return render(request, 'paginas/usuarios.html', {'usuarios': usuarios})
-
+def ahorro(request):
+    ahorro=Ahorro.objects.all()
+    return render(request, 'paginas/ahorro.html', {'ahorro': ahorro})
+def prestamo(request):
+    prestamos=Prestamo.objects.all()
+    return render(request, 'paginas/prestamo.html', {'prestamos': prestamos})
+def pagos(request):
+    pagos=Pago.objects.all()
+    return render(request, 'paginas/pagos.html', {'pagos': pagos})
 
 def crear(request):
     formulario = LibroForm(request.POST or None, request.FILES or None)
@@ -24,6 +31,32 @@ def crear(request):
         formulario.save()
         return redirect('libros')
     return render(request, 'paginas/crear.html', {'formulario': formulario})
+def crear_usuario(request):
+    form_usuario = UsuarioForm(request.POST or None, request.FILES or None)
+    if form_usuario.is_valid():
+        form_usuario.save()
+        return redirect('usuarios')    
+    return render(request, 'paginas/crear_usuario.html', {'form_usuario': form_usuario})
+def crear_ahorro(request):
+    form_ahorro = AhorroForm(request.POST or None, request.FILES or None)
+    if form_ahorro.is_valid():
+        form_ahorro.save()
+        return redirect('ahorro')    
+    return render(request, 'paginas/crear_ahorro.html', {'form_ahorro': form_ahorro})
+def crear_prestamo(request):
+    formulario_prestamo = PrestamoForm(request.POST or None, request.FILES or None)
+    if formulario_prestamo.is_valid():
+        formulario_prestamo.save()
+        return redirect('prestamo') 
+    return render(request, 'paginas/crear_prestamo.html', {'formulario_prestamo': formulario_prestamo})
+def crear_pago(request):
+    form_pago = PagoForm(request.POST or None, request.FILES or None)
+    if form_pago.is_valid():
+        form_pago.save()
+        return redirect('pagos')    
+    return render(request, 'paginas/crear_pago.html', {'form_pago': form_pago})
+
+
 def editar(request,id):
     libro = Libro.objects.get(id=id)
     formulario = LibroForm(request.POST or None, request.FILES or None, instance = libro)
@@ -31,6 +64,35 @@ def editar(request,id):
         formulario.save()
         return redirect('libros')
     return render(request, 'paginas/editar.html', {'formulario': formulario})
+def editar_ahorro(request,id):
+    ahorro = Ahorro.objects.get(id_ahorro=id)
+    form_ahorro = AhorroForm(request.POST or None, request.FILES or None, instance = ahorro)
+    if form_ahorro.is_valid() and request.POST:
+        form_ahorro.save()
+        return redirect('ahorro')
+    return render(request, 'paginas/editar_ahorro.html', {'form_ahorro': form_ahorro})
+def editar_prestamo(request,id):
+    prestamo = Prestamo.objects.get(id_prestamo=id)
+    formulario_prestamo = PrestamoForm(request.POST or None, request.FILES or None, instance = prestamo)
+    if formulario_prestamo.is_valid() and request.POST:
+        formulario_prestamo.save()
+        return redirect('prestamo')
+    return render(request, 'paginas/editar_prestamo.html', {'formulario_prestamo': formulario_prestamo})
+def editar_usuario(request,id):
+    usuarios = Usuario.objects.get(id_user=id)
+    form_usuario = UsuarioForm(request.POST or None, request.FILES or None, instance = usuarios)
+    if form_usuario.is_valid() and request.POST:
+        form_usuario.save()
+        return redirect('usuarios')
+    return render(request, 'paginas/editar_usuario.html', {'form_usuario': form_usuario})
+def editar_pago(request,id):
+    pagos = Pago.objects.get(id_pagos=id)
+    form_pago = PagoForm(request.POST or None, request.FILES or None, instance = pagos)
+    if form_pago.is_valid() and request.POST:
+        form_pago.save()
+        return redirect('pagos')
+    return render(request, 'paginas/editar_pago.html', {'form_pago': form_pago})
+
 def eliminar(request,id):
     libro = Libro.objects.get(id=id)
     libro.delete()
@@ -39,95 +101,26 @@ def eliminarusuario(request,id):
     usuario = Usuario.objects.get(id_user=id)
     usuario.delete()
     return redirect('usuarios')
+def eliminarahorro(request,id):
+    ahorro = Ahorro.objects.get(id_ahorro=id)
+    ahorro.delete()
+    return redirect('ahorro')
+def eliminarprestamo(request,id):
+    prestamo = Prestamo.objects.get(id_prestamo=id)
+    prestamo.delete()
+    return redirect('prestamo')
+def eliminarpago(request,id):
+    pago = Pago.objects.get(id_pagos=id)
+    pago.delete()
+    return redirect('pagos')
+
 def form(request):
     return render(request, 'paginas/form.html')
 def form_usuario(request):
     return render(request, 'paginas/form_usuario.html')
-
-
-def crear_usuario(request):
-    formulario_usuario = UsuarioForm(request.POST or None, request.FILES or None)
-    if formulario_usuario.is_valid():
-        formulario_usuario.save()
-        return redirect('usuarios')    
-    return render(request, 'paginas/crear_usuario.html', {'formulario_usuario': formulario_usuario})
-def editar_usuario(request):
-    return render(request, 'paginas/editar_usuario.html')
-def formulario_usuarios(request):
-    return render(request, 'paginas/formulario_usuarios.html')
-
-def crear_ahorro(request):
-    return render(request, 'paginas/crear_ahorro.html')
-def editar_ahorro(request):
-    return render(request, 'paginas/editar_ahorro.html')
-def formulario_ahorro(request):
-    return render(request, 'paginas/formulario_ahorro.html')
-
-def crear_retiro(request):
-    return render(request, 'paginas/crear_retiro.html')
-def editar_retiro(request):
-    return render(request, 'paginas/editar_retiro.html')
-def formulario_retiro(request):
-    return render(request, 'paginas/formulario_retiro.html')
-
-def crear_prestamo(request):
-    return render(request, 'paginas/crear_prestamo.html')
-def editar_prestamo(request):
-    return render(request, 'paginas/editar_prestamo.html')
-def formulario_prestamo(request):
-    return render(request, 'paginas/formulario_prestamo.html')
-
-
-def crear_pago(request):
-    return render(request, 'paginas/crear_pago.html')
-def editar_pago(request):
-    return render(request, 'paginas/editar_pago.html')
-def formulario_pago(request):
-    return render(request, 'paginas/formulario_pago.html')
-
-def crear_tipopago(request):
-    return render(request, 'paginas/crear_tipopago.html')
-def editar_tipopago(request):
-    return render(request, 'paginas/editar_tipopago.html')
-def formulario_tipopago(request):
-    return render(request, 'paginas/formulario_tipopago.html')
-
-def crear_tipoprestamo(request):
-    return render(request, 'paginas/crear_tipoprestamo.html')
-def editar_tipoprestamo(request):
-    return render(request, 'paginas/editar_tipoprestamo.html')
-def formulario_tipoprestamo(request):
-    return render(request, 'paginas/formulario_tipoprestamo.html')
-
- 
-
-
-class AhorroDeleteView(DeleteView):
-    model = Ahorro
-    template_name = 'ahorro_confirm_delete.html'
-    success_url = reverse_lazy('ahorros:list')
-
-class RetiroDeleteView(DeleteView):
-    model = Retiro
-    template_name = 'retiro_confirm_delete.html'
-    success_url = reverse_lazy('retiros:list')
-
-class TipoPrestamoDeleteView(DeleteView):
-    model = TipoPrestamo
-    template_name = 'tipoprestamo_confirm_delete.html'
-    success_url = reverse_lazy('tiposprestamos:list')
-
-class PrestamoDeleteView(DeleteView):
-    model = Prestamo
-    template_name = 'prestamo_confirm_delete.html'
-    success_url = reverse_lazy('prestamos:list')
-
-class TipoPagoDeleteView(DeleteView):
-    model = TipoPago
-    template_name = 'tipopago_confirm_delete.html'
-    success_url = reverse_lazy('tipospagos:list')
-
-class PagoDeleteView(DeleteView):
-    model = Pago
-    template_name = 'pago_confirm_delete.html'
-    success_url = reverse_lazy('pagos:list')
+def form_ahorro(request):
+    return render(request, 'paginas/form_ahorro.html')
+def form_prestamo(request):
+    return render(request, 'paginas/form_prestamo.html')
+def form_pago(request):
+    return render(request, 'paginas/form_pago.html')

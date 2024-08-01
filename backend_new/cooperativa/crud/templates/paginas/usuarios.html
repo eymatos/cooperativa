@@ -45,7 +45,7 @@
                             <td style="vertical-align: text-top;">{{ usuario.monto_ahorro }}</td>
                             <td style="vertical-align: text-top;text-wrap: balance;width: 190px;">{{ usuario.direccion }}</td>
                             <td style="vertical-align: text-top;">
-                                <a name="" id="" class="btn btn-info" href="{% url 'editar' usuario.id_user %}" role="button">Editar</a>
+                                <a name="" id="" class="btn btn-info" href="{% url 'editar_usuario' usuario.id_user %}" role="button">Editar</a>
                                 <a name="" id="" class="btn btn-danger" href="{% url 'eliminarusuario' usuario.id_user %}" role="button">Borrar</a>
                             </td>
                         </tr>

@@ -10,3 +10,18 @@ class UsuarioForm(forms.ModelForm):
         class Meta:
                 model = Usuario
                 fields='__all__'
+
+class AhorroForm(forms.ModelForm):
+        class Meta:
+                model = Ahorro
+                fields='__all__'
+
+class PrestamoForm(forms.ModelForm):
+        class Meta:
+                model = Prestamo
+                fields='__all__'
+
+class PagoForm(forms.ModelForm):
+        class Meta:
+                model = Pago
+                fields='__all__'
