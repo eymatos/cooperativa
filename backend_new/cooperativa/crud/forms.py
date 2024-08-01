@@ -21,6 +21,11 @@ class PrestamoForm(forms.ModelForm):
                 model = Prestamo
                 fields='__all__'
 
+class TipoPrestamoForm(forms.ModelForm):
+         class Meta:
+                model = TipoPrestamo
+                fields='__all__'
+
 class PagoForm(forms.ModelForm):
         class Meta:
                 model = Pago

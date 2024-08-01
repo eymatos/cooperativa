@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block titulo %} Editar tipo prestamo {% endblock %}
+
+{% block contenido %}
+<div class="card">
+    <div class="card-header">Editar un tipo prestamo</div>
+    <div class="card-body">
+        <h4 class="card-title">Datos del tipo del prestamo</h4>
+        {% include 'paginas/form_tipo_prestamo.html' %}
+    </div>
+    <div class="card-footer text-muted">Footer</div>
+</div>
+{% endblock %}

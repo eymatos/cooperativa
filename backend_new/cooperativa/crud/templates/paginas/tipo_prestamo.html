@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block titulo %} tipo_prestamo {% endblock %}
+
+{% block contenido %}
+    <div class="card">
+        <div class="card-header">
+                <a
+                    name=""
+                    id=""
+                    class="btn btn-success"
+                    href="/crear_tipo_prestamo"
+                    role="button"
+                    >Agregar Un Nuevo Tipo Prestamo</a>    
+        </div>
+        <div class="card-body">
+            <h4 class="card-title">Tipo del prestamo</h4>
+
+            <div
+                class="table-responsive"
+            >
+                <table
+                    class="table table-primary"
+                >
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tipo prestamo</th>
+                            <th>Interes</th>
+                            <th>Mora</th>
+                            <th></th>
+                        </tr>
+                       
+                    </thead>
+                    <tbody>
+                        {%for tipo_prestamo in tipo_prestamo %}
+                        <tr class="">
+                            <td style="vertical-align: text-top;">{{ tipo_prestamo.id_tipo_prestamo }}</td>
+                            <td style="vertical-align: text-top;">{{ tipo_prestamo.tipo_prestamo }}</td>
+                            <td style="vertical-align: text-top;">{{ tipo_prestamo.interes }}</td>
+                            <td style="vertical-align: text-top;">{{ tipo_prestamo.mora }}</td>
+                            <td style="vertical-align: text-top;">
+                                <a name="" id="" class="btn btn-info" href="{% url 'editar_tipo_prestamo' tipo_prestamo.id_tipo_prestamo %}" role="button">Editar</a>
+                                <a name="" id="" class="btn btn-danger" href="{% url 'eliminartipo_prestamo' tipo_prestamo.id_tipo_prestamo %}" role="button">Borrar</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+        </div>
+        <div class="card-footer text-muted">Bienvenido</div>
+    </div>
+    
+{% endblock %}

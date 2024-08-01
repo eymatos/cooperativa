@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.urls import reverse_lazy
-from .models import Libro, Pago,  Prestamo, Usuario, Ahorro
-from .forms import LibroForm, PagoForm, UsuarioForm, AhorroForm, PrestamoForm
+from .models import Libro, Pago,  Prestamo, TipoPrestamo, Usuario, Ahorro
+from .forms import LibroForm, PagoForm, UsuarioForm, AhorroForm, PrestamoForm, TipoPrestamoForm
 
 # Create your views here.
 def inicio(request):
@@ -21,6 +21,9 @@ def ahorro(request):
 def prestamo(request):
     prestamos=Prestamo.objects.all()
     return render(request, 'paginas/prestamo.html', {'prestamos': prestamos})
+def tipo_prestamo(request):
+    tipo_prestamo=TipoPrestamo.objects.all()
+    return render(request, 'paginas/tipo_prestamo.html', {'tipo_prestamo': tipo_prestamo})
 def pagos(request):
     pagos=Pago.objects.all()
     return render(request, 'paginas/pagos.html', {'pagos': pagos})
@@ -49,6 +52,12 @@ def crear_prestamo(request):
         formulario_prestamo.save()
         return redirect('prestamo') 
     return render(request, 'paginas/crear_prestamo.html', {'formulario_prestamo': formulario_prestamo})
+def crear_tipo_prestamo(request):
+    form_tipo_prestamo = TipoPrestamoForm(request.POST or None, request.FILES or None)
+    if form_tipo_prestamo.is_valid():
+        form_tipo_prestamo.save()
+        return redirect('tipo_prestamo') 
+    return render(request, 'paginas/crear_tipo_prestamo.html', {'form_tipo_prestamo': form_tipo_prestamo})
 def crear_pago(request):
     form_pago = PagoForm(request.POST or None, request.FILES or None)
     if form_pago.is_valid():
@@ -78,6 +87,13 @@ def editar_prestamo(request,id):
         formulario_prestamo.save()
         return redirect('prestamo')
     return render(request, 'paginas/editar_prestamo.html', {'formulario_prestamo': formulario_prestamo})
+def editar_tipo_prestamo(request,id):
+    tipo_prestamo = TipoPrestamo.objects.get(id_tipo_prestamo=id)
+    form_tipo_prestamo = TipoPrestamoForm(request.POST or None, request.FILES or None, instance = tipo_prestamo)
+    if form_tipo_prestamo.is_valid() and request.POST:
+        form_tipo_prestamo.save()
+        return redirect('tipo_prestamo')
+    return render(request, 'paginas/editar_tipo_prestamo.html', {'form_tipo_prestamo': form_tipo_prestamo})
 def editar_usuario(request,id):
     usuarios = Usuario.objects.get(id_user=id)
     form_usuario = UsuarioForm(request.POST or None, request.FILES or None, instance = usuarios)
@@ -109,6 +125,10 @@ def eliminarprestamo(request,id):
     prestamo = Prestamo.objects.get(id_prestamo=id)
     prestamo.delete()
     return redirect('prestamo')
+def eliminartipo_prestamo(request,id):
+    tipo_prestamo = TipoPrestamo.objects.get(id_tipo_prestamo=id)
+    tipo_prestamo.delete()
+    return redirect('tipo_prestamo')
 def eliminarpago(request,id):
     pago = Pago.objects.get(id_pagos=id)
     pago.delete()
@@ -122,5 +142,7 @@ def form_ahorro(request):
     return render(request, 'paginas/form_ahorro.html')
 def form_prestamo(request):
     return render(request, 'paginas/form_prestamo.html')
+def form_tipo_prestamo(request):
+    return render(request, 'paginas/form_tipo_prestamo.html')
 def form_pago(request):
     return render(request, 'paginas/form_pago.html')
