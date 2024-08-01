@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.urls import reverse_lazy
-from .models import Libro, Pago,  Prestamo, TipoPrestamo, Usuario, Ahorro
-from .forms import LibroForm, PagoForm, UsuarioForm, AhorroForm, PrestamoForm, TipoPrestamoForm
+from .models import Libro, Pago,  Prestamo, Usuario, Ahorro, TipoPago, TipoPrestamo
+from .forms import LibroForm, PagoForm, UsuarioForm, AhorroForm, PrestamoForm, TipoPagoForm, TipoPrestamoForm
 
 # Create your views here.
 def inicio(request):
@@ -27,6 +27,9 @@ def tipo_prestamo(request):
 def pagos(request):
     pagos=Pago.objects.all()
     return render(request, 'paginas/pagos.html', {'pagos': pagos})
+def tipopago(request):
+    tipopago= TipoPago.objects.all()
+    return render(request, 'paginas/tipopago.html', {'tipopago': tipopago})
 
 def crear(request):
     formulario = LibroForm(request.POST or None, request.FILES or None)
@@ -64,6 +67,13 @@ def crear_pago(request):
         form_pago.save()
         return redirect('pagos')    
     return render(request, 'paginas/crear_pago.html', {'form_pago': form_pago})
+def crear_tipopago(request):
+    form_tipopago = TipoPagoForm(request.POST or None, request.FILES or None)
+    if form_tipopago.is_valid():
+        form_tipopago.save()
+        return redirect('tipopago')    
+    return render(request, 'paginas/crear_tipopago.html', {'form_tipopago': form_tipopago})
+
 
 
 def editar(request,id):
@@ -108,6 +118,16 @@ def editar_pago(request,id):
         form_pago.save()
         return redirect('pagos')
     return render(request, 'paginas/editar_pago.html', {'form_pago': form_pago})
+def editar_tipopago(request,id):
+    tipopago = TipoPago.objects.get(id_tipo_pago=id)
+    form_tipopago = TipoPagoForm(request.POST or None, request.FILES or None, instance = tipopago)
+    if form_tipopago.is_valid() and request.POST:
+        form_tipopago.save()
+        return redirect('tipopago')
+    return render(request, 'paginas/editar_tipopago.html', {'form_tipopago': form_tipopago})
+
+def eliminar(request,id):
+    libro = Libro.objects.get(id=id)
 
 def eliminar(request,id):
     libro = Libro.objects.get(id=id)
@@ -133,6 +153,10 @@ def eliminarpago(request,id):
     pago = Pago.objects.get(id_pagos=id)
     pago.delete()
     return redirect('pagos')
+def eliminartipopago(request,id):
+    tipopago = TipoPago.objects.get(id_tipo_pago=id)
+    tipopago.delete()
+    return redirect('tipopago')
 
 def form(request):
     return render(request, 'paginas/form.html')
@@ -146,3 +170,5 @@ def form_tipo_prestamo(request):
     return render(request, 'paginas/form_tipo_prestamo.html')
 def form_pago(request):
     return render(request, 'paginas/form_pago.html')
+def form_tipopago(request):
+    return render(request, 'paginas/form_tipopago.html')
