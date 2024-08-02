@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.urls import reverse_lazy
+from rest_framework import viewsets
+from .serializer import LibroSerializer, UsuarioSerializer, AhorroSerializer, RetiroSerializer, TipoPrestamoSerializer, PrestamoSerializer, TipoPagoSerializer, PagoSerializer
 from .models import Libro, Pago, Retiro, Prestamo, Usuario, Ahorro, TipoPago, TipoPrestamo
 from .forms import LibroForm, PagoForm, UsuarioForm, AhorroForm, PrestamoForm, TipoPagoForm, TipoPrestamoForm, RetiroForm
 
@@ -191,3 +193,37 @@ def form_tipopago(request):
     return render(request, 'paginas/form_tipopago.html')
 def form_retiro(request):
     return render(request, 'paginas/form_retiro.html')
+
+# API
+
+class LibroViewSet(viewsets.ModelViewSet):
+    queryset = Libro.objects.all()
+    serializer_class = LibroSerializer
+
+class UsuarioViewSet(viewsets.ModelViewSet):
+    queryset = Usuario.objects.all()
+    serializer_class = UsuarioSerializer
+
+class AhorroViewSet(viewsets.ModelViewSet):
+    queryset = Ahorro.objects.all()
+    serializer_class = AhorroSerializer
+
+class RetiroViewSet(viewsets.ModelViewSet):
+    queryset = Retiro.objects.all()
+    serializer_class = RetiroSerializer
+
+class TipoPrestamoViewSet(viewsets.ModelViewSet):
+    queryset = TipoPrestamo.objects.all()
+    serializer_class = TipoPrestamoSerializer
+
+class PrestamoViewSet(viewsets.ModelViewSet):
+    queryset = Prestamo.objects.all()
+    serializer_class = PrestamoSerializer
+
+class TipoPagoViewSet(viewsets.ModelViewSet):
+    queryset = TipoPago.objects.all()
+    serializer_class = TipoPagoSerializer
+
+class PagoViewSet(viewsets.ModelViewSet):
+    queryset = Pago.objects.all()
+    serializer_class = PagoSerializer

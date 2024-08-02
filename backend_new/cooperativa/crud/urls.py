@@ -1,5 +1,18 @@
-from django.urls import path
+from django.urls import path,include
 from .import views
+from rest_framework import routers
+from crud import views
+
+
+router=routers.DefaultRouter()
+router.register(r'libros', views.LibroViewSet)
+router.register(r'usuarios', views.UsuarioViewSet)
+router.register(r'ahorros', views.AhorroViewSet)
+router.register(r'retiros', views.RetiroViewSet)
+router.register(r'tipoprestamos', views.TipoPrestamoViewSet)
+router.register(r'prestamos', views.PrestamoViewSet)
+router.register(r'tipopagos', views.TipoPagoViewSet)
+router.register(r'pagos', views.PagoViewSet)
 
 
 
@@ -51,5 +64,8 @@ urlpatterns = [
     path('eliminartipopago/<int:id>', views.eliminartipopago, name='eliminartipopago'),
     path('eliminarahorro/<int:id>', views.eliminarahorro, name='eliminarahorro'),    
     path('eliminarretiro/<int:id>', views.eliminarretiro, name='eliminarretiro'),
+
+
+    path('api/', include(router.urls)),
     
     ]

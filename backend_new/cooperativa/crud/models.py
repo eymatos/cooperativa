@@ -37,7 +37,7 @@ class Usuario(models.Model):
     fecha_salida = models.DateField(blank=True, null=True, verbose_name='Fecha de Salida de la Cooperativa')
     estatus = models.CharField(max_length=20, blank=True, null=True, verbose_name='Estatus')
     referido_por = models.CharField(max_length=50, blank=True, null=True, verbose_name='Referido por')
-    ultima_conexion = models.DateTimeField(blank=True, null=True, verbose_name='Última Conexión')
+    ultima_conexion = models.DateField(blank=True, null=True, verbose_name='Última Conexión')
     tipo_usuario = models.CharField(max_length=20, blank=True, null=True, verbose_name='Tipo de Usuario')
 
     def __str__(self):
