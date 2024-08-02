@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block titulo %} Retiros realizados {% endblock %}
+
+{% block contenido %}
+    <div class="card">
+        <div class="card-header">
+                <a
+                    name=""
+                    id=""
+                    class="btn btn-success"
+                    href="/crear_retiro"
+                    role="button"
+                    > Retirar</a
+                >    
+        </div>
+        <div class="card-body">
+            <h4 class="card-title">Retiros</h4>
+
+            <div
+                class="table-responsive"
+            >
+                <table
+                    class="table table-primary"
+                >
+                    <thead>
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Cédula</th>
+                            <th scope="col">Monto del retiro</th>
+                            <th scope="col">Fecha del retiro</th>
+                            <th scope="col">Comentario</th>
+                            <th scope="col"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {%for retiro in retiros %}
+                        <tr class="">
+                            <td style="vertical-align: text-top;">{{ retiro.id_retiro}}</td>
+                            <td style="vertical-align: text-top;">{{ retiro.cedula}}</td>
+                            <td style="vertical-align: text-top;">{{ retiro.monto_retiro}}</td>
+                            <td style="vertical-align: text-top;">{{ retiro.fecha_retiro}}</td>
+                            <td style="vertical-align: text-top;">{{ retiro.comentario}}</td>
+                            <td style="vertical-align: text-top;"> 
+                                <a name="" id="" class="btn btn-info" href="{% url 'editar_retiro' retiro.id_retiro %}" role="button">Editar</a>
+                                <a name="" id="" class="btn btn-danger" href="{% url 'eliminarretiro' retiro.id_retiro %}" role="button">Borrar</a>
+                              
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+        </div>
+        <div class="card-footer text-muted">Bienvenido</div>
+    </div>
+    
+{% endblock %}

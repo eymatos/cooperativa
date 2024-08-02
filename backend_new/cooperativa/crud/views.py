@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.urls import reverse_lazy
-from .models import Libro, Pago,  Prestamo, Usuario, Ahorro, TipoPago, TipoPrestamo
-from .forms import LibroForm, PagoForm, UsuarioForm, AhorroForm, PrestamoForm, TipoPagoForm, TipoPrestamoForm
+from .models import Libro, Pago, Retiro, Prestamo, Usuario, Ahorro, TipoPago, TipoPrestamo
+from .forms import LibroForm, PagoForm, UsuarioForm, AhorroForm, PrestamoForm, TipoPagoForm, TipoPrestamoForm, RetiroForm
 
 # Create your views here.
 def inicio(request):
@@ -30,6 +30,9 @@ def pagos(request):
 def tipopago(request):
     tipopago= TipoPago.objects.all()
     return render(request, 'paginas/tipopago.html', {'tipopago': tipopago})
+def retiros(request):
+    retiros=Retiro.objects.all()
+    return render(request, 'paginas/retiros.html', {'retiros': retiros})
 
 def crear(request):
     formulario = LibroForm(request.POST or None, request.FILES or None)
@@ -73,8 +76,12 @@ def crear_tipopago(request):
         form_tipopago.save()
         return redirect('tipopago')    
     return render(request, 'paginas/crear_tipopago.html', {'form_tipopago': form_tipopago})
-
-
+def crear_retiro(request):
+    form_retiro = RetiroForm(request.POST or None, request.FILES or None)
+    if form_retiro.is_valid():
+        form_retiro.save()
+        return redirect('retiros')   
+    return render(request, 'paginas/crear_retiro.html', {'form_retiro': form_retiro})
 
 def editar(request,id):
     libro = Libro.objects.get(id=id)
@@ -125,7 +132,13 @@ def editar_tipopago(request,id):
         form_tipopago.save()
         return redirect('tipopago')
     return render(request, 'paginas/editar_tipopago.html', {'form_tipopago': form_tipopago})
-
+def editar_retiro(request,id):
+    retiros = Retiro.objects.get(id_retiro=id)
+    form_retiro = RetiroForm(request.POST or None, request.FILES or None, instance = retiros)
+    if form_retiro.is_valid() and request.POST:
+        form_retiro.save()
+        return redirect('retiros')
+    return render(request, 'paginas/editar_retiro.html', {'form_retiro': form_retiro})
 def eliminar(request,id):
     libro = Libro.objects.get(id=id)
 
@@ -157,6 +170,10 @@ def eliminartipopago(request,id):
     tipopago = TipoPago.objects.get(id_tipo_pago=id)
     tipopago.delete()
     return redirect('tipopago')
+def eliminarretiro(request,id):
+    retiro = Retiro.objects.get(id_retiro=id)
+    retiro.delete()
+    return redirect('retiros')
 
 def form(request):
     return render(request, 'paginas/form.html')
@@ -172,3 +189,5 @@ def form_pago(request):
     return render(request, 'paginas/form_pago.html')
 def form_tipopago(request):
     return render(request, 'paginas/form_tipopago.html')
+def form_retiro(request):
+    return render(request, 'paginas/form_retiro.html')
