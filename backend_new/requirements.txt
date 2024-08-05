@@ -9,3 +9,8 @@ sqlparse
 psycopg2-binary
 python-dotenv
 pymysql
+setuptools
+coreapi 
+coreschema
+drf-spectacular
+drf-yasg
