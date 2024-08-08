@@ -1,20 +1,22 @@
-from django.urls import path,include
-from .import views
-from rest_framework import routers
-from api import views
+from django.urls import path
+from rest_framework.routers import DefaultRouter
+from api.views import UsuarioViewSet, AhorroViewSet, RetiroViewSet, TipoPrestamoViewSet, PrestamoViewSet, TipoPagoViewSet, PagoViewSet
+from . import views
 
-
-router=routers.DefaultRouter()
-router.register(r'usuarios', views.UsuarioViewSet)
-router.register(r'ahorros', views.AhorroViewSet)
-router.register(r'retiros', views.RetiroViewSet)
-router.register(r'tipoprestamos', views.TipoPrestamoViewSet)
-router.register(r'prestamos', views.PrestamoViewSet)
-router.register(r'tipopagos', views.TipoPagoViewSet)
-router.register(r'pagos', views.PagoViewSet)
-
+router= DefaultRouter()
+router.register('usuarios', UsuarioViewSet, basename='usuario')
+router.register('ahorros', AhorroViewSet, basename='ahorros')
+router.register('retiros', RetiroViewSet, basename='retiros')
+router.register('tipoprestamos', TipoPrestamoViewSet, basename='tipoprestamos')
+router.register('prestamos', PrestamoViewSet, basename='prestamos')
+router.register('tipopagos', TipoPagoViewSet, basename='tipopagos')
+router.register('pagos', PagoViewSet, basename='pagos')
 
 
 urlpatterns = [
-    path('', include(router.urls)),      
-    ]
+    path("notes/", views.NoteListCreate.as_view(), name="note-list"),
+    path("notes/delete/<int:pk>/", views.NoteDelete.as_view(), name="delete-note"),
+]
+
+# Extend urlpatterns with the router URLs
+urlpatterns += router.urls
