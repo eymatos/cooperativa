@@ -1,21 +1,18 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
-from api.views import UsuarioViewSet, AhorroViewSet, RetiroViewSet, TipoPrestamoViewSet, PrestamoViewSet, TipoPagoViewSet, PagoViewSet
+from api.views import UsuarioViewSet, TransaccionesViewSet, TransaccionPorCedulaView, TipoPrestamoViewSet, PrestamoViewSet, TipoOperacionViewSet
 from . import views
 
 router= DefaultRouter()
 router.register('usuarios', UsuarioViewSet, basename='usuario')
-router.register('ahorros', AhorroViewSet, basename='ahorros')
-router.register('retiros', RetiroViewSet, basename='retiros')
+router.register('transaccion', TransaccionesViewSet, basename='transaccion')
 router.register('tipoprestamos', TipoPrestamoViewSet, basename='tipoprestamos')
 router.register('prestamos', PrestamoViewSet, basename='prestamos')
-router.register('tipopagos', TipoPagoViewSet, basename='tipopagos')
-router.register('pagos', PagoViewSet, basename='pagos')
+router.register('tipooperacion', TipoOperacionViewSet, basename='tipooperacion')
 
 
 urlpatterns = [
-    path("notes/", views.NoteListCreate.as_view(), name="note-list"),
-    path("notes/delete/<int:pk>/", views.NoteDelete.as_view(), name="delete-note"),
+    path('transacciones/cedula/<str:cedula>/<int:id_tipo_operacion_id>/', TransaccionPorCedulaView.as_view(), name='ahorros-por-cedula'),
 ]
 
 # Extend urlpatterns with the router URLs

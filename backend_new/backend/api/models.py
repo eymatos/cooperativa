@@ -1,16 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-
-class Note(models.Model):
-    title = models.CharField(max_length=100)
-    content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notes")
-
-    def __str__(self):
-        return self.title
-    
 # Create your models here.
 class Usuario(models.Model):
     id_user = models.AutoField(primary_key=True, verbose_name='ID Usuario')
@@ -36,26 +26,23 @@ class Usuario(models.Model):
 
     def __str__(self):
         return f"{self.name} {self.lastname}"
+class TipoOperacion(models.Model):
+    id_tipo_operacion = models.AutoField(primary_key=True, verbose_name='ID Tipo de Operacion')
+    tipo_operacion = models.CharField(max_length=50, verbose_name='Tipo de Operacion')
 
-class Ahorro(models.Model):
-    id_ahorro = models.AutoField(primary_key=True, verbose_name='ID Ahorro')
+    def __str__(self):
+        return self.tipo_operacion
+    
+class Transacciones(models.Model):
+    id_operacion = models.AutoField(primary_key=True, verbose_name='ID Operacion')
     cedula = models.CharField(max_length=20, verbose_name='Cédula')
-    monto_ahorro = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Monto de Ahorro')
-    fecha_ahorro = models.DateField(verbose_name='Fecha de Ahorro')
+    monto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Monto')
+    fecha_operacion = models.DateField(verbose_name='Fecha de operacion')
     comentario = models.CharField(max_length=255, blank=True, null=True, verbose_name='Comentario')
-
+    id_tipo_operacion = models.ForeignKey(TipoOperacion, on_delete=models.CASCADE, verbose_name='Tipo de Operacion')
+     
     def __str__(self):
         return f"Ahorro de {self.cedula} por {self.monto_ahorro}"
-
-class Retiro(models.Model):
-    id_retiro = models.AutoField(primary_key=True, verbose_name='ID Retiro')
-    cedula = models.CharField(max_length=20, verbose_name='Cédula')
-    monto_retiro = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Monto de Retiro')
-    fecha_retiro = models.DateField(verbose_name='Fecha de Retiro')
-    comentario = models.CharField(max_length=255, blank=True, null=True, verbose_name='Comentario')
-
-    def __str__(self):
-        return f"Retiro de {self.cedula} por {self.monto_retiro}"
 
 class TipoPrestamo(models.Model):
     id_tipo_prestamo = models.AutoField(primary_key=True, verbose_name='ID Tipo de Préstamo')
@@ -81,23 +68,5 @@ class Prestamo(models.Model):
     def __str__(self):
         return f"Préstamo {self.id_prestamo} de {self.cedula}"
 
-class TipoPago(models.Model):
-    id_tipo_pago = models.AutoField(primary_key=True, verbose_name='ID Tipo de Pago')
-    tipo_pago = models.CharField(max_length=50, verbose_name='Tipo de Pago')
 
-    def __str__(self):
-        return self.tipo_pago
-
-class Pago(models.Model):
-    id_pagos = models.AutoField(primary_key=True, verbose_name='ID Pago')
-    cedula = models.CharField(max_length=20, verbose_name='Cédula')
-    id_prestamo = models.ForeignKey(Prestamo, on_delete=models.CASCADE, verbose_name='Préstamo')
-    monto_total = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Monto Total')
-    monto_capital = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Monto Capital')
-    monto_interes = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Monto Interés')
-    fecha_pago = models.DateField(verbose_name='Fecha de Pago')
-    id_tipo_pago = models.ForeignKey(TipoPago, on_delete=models.CASCADE, verbose_name='Tipo de Pago')
-
-    def __str__(self):
-        return f"Pago {self.id_pagos} de {self.cedula}"
    

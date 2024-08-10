@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from api.models import Note, Usuario, Ahorro, Retiro, TipoPrestamo, Prestamo, TipoPago, Pago
+from api.models import Transacciones, Usuario,  TipoPrestamo, Prestamo, TipoOperacion
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -15,12 +15,6 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
-class NoteSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Note
-        fields = ["id", "title", "content", "created_at", "author"]
-        extra_kwargs = {"author": {"read_only": True}}
-
 class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
@@ -30,14 +24,9 @@ class UsuarioSerializer(serializers.ModelSerializer):
         user = Usuario.objects.create_user(**validated_data)
         return user
 
-class AhorroSerializer(serializers.ModelSerializer):
+class TransaccionesSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Ahorro
-        fields = '__all__'
-
-class RetiroSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Retiro
+        model = Transacciones
         fields = '__all__'
 
 class TipoPrestamoSerializer(serializers.ModelSerializer):
@@ -50,12 +39,7 @@ class PrestamoSerializer(serializers.ModelSerializer):
         model = Prestamo
         fields = '__all__'
 
-class TipoPagoSerializer(serializers.ModelSerializer):
+class TipoOperacionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = TipoPago
-        fields = '__all__'
-
-class PagoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Pago
+        model = TipoOperacion
         fields = '__all__'
