@@ -134,7 +134,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOW_ALL_ORIGIN = True
 CORS_ALLOWS_CREDENTIALS= True
-
+CORS_ALLOW_HEADERS = [
+    'content-type',
+    'authorization',
+]
 
 REST_FRAMEWORK = {
        'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -142,3 +145,6 @@ REST_FRAMEWORK = {
     ),
         'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
 }
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+]
