@@ -36,6 +36,19 @@ class CreateUserView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
+
+class ActualizarEstatusUsuario(generics.CreateAPIView):
+    def post(self, request, id_user):
+        try:
+            usuario = User.objects.get(id_user=id_user)
+        except User.DoesNotExist:
+            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+        usuario.is_active = 0 if usuario.is_active == 1 else 1
+        usuario.save()
+
+        serializer = UsuarioSerializer(usuario)
+        return Response(serializer.data)
     
 class UsuarioViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]

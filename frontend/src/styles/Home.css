@@ -3,18 +3,18 @@ div {
     font-family: Arial, sans-serif;
   }
   
-  /* Styles for the notes section */
-  .notes-section {
+  /* Styles for the usuarios section */
+  .usuarios-section {
     margin-bottom: 2rem;
   }
   
-  .notes-section h2 {
+  .usuarios-section h2 {
     color: #333;
     font-size: 24px;
   }
   
-  /* Styles for individual notes - assuming your Note component has some container element */
-  .note {
+  /* Styles for individual usuarios - assuming your usuario component has some container element */
+  .usuario {
     background-color: #f9f9f9;
     border-left: 5px solid #007bff;
     margin: 10px 0;
