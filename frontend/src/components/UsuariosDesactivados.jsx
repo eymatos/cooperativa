@@ -1,7 +1,7 @@
 import React from "react"
 import "../styles/Usuario.css"
 
-function Usuario({usuario, onDelete}){
+function UsuariosDesactivados({usuario, onActivate}){
 
     const formatDate = new Date(usuario.created_at).toLocaleDateString("en-US")
 
@@ -25,9 +25,9 @@ function Usuario({usuario, onDelete}){
         <p className="usuario-ultima_conexion">{usuario.ultima_conexion}</p>
         <p className="usuario-tipo_usuario">{usuario.tipo_usuario}</p>
         <p className="usuario-date">{formatDate}</p>
-        <button className="btn btn-danger" onClick={() => onDelete(usuario.id_user)}>Desactivar</button>
+        <button className="btn btn-primary" onClick={() => onActivate(usuario.id_user)}>Activar</button>
     </div>
     );
 }
 
-export default Usuario;
+export default UsuariosDesactivados;

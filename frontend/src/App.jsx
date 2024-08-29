@@ -1,10 +1,12 @@
-import react from "react"
+import React from "react"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
 import Home from "./pages/Home"
+import CreateUser from "./pages/CreateUser"
 import NotFound from "./pages/NotFound"
 import ProtectedRoute from "./components/ProtectedRoute"
+import UsuarioDesactivados from "./pages/UsuariosDesactivados"
 
 function Logout() {
   localStorage.clear()
@@ -33,6 +35,8 @@ function App() {
         <Route path="/register" element={<RegisterAndLogout />} />
         <Route path="/home" element={<Home />} />
         <Route path="*" element={<NotFound />}></Route>
+        <Route path="/create-user" element={<CreateUser />} />
+        <Route path="/usuarios-desactivados" element={<UsuarioDesactivados />} />
       </Routes>
     </BrowserRouter>
   )

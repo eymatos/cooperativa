@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import api from "../api";
-import Usuario from "../components/Usuario";
+import Usuario from "../components/UsuariosDesactivados";
 import "../styles/Home.css";
 
-function Home() {
+function UsuariosDesactivados() {
     const [usuario, setUsuario] = useState([]);
 
     useEffect(() => {
@@ -12,35 +12,34 @@ function Home() {
 
     const getUsuario = () => {
         api
-            .get("/api/usuarios/")
+            .get("/api/usuarios-desactivados/")
             .then((res) => {
                 setUsuario(res.data);
                 console.log(res.data);
             })
             .catch((err) => console.log(err));
     };
-
-    const deactivateUsuario = (id) => {
+    const activateUsuario = (id) => {
         api
-            .patch(`/api/usuarios/${id}/deactivate/`, { is_active: false })
+            .patch(`/api/usuarios/${id}/activate/`, { is_active: true })
             .then((res) => {
                 if (res.status === 200) {
-                    alert("Usuario desactivado");
+                    alert("Usuario activado");
                     getUsuario(); // Actualizar la lista de usuarios
                 } else {
-                    alert("Error al desactivar el usuario");
+                    alert("Error al activar el usuario");
                 }
             })
             .catch((err) => console.log(err));
     };
     return (
         <div>
-            <h2>Usuarios</h2>
+            <h2>Usuarios Desactivados</h2>
             {usuario.map((usuario) => (
-                <Usuario usuario={usuario} onDelete={deactivateUsuario} key={usuario.id_user} />
+                <Usuario usuario={usuario} onActivate={activateUsuario} key={usuario.id_user} />
             ))}
         </div>
     );
 }
 
-export default Home;
+export default UsuariosDesactivados;

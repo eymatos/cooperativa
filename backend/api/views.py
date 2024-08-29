@@ -6,6 +6,8 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .serializer import UserSerializer, UsuarioSerializer, TransaccionesSerializer, TipoPrestamoSerializer, PrestamoSerializer, TipoOperacionSerializer
 from .models import Transacciones, Prestamo, Usuario, TipoPrestamo, TipoOperacion
+from rest_framework.views import APIView
+
 
 
 # API
@@ -36,23 +38,15 @@ class CreateUserView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
-
-class ActualizarEstatusUsuario(generics.CreateAPIView):
-    def post(self, request, id_user):
-        try:
-            usuario = User.objects.get(id_user=id_user)
-        except User.DoesNotExist:
-            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
-
-        usuario.is_active = 0 if usuario.is_active == 1 else 1
-        usuario.save()
-
-        serializer = UsuarioSerializer(usuario)
-        return Response(serializer.data)
     
 class UsuarioViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    queryset = Usuario.objects.all()
+    queryset = Usuario.objects.filter(is_active=True)
+    serializer_class = UsuarioSerializer
+
+class UsuarioDesactivadosViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset = Usuario.objects.exclude(is_active=True)
     serializer_class = UsuarioSerializer
 
 class TransaccionesViewSet(viewsets.ModelViewSet):
@@ -74,3 +68,23 @@ class TipoOperacionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = TipoOperacion.objects.all()
     serializer_class = TipoOperacionSerializer
+
+class DeactivateUsuario(APIView):
+    def patch(self, request, pk):
+        try:
+            usuario = Usuario.objects.get(pk=pk)
+            usuario.is_active = False
+            usuario.save()
+            return Response({'status': 'usuario desactivado'}, status=status.HTTP_200_OK)
+        except Usuario.DoesNotExist:
+            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+class ActivateUsuario(APIView):
+    def patch(self, request, pk):
+        try:
+            usuario = Usuario.objects.get(pk=pk)
+            usuario.is_active = True
+            usuario.save()
+            return Response({'status': 'usuario activado'}, status=status.HTTP_200_OK)
+        except Usuario.DoesNotExist:
+            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
