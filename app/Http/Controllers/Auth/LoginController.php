@@ -32,14 +32,12 @@ public function login(Request $request)
 
     Auth::login($user);
 
-    // 🔥 Redirección por tipo
-    return match ($user->tipo) {
-        1 => redirect()->route('soporte.dashboard'),
-        2 => redirect()->route('admin.dashboard'),
-        default => redirect()->route('socio.dashboard'),
+    // LÓGICA SIMPLIFICADA (Solo Admin o Socio)
+    return match ((int)$user->tipo) {
+        2 => redirect()->route('admin.dashboard'), // Si es 2 -> Admin
+        default => redirect()->route('socio.dashboard'), // 0 (o cualquier otro) -> Socio
     };
 }
-
 
     public function logout()
     {

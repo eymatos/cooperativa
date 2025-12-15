@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Prestamo extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'socio_id',
+        'tipo_prestamo_id', // <--- Asegúrate de que esto esté aquí también
         'monto',
         'tasa_interes',
         'plazo',
@@ -17,15 +21,21 @@ class Prestamo extends Model
         'estado'
     ];
 
-    // Un préstamo pertenece a un Socio
+    // Relación con el Socio
     public function socio()
     {
         return $this->belongsTo(Socio::class);
     }
 
-    // Un préstamo tiene muchas cuotas
+    // Relación con las Cuotas
     public function cuotas()
     {
         return $this->hasMany(Cuota::class);
+    }
+
+    // ✅ NUEVA RELACIÓN: Un Préstamo pertenece a un Tipo de Préstamo
+    public function tipoPrestamo()
+    {
+        return $this->belongsTo(TipoPrestamo::class);
     }
 }

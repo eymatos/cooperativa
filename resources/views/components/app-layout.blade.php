@@ -27,12 +27,26 @@
                             </div>
 
                             <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                                <a href="{{ route('socio.dashboard') }}" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out">
+
+                                <a href="{{ route('dashboard') }}" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none transition duration-150 ease-in-out">
                                     Inicio
                                 </a>
-                                <a href="{{ route('prestamos.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 border-indigo-400 text-sm font-medium leading-5 text-gray-900 focus:outline-none focus:border-indigo-700 transition duration-150 ease-in-out">
-                                    Préstamos
-                                </a>
+
+                                @if(Auth::user()->tipo == 0)
+                                    <a href="{{ route('ahorros.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('ahorros.*') ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-500' }} text-sm font-medium leading-5 transition duration-150 ease-in-out">
+                                        Mis Ahorros
+                                    </a>
+                                    <a href="{{ route('prestamos.mis_prestamos') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('prestamos.mis_prestamos') ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-500' }} text-sm font-medium leading-5 transition duration-150 ease-in-out">
+                                        Mis Préstamos
+                                    </a>
+                                @endif
+
+                                @if(Auth::user()->tipo == 2)
+                                    <a href="{{ route('admin.prestamos.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('admin.prestamos.*') ? 'border-red-500 text-gray-900' : 'border-transparent text-gray-500' }} text-sm font-medium leading-5 transition duration-150 ease-in-out">
+                                        🏢 Gestión Préstamos
+                                    </a>
+                                    @endif
+
                             </div>
                         </div>
 

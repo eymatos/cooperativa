@@ -19,8 +19,17 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+// Relación 1: Un Usuario tiene un Perfil de Socio
     public function socio()
-{
-    return $this->hasOne(Socio::class);
-}
+    {
+        return $this->hasOne(Socio::class);
+    }
+
+    // Relación 2: Un Usuario tiene muchos Préstamos (A través de su perfil de Socio)
+    public function prestamos()
+    {
+        // "HasManyThrough" significa: El Usuario tiene Préstamos... a través de la tabla Socios
+        return $this->hasManyThrough(Prestamo::class, Socio::class);
+    }
+
 }

@@ -2,85 +2,95 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Pago;
 use App\Models\Prestamo;
+use App\Models\Pago;
+use App\Models\Cuota;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 
 class PagoController extends Controller
 {
-    // Mostrar el formulario de pago para un préstamo específico
-    public function create(Prestamo $prestamo)
+    // Muestra el formulario para pagar un préstamo específico
+    public function create($prestamo_id)
     {
-        return view('pagos.create', compact('prestamo'));
+        // 1. Buscamos el préstamo con sus relaciones
+        $prestamo = Prestamo::with(['socio.user', 'cuotas'])->findOrFail($prestamo_id);
+
+        // 2. Buscamos la siguiente cuota pendiente (la más vieja sin pagar)
+        $siguienteCuota = $prestamo->cuotas()
+            ->where('estado', 'pendiente')
+            ->orderBy('fecha_vencimiento', 'asc')
+            ->first();
+
+        return view('admin.pagos.create', compact('prestamo', 'siguienteCuota'));
     }
 
-    // Guardar el pago y aplicarlo a las cuotas (Lógica Crítica)
-    public function store(Request $request, Prestamo $prestamo)
+    // Procesa y guarda el pago
+    public function store(Request $request, $prestamo_id)
     {
         $request->validate([
             'monto' => 'required|numeric|min:1',
-            'fecha_pago' => 'required|date',
-            'metodo' => 'required|string'
+            'fecha_pago' => 'required|date'
         ]);
+
+        $prestamo = Prestamo::findOrFail($prestamo_id);
 
         DB::transaction(function () use ($request, $prestamo) {
 
-            // 1. Registrar el ingreso del dinero (La Caja)
-            $pago = Pago::create([
+            // 1. Registrar el Pago Histórico
+            \App\Models\Pago::create([
                 'prestamo_id' => $prestamo->id,
-                'user_id' => Auth::id(), // Quién cobró (el cajero)
-                'monto' => $request->monto,
-                'fecha_pago' => $request->fecha_pago,
-                'metodo' => $request->metodo,
-                'referencia' => $request->referencia,
-                'nota' => $request->nota
+                'user_id'     => auth()->id(),
+                'monto'       => $request->monto,
+                'fecha_pago'  => $request->fecha_pago,
             ]);
 
-            // 2. Distribuir el dinero en las cuotas (El Algoritmo)
+            // 2. LÓGICA DE ABONO CORREGIDA
             $dineroDisponible = $request->monto;
 
-            // Buscamos cuotas que no estén pagadas totalmente, ordenadas por fecha (primero la más vieja)
+            // Buscamos cuotas que no estén totalmente pagadas
             $cuotasPendientes = $prestamo->cuotas()
-                                ->where('estado', '!=', 'pagada')
-                                ->orderBy('numero_cuota', 'asc')
-                                ->get();
+                ->where('estado', 'pendiente')
+                ->orderBy('fecha_vencimiento', 'asc')
+                ->get();
 
             foreach ($cuotasPendientes as $cuota) {
-                if ($dineroDisponible <= 0) break; // Se acabó el dinero
+                if ($dineroDisponible <= 0) break;
 
-                // Cuánto le falta a esta cuota para saldarse
-                $deudaCuota = $cuota->monto_total - $cuota->pagado;
+                // CALCULO CORRECTO:
+                // Deuda de la cuota = Total de la cuota - Lo que ya se ha abonado a esa cuota
+                $deudaRealCuota = $cuota->monto_total - $cuota->abonado;
 
-                if ($dineroDisponible >= $deudaCuota) {
-                    // ALCANZA para pagar toda la cuota
-                    $cuota->pagado += $deudaCuota;
-                    $cuota->estado = 'pagada';
-                    $dineroDisponible -= $deudaCuota;
+                if ($dineroDisponible >= $deudaRealCuota) {
+                    // Paga la cuota completa
+                    $cuota->abonado += $deudaRealCuota; // Se llena el abono
+                    $cuota->estado = 'pagado';          // Se marca pagado
+                    $cuota->save();
 
-                    // Actualizamos saldo capital del préstamo (Restamos el capital de esta cuota)
-                    $prestamo->decrement('saldo_capital', $cuota->capital);
+                    $dineroDisponible -= $deudaRealCuota;
                 } else {
-                    // NO ALCANZA (Abono parcial)
-                    $cuota->pagado += $dineroDisponible;
-                    $cuota->estado = 'parcial';
+                    // Abono parcial (no alcanza para cerrar la cuota)
+                    $cuota->abonado += $dineroDisponible;
+                    $cuota->save();
+
                     $dineroDisponible = 0;
-
-                    // Nota: En abono parcial simple, no bajamos saldo capital hasta cubrir interés.
-                    // Para simplificar tu portafolio, asumimos pago general por ahora.
                 }
-                $cuota->save();
             }
 
-            // 3. Verificar si el préstamo se saldó por completo
-            $cuotasRestantes = $prestamo->cuotas()->where('estado', '!=', 'pagada')->count();
-            if ($cuotasRestantes == 0) {
-                $prestamo->update(['estado' => 'pagado']);
+            // 3. Actualizar Saldo Global del Préstamo (Capital)
+            // Nota: Aquí estamos asumiendo que todo abono reduce capital para simplificar,
+            // en un sistema real esto depende de si pagas interés o capital.
+            // Para mantener coherencia visual con tu tabla:
+            $prestamo->saldo_capital -= $request->monto;
+
+            if ($prestamo->saldo_capital <= 0.5) { // Margen de error por decimales
+                 $prestamo->estado = 'pagado';
+                 $prestamo->saldo_capital = 0;
             }
+            $prestamo->save();
         });
 
-        return redirect()->route('prestamos.show', $prestamo)
-                         ->with('success', 'Pago registrado correctamente');
+        return redirect()->route('admin.prestamos.show', $prestamo_id)
+            ->with('success', 'Pago registrado correctamente.');
     }
 }

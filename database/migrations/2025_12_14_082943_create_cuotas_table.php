@@ -14,18 +14,21 @@ return new class extends Migration {
                   ->constrained()
                   ->onDelete('cascade');
 
-            $table->integer('numero_cuota'); // 1, 2, 3...
+            $table->integer('numero_cuota'); 
             
             // Desglose financiero
             $table->decimal('capital', 12, 2);
             $table->decimal('interes', 12, 2);
-            $table->decimal('monto_total', 12, 2); // capital + interes
+            $table->decimal('monto_total', 12, 2); // Cuota a pagar
+            
+            // --- CAMBIO APLICADO AQUÍ ---
+            $table->decimal('saldo_restante', 12, 2); // Cuánto debe después de pagar
             
             $table->date('fecha_vencimiento');
             
             // Control de pagos
-            $table->decimal('pagado', 12, 2)->default(0); // Cuánto ha abonado a esta cuota
-            $table->string('estado')->default('pendiente'); // 'pendiente', 'parcial', 'pagada'
+            $table->decimal('pagado', 12, 2)->default(0); 
+            $table->string('estado')->default('pendiente'); 
 
             $table->timestamps();
         });

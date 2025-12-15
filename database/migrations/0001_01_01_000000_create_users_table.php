@@ -9,9 +9,11 @@ return new class extends Migration {
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('cedula')->unique();
+            $table->string('name'); // Nombre completo (Indispensable)
+            $table->string('cedula')->unique(); // Tu login
+            $table->string('email')->nullable()->unique(); // Para notificaciones
             $table->string('password');
-            $table->tinyInteger('tipo')->default(0); // 0 socio, 1 soporte, 2 admin
+            $table->tinyInteger('tipo')->default(0); // 0: Socio, 1: Empleado, 2: Admin
             $table->timestamps();
         });
     }
@@ -21,3 +23,4 @@ return new class extends Migration {
         Schema::dropIfExists('users');
     }
 };
+

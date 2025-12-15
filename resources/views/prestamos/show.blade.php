@@ -5,10 +5,11 @@
                 {{ __('Detalle del Préstamo') }} #{{ $prestamo->id }}
             </h2>
 
-            @if($prestamo->estado != 'pagado')
-            <a href="{{ route('pagos.create', $prestamo) }}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow">
-                💰 Registrar Pago
-            </a>
+            {{-- EL BOTÓN DE PAGAR SOLO LO VE EL ADMIN (TIPO 1) --}}
+            @if(Auth::user()->tipo == 1 && $prestamo->estado != 'pagado')
+                <a href="{{ route('admin.pagos.create', $prestamo) }}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow">
+                    💰 Registrar Pago
+                </a>
             @endif
         </div>
     </x-slot>
