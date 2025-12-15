@@ -116,7 +116,7 @@
                                         <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">ID</th>
                                         <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Fecha</th>
                                         <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Tipo</th>
-                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Monto Original</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Monto</th>
                                         <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Estado</th>
                                         <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Acción</th>
                                     </tr>
@@ -145,17 +145,18 @@
                             <div>
                                 <h3 class="text-lg font-bold text-gray-800">💰 Histórico Anual de Ahorros</h3>
                                 <p class="text-sm text-gray-500">
-                                    Resumen mensual. <span class="text-blue-600 font-semibold">Pasa el mouse sobre los montos</span> para ver detalles.
+                                    Resumen mensual. <span class="text-blue-600 font-semibold cursor-help">Pasa el mouse sobre los montos</span> para ver detalles.
                                 </p>
                             </div>
 
                             <form action="{{ route('admin.socios.show', $socio->id) }}#seccion-ahorros" method="GET" class="flex items-center gap-2 mt-4 md:mt-0">
                                 <label class="font-bold text-gray-700">Año:</label>
                                 <select name="anio_ahorro" onchange="this.form.submit()" class="border-gray-300 rounded shadow-sm py-1 font-bold text-gray-700 focus:ring-indigo-500 focus:border-indigo-500">
-                                    @foreach($aniosDisponibles as $anio)
-                                        <option value="{{ $anio }}" {{ $anioSeleccionado == $anio ? 'selected' : '' }}>{{ $anio }}</option>
-                                    @endforeach
-                                    @if($aniosDisponibles->isEmpty())
+                                    @if(isset($aniosDisponibles) && $aniosDisponibles->isNotEmpty())
+                                        @foreach($aniosDisponibles as $anio)
+                                            <option value="{{ $anio }}" {{ (isset($anioSeleccionado) && $anioSeleccionado == $anio) ? 'selected' : '' }}>{{ $anio }}</option>
+                                        @endforeach
+                                    @else
                                         <option value="{{ date('Y') }}">{{ date('Y') }}</option>
                                     @endif
                                 </select>
@@ -175,7 +176,6 @@
                                         <span class="text-sm font-bold text-blue-700">RD$ {{ number_format($cuentaAportacion->recurring_amount ?? 0, 2) }}</span>
                                     </div>
                                 </div>
-
                                 <div class="overflow-x-auto bg-white">
                                     <table class="min-w-full text-xs">
                                         <thead class="bg-gray-100 text-gray-600 uppercase border-b">
@@ -186,30 +186,22 @@
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-gray-100">
-                                            @foreach($matrizAportacion as $mesNum => $data)
-                                            <tr class="hover:bg-gray-50 group">
-                                                <td class="px-4 py-2 font-bold text-gray-500 capitalize">
-                                                    {{ \Carbon\Carbon::create()->month($mesNum)->locale('es')->monthName }}
-                                                </td>
-
-                                                <td class="px-4 py-2 text-right font-mono" title="{{ implode(', ', $data['comentarios']) }}">
-                                                    @if($data['aporte'] > 0)
-                                                        <span class="text-green-700 font-bold cursor-help border-b border-dotted border-green-400">
-                                                            {{ number_format($data['aporte'], 2) }}
-                                                        </span>
-                                                        @if(count($data['comentarios']) > 0)
-                                                            <span class="text-[9px] align-top text-gray-400 ml-1">💬</span>
-                                                        @endif
-                                                    @else
-                                                        <span class="text-gray-300">-</span>
-                                                    @endif
-                                                </td>
-
-                                                <td class="px-4 py-2 text-right font-mono text-red-600">
-                                                    {{ $data['retiro'] > 0 ? number_format($data['retiro'], 2) : '-' }}
-                                                </td>
-                                            </tr>
-                                            @endforeach
+                                            @if(isset($matrizAportacion))
+                                                @foreach($matrizAportacion as $mesNum => $data)
+                                                <tr class="hover:bg-gray-50 group">
+                                                    <td class="px-4 py-2 font-bold text-gray-500 capitalize">{{ \Carbon\Carbon::create()->month($mesNum)->locale('es')->monthName }}</td>
+                                                    <td class="px-4 py-2 text-right font-mono" title="{{ implode(', ', $data['comentarios']) }}">
+                                                        @if($data['aporte'] > 0)
+                                                            <span class="text-green-700 font-bold cursor-help border-b border-dotted border-green-400">{{ number_format($data['aporte'], 2) }}</span>
+                                                            @if(count($data['comentarios']) > 0) <span class="text-[9px] align-top text-gray-400 ml-1">💬</span> @endif
+                                                        @else <span class="text-gray-300">-</span> @endif
+                                                    </td>
+                                                    <td class="px-4 py-2 text-right font-mono text-red-600">
+                                                        {{ $data['retiro'] > 0 ? number_format($data['retiro'], 2) : '-' }}
+                                                    </td>
+                                                </tr>
+                                                @endforeach
+                                            @else <tr><td colspan="3" class="p-4 text-center">No hay datos.</td></tr> @endif
                                         </tbody>
                                     </table>
                                 </div>
@@ -226,7 +218,6 @@
                                         <span class="text-sm font-bold text-yellow-700">RD$ {{ number_format($cuentaVoluntario->recurring_amount ?? 0, 2) }}</span>
                                     </div>
                                 </div>
-
                                 <div class="overflow-x-auto bg-white">
                                     <table class="min-w-full text-xs">
                                         <thead class="bg-gray-100 text-gray-600 uppercase border-b">
@@ -237,30 +228,22 @@
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-gray-100">
-                                            @foreach($matrizVoluntario as $mesNum => $data)
-                                            <tr class="hover:bg-gray-50 group">
-                                                <td class="px-4 py-2 font-bold text-gray-500 capitalize">
-                                                    {{ \Carbon\Carbon::create()->month($mesNum)->locale('es')->monthName }}
-                                                </td>
-
-                                                <td class="px-4 py-2 text-right font-mono" title="{{ implode(', ', $data['comentarios']) }}">
-                                                    @if($data['aporte'] > 0)
-                                                        <span class="text-green-700 font-bold cursor-help border-b border-dotted border-green-400">
-                                                            {{ number_format($data['aporte'], 2) }}
-                                                        </span>
-                                                        @if(count($data['comentarios']) > 0)
-                                                            <span class="text-[9px] align-top text-gray-400 ml-1">💬</span>
-                                                        @endif
-                                                    @else
-                                                        <span class="text-gray-300">-</span>
-                                                    @endif
-                                                </td>
-
-                                                <td class="px-4 py-2 text-right font-mono text-red-600">
-                                                    {{ $data['retiro'] > 0 ? number_format($data['retiro'], 2) : '-' }}
-                                                </td>
-                                            </tr>
-                                            @endforeach
+                                            @if(isset($matrizVoluntario))
+                                                @foreach($matrizVoluntario as $mesNum => $data)
+                                                <tr class="hover:bg-gray-50 group">
+                                                    <td class="px-4 py-2 font-bold text-gray-500 capitalize">{{ \Carbon\Carbon::create()->month($mesNum)->locale('es')->monthName }}</td>
+                                                    <td class="px-4 py-2 text-right font-mono" title="{{ implode(', ', $data['comentarios']) }}">
+                                                        @if($data['aporte'] > 0)
+                                                            <span class="text-green-700 font-bold cursor-help border-b border-dotted border-green-400">{{ number_format($data['aporte'], 2) }}</span>
+                                                            @if(count($data['comentarios']) > 0) <span class="text-[9px] align-top text-gray-400 ml-1">💬</span> @endif
+                                                        @else <span class="text-gray-300">-</span> @endif
+                                                    </td>
+                                                    <td class="px-4 py-2 text-right font-mono text-red-600">
+                                                        {{ $data['retiro'] > 0 ? number_format($data['retiro'], 2) : '-' }}
+                                                    </td>
+                                                </tr>
+                                                @endforeach
+                                            @else <tr><td colspan="3" class="p-4 text-center">No hay datos.</td></tr> @endif
                                         </tbody>
                                     </table>
                                 </div>
@@ -271,7 +254,6 @@
 
                 </div>
             </div>
-
         </div>
     </div>
 

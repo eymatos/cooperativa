@@ -2,26 +2,43 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\Socio;
+use App\Models\SavingType;
+use App\Models\SavingsAccount;
+use App\Models\SavingsTransaction;
 
 class SocioController extends Controller
 {
-    // 1. LISTA DE SOCIOS (Buscador)
+    // 1. LISTA DE SOCIOS (Buscador Inteligente Normalizado)
     public function index(Request $request)
     {
-        $query = User::where('tipo', 0); // Solo socios
+        $buscar = $request->get('buscar');
 
-        if ($request->has('buscar') && $request->buscar != '') {
-            $busqueda = $request->buscar;
-            $query->where(function($q) use ($busqueda) {
-                $q->where('nombres', 'LIKE', "%$busqueda%")
-                  ->orWhere('apellidos', 'LIKE', "%$busqueda%")
-                  ->orWhere('cedula', 'LIKE', "%$busqueda%");
-            });
-        }
+        // 1. Buscamos en la tabla USUARIOS (User), filtrando solo los que son socios (tipo 0)
+        // Usamos with('socio') para cargar su perfil de una vez
+        $socios = \App\Models\User::where('tipo', 0)
+            ->with('socio')
+            ->when($buscar, function ($query) use ($buscar) {
+                return $query->where(function ($q) use ($buscar) {
 
-        $socios = $query->paginate(10);
+                    // A. Buscar por Cédula (Directamente en tabla users)
+                    $q->where('cedula', 'LIKE', "%$buscar%")
+
+                    // B. Buscar por Nombre de Usuario (backup)
+                      ->orWhere('name', 'LIKE', "%$buscar%")
+
+                    // C. Buscar por Nombres/Apellidos (Dentro de la relación 'socio')
+                      ->orWhereHas('socio', function ($sq) use ($buscar) {
+                          $sq->where('nombres', 'LIKE', "%$buscar%")
+                             ->orWhere('apellidos', 'LIKE', "%$buscar%");
+                      });
+                });
+            })
+            ->orderBy('id', 'desc')
+            ->paginate(10);
+
+        $socios->appends(['buscar' => $buscar]);
 
         return view('admin.socios.index', compact('socios'));
     }
@@ -30,47 +47,47 @@ class SocioController extends Controller
     public function show(Request $request, $id)
     {
         // 1. CARGAR DATOS
-        // Buscamos al socio y traemos la información de su usuario
-        $socio = \App\Models\Socio::with('user')->findOrFail($id);
+        $socio = Socio::with('user')->findOrFail($id);
 
-        // --- LÓGICA DE PRÉSTAMOS (Tu código original) ---
+        // --- LÓGICA DE PRÉSTAMOS ---
         $prestamosActivos = $socio->prestamos()->where('estado', '!=', 'pagado')->get();
         $prestamosInactivos = $socio->prestamos()->where('estado', '==', 'pagado')->get();
         $totalDeuda = $prestamosActivos->sum('saldo_capital');
 
         // --- LÓGICA DE AHORROS ---
 
-        // 2. BUSCAR O CREAR LAS CUENTAS (BILLETERAS)
-        // Buscamos los IDs de los tipos de ahorro
-        $tipoAportacion = \App\Models\SavingType::where('code', 'aportacion')->first();
-        $tipoVoluntario = \App\Models\SavingType::where('code', 'voluntario')->first();
+        // 2. BUSCAR TIPOS DE AHORRO
+        $tipoAportacion = SavingType::where('code', 'aportacion')->first();
+        $tipoVoluntario = SavingType::where('code', 'voluntario')->first();
 
-        // firstOrCreate: Si la cuenta existe, la trae. Si no, la crea con balance 0.
-        // Esto evita errores si entras al perfil de un socio nuevo.
-        $cuentaAportacion = \App\Models\SavingsAccount::firstOrCreate(
+        // Validación simple por seguridad
+        if (!$tipoAportacion || !$tipoVoluntario) {
+            // Si es la primera vez y no hay seeds, evitar error 500
+            return back()->with('error', 'Faltan configurar los tipos de ahorro en el sistema.');
+        }
+
+        // 3. BUSCAR O CREAR LAS CUENTAS (BILLETERAS)
+        $cuentaAportacion = SavingsAccount::firstOrCreate(
             ['socio_id' => $socio->id, 'saving_type_id' => $tipoAportacion->id],
             ['balance' => 0, 'recurring_amount' => 0]
         );
 
-        $cuentaVoluntario = \App\Models\SavingsAccount::firstOrCreate(
+        $cuentaVoluntario = SavingsAccount::firstOrCreate(
             ['socio_id' => $socio->id, 'saving_type_id' => $tipoVoluntario->id],
             ['balance' => 0, 'recurring_amount' => 0]
         );
 
-        // 3. PREPARAR EL FILTRO DE AÑOS
-        // Buscamos en todas las transacciones de estas cuentas qué años tienen movimientos
+        // 4. PREPARAR EL FILTRO DE AÑOS
         $cuentasIds = [$cuentaAportacion->id, $cuentaVoluntario->id];
-        $aniosDisponibles = \App\Models\SavingsTransaction::whereIn('savings_account_id', $cuentasIds)
+        $aniosDisponibles = SavingsTransaction::whereIn('savings_account_id', $cuentasIds)
             ->selectRaw('YEAR(date) as anio')
             ->distinct()
             ->orderBy('anio', 'desc')
             ->pluck('anio');
 
-        // Determinamos qué año quiere ver el usuario (o el actual por defecto)
         $anioSeleccionado = $request->get('anio_ahorro', date('Y'));
 
-
-       // 4. FUNCIÓN MAESTRA: CONVERTIR DATA EN MATRIZ DE 12 MESES
+        // 5. FUNCIÓN MAESTRA: CONVERTIR DATA EN MATRIZ DE 12 MESES
         $armarMatrizMensual = function($cuenta) use ($anioSeleccionado) {
             $meses = [];
             // Inicializamos los 12 meses
@@ -78,7 +95,7 @@ class SocioController extends Controller
                 $meses[$i] = [
                     'aporte' => 0,
                     'retiro' => 0,
-                    'comentarios' => [] // Array para guardar múltiples notas
+                    'comentarios' => []
                 ];
             }
 
@@ -96,9 +113,7 @@ class SocioController extends Controller
                         $meses[$mes]['retiro'] += $tx->amount;
                     }
 
-                    // Si hay comentario, lo agregamos a la lista de ese mes
                     if (!empty($tx->description)) {
-                        // Ejemplo: "Excedente (RD$ 200)"
                         $meses[$mes]['comentarios'][] = $tx->description;
                     }
                 }
@@ -106,22 +121,21 @@ class SocioController extends Controller
             return $meses;
         };
 
-        // 5. EJECUTAMOS LA FUNCIÓN PARA AMBAS CUENTAS
+        // 6. EJECUTAR LÓGICA
         $matrizAportacion = $armarMatrizMensual($cuentaAportacion);
         $matrizVoluntario = $armarMatrizMensual($cuentaVoluntario);
 
-        // 6. TOTALES GENERALES (Histórico completo)
+        // 7. TOTALES GENERALES
         $totalAportaciones = $cuentaAportacion->balance;
         $totalRetirable = $cuentaVoluntario->balance;
         $totalAhorradoGlobal = $totalAportaciones + $totalRetirable;
 
-        // 7. ENVIAR A LA VISTA
+        // 8. ENVIAR A LA VISTA
         return view('admin.socios.show', compact(
             'socio',
             'totalDeuda',
             'prestamosActivos',
             'prestamosInactivos',
-            // Variables de Ahorro
             'aniosDisponibles',
             'anioSeleccionado',
             'matrizAportacion',

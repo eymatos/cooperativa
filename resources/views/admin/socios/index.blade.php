@@ -30,11 +30,15 @@
                             <td class="px-5 py-5 border-b bg-white text-sm font-bold">
                                 {{ $socio->socio->nombres ?? $socio->name }} {{ $socio->socio->apellidos ?? '' }}
                             </td>
-                            <td class="px-5 py-5 border-b bg-white text-sm">{{ $socio->cedula }}</td>
+
+                            <td class="px-5 py-5 border-b bg-white text-sm">
+                                {{ $socio->socio->cedula ?? 'N/A' }}
+                            </td>
+
                             <td class="px-5 py-5 border-b bg-white text-sm">{{ $socio->email }}</td>
+
                             <td class="px-5 py-5 border-b bg-white text-sm">
 
-                                {{-- VERIFICAMOS QUE EL USUARIO TENGA PERFIL DE SOCIO CREADO --}}
                                 @if($socio->socio)
                                     <a href="{{ route('admin.socios.show', $socio->socio->id) }}"
                                        class="bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 text-xs font-bold inline-block relative z-10">

@@ -21,9 +21,18 @@ class Socio extends Model
         'lugar_trabajo', // Para saber riesgo
     ];
 
+    // Relación existente
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    // ✅ EL TRUCO MÁGICO (Accessor)
+    // Esto permite usar $socio->cedula aunque la columna no exista en esta tabla.
+    // Laravel irá a buscarla a la tabla 'users'.
+    public function getCedulaAttribute()
+    {
+        return $this->user->cedula ?? 'Sin Cédula';
     }
     public function prestamos()
     {
