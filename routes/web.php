@@ -72,14 +72,25 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         return view('admin.dashboard');
     })->name('dashboard');
 
-    // 1. GESTIÓN DE SOCIOS (Corregido: Ya no está anidado doblemente)
+    // 1. GESTIÓN DE SOCIOS
     Route::resource('socios', SocioController::class);
+
+    // NUEVA RUTA: Historial de Préstamos Pagados (LIMPIA)
+    Route::get('socios/{socio}/prestamos/historial-pagados', [SocioController::class, 'showHistorialPrestamos'])
+        ->name('socios.historial.prestamos');
 
     // 2. GESTIÓN DE PRÉSTAMOS
     Route::resource('prestamos', PrestamoController::class);
 
-    // 3. CAJA (Registrar Pagos)
+    // 3. CAJA
     Route::get('/prestamos/{prestamo}/pagar', [PagoController::class, 'create'])->name('pagos.create');
     Route::post('/prestamos/{prestamo}/pagar', [PagoController::class, 'store'])->name('pagos.store');
 
+    // ACTUALIZAR CUOTA DE AHORRO
+    Route::put('/cuentas/update-cuota/{id}', [SocioController::class, 'updateCuota'])->name('cuentas.update_cuota');
+    // --- GESTIÓN DE TRANSACCIONES DE AHORRO (Correcciones) ---
+    Route::post('/ahorros/transaccion', [SocioController::class, 'storeTransaction'])->name('ahorros.transaction.store');
+    Route::put('/ahorros/transaccion/{id}', [SocioController::class, 'updateTransaction'])->name('ahorros.transaction.update');
+    // Ruta para eliminar (opcional pero útil para correcciones)
+    Route::delete('/ahorros/transaccion/{id}', [SocioController::class, 'destroyTransaction'])->name('ahorros.transaction.destroy');
 });

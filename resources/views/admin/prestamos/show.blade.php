@@ -2,9 +2,9 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Detalle del Préstamo #') . $prestamo->id }}
+                {{ __('Detalle del Préstamo: ') . $prestamo->numero_prestamo }}
             </h2>
-            <a href="{{ route('admin.socios.show', $prestamo->socio->user_id) }}" class="text-gray-600 hover:text-gray-900 font-bold">
+            <a href="{{ route('admin.socios.show', $prestamo->socio->id) }}" class="text-gray-600 hover:text-gray-900 font-bold">
                 &larr; Volver al Perfil del Socio
             </a>
         </div>

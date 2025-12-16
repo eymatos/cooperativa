@@ -11,7 +11,8 @@ class Prestamo extends Model
 
     protected $fillable = [
         'socio_id',
-        'tipo_prestamo_id', // <--- Asegúrate de que esto esté aquí también
+        'tipo_prestamo_id',
+        'numero_prestamo', // <--- AGREGAR ESTO
         'monto',
         'tasa_interes',
         'plazo',

@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory; // <--- 1. IMPORTANTE PARA SEEDERS
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Prestamo; // <--- ¡AÑADE ESTA LÍNEA!
+use App\Models\SavingsAccount; // Asumo que esta clase es necesaria
+// Asegúrate de que las demás clases que uses también estén aquí.
 
 class Socio extends Model
 {
-    use HasFactory; // <--- 2. AGREGA ESTO
+    use HasFactory;
 
     protected $fillable = [
         'user_id',
@@ -16,28 +19,29 @@ class Socio extends Model
         'telefono',
         'direccion',
         'ahorro_total',
-        // --- AGREGA ESTOS CAMPOS ÚTILES PARA PRÉSTAMOS ---
-        'sueldo',        // Para saber capacidad de pago
-        'lugar_trabajo', // Para saber riesgo
+        'sueldo',
+        'lugar_trabajo',
     ];
 
-    // Relación existente
+    // Relación con el usuario
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // ✅ EL TRUCO MÁGICO (Accessor)
-    // Esto permite usar $socio->cedula aunque la columna no exista en esta tabla.
-    // Laravel irá a buscarla a la tabla 'users'.
+    // Accessor para obtener la cédula
     public function getCedulaAttribute()
     {
         return $this->user->cedula ?? 'Sin Cédula';
     }
+
+    // Relación con los préstamos (Ahora Prestamo está correctamente importado)
     public function prestamos()
     {
-        return $this->hasMany(Prestamo::class);
+        return $this->hasMany(Prestamo::class, 'socio_id');
     }
+
+    // Relación con las cuentas de ahorro
     public function cuentas()
     {
         return $this->hasMany(SavingsAccount::class);

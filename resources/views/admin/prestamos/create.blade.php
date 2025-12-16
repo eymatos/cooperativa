@@ -15,15 +15,17 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
 
-                            <div>
-                                <label class="block font-medium text-sm text-gray-700 mb-1">Socio Solicitante</label>
-                                <select name="user_id" id="user_id" class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
-                                    <option value="">-- Seleccione un Socio --</option>
-                                    @foreach($socios as $socio)
-                                        <option value="{{ $socio->id }}"
-                                            {{ (isset($socioPreseleccionado) && $socioPreseleccionado == $socio->id) ? 'selected' : '' }}>
+                            <div class="mb-4">
+                                <label class="block font-bold text-gray-700 mb-2">Socio Solicitante</label>
+                                <select name="user_id" class="w-full border-gray-300 rounded shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="">-- Seleccione Socio --</option>
+                                    @foreach($socios as $usuario)
+                                        <option value="{{ $usuario->id }}"
+                                            {{-- AQUÍ ESTÁ LA LÓGICA DE PRE-SELECCIÓN --}}
+                                            {{ (isset($socioPreseleccionado) && $socioPreseleccionado == $usuario->id) ? 'selected' : '' }}>
 
-                                            {{ $socio->nombres ?? $socio->name }} (Cédula: {{ $socio->cedula }})
+                                            {{-- Mostramos Nombre del Socio y Cédula del Usuario --}}
+                                            {{ $usuario->socio->nombres ?? $usuario->name }} {{ $usuario->socio->apellidos ?? '' }} ({{ $usuario->cedula }})
                                         </option>
                                     @endforeach
                                 </select>

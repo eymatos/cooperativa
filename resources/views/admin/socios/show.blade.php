@@ -48,10 +48,11 @@
 
                 <div class="md:col-span-2 space-y-6">
 
+                    {{-- INICIO: TARJETA DE PRÉSTAMOS ACTIVOS --}}
                     <div class="bg-white shadow rounded-lg p-6">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-bold text-gray-800">📂 Préstamos Activos</h3>
-                            <a href="{{ route('admin.prestamos.create') }}?user_id={{ $socio->id }}" class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 font-bold">
+                            <a href="{{ route('admin.prestamos.create') }}?user_id={{ $socio->user_id }}" class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 font-bold">
                                 + Nuevo Préstamo
                             </a>
                         </div>
@@ -76,7 +77,10 @@
                                     <tbody class="divide-y divide-gray-100">
                                         @foreach($prestamosActivos as $prestamo)
                                         <tr class="hover:bg-gray-50">
-                                            <td class="px-4 py-3 text-gray-500">#{{ $prestamo->id }}</td>
+                                            <td class="px-4 py-3 text-gray-500">
+                                                <span class="font-bold text-gray-700">{{ $prestamo->numero_prestamo }}</span>
+                                                <span class="text-xs text-gray-400">(ID: {{ $prestamo->id }})</span>
+                                            </td>
                                             <td class="px-4 py-3">{{ \Carbon\Carbon::parse($prestamo->fecha_inicio)->format('d/m/Y') }}</td>
                                             <td class="px-4 py-3">
                                                 <span class="px-2 py-1 rounded text-xs font-bold bg-indigo-100 text-indigo-700">
@@ -89,6 +93,7 @@
                                                 <div class="flex gap-2">
                                                     <a href="{{ route('admin.prestamos.show', $prestamo->id) }}" class="text-blue-600 hover:text-blue-800 font-semibold text-xs border border-blue-200 px-2 py-1 rounded">Ver Tabla</a>
                                                     <a href="{{ route('admin.pagos.create', $prestamo->id) }}" class="text-green-600 hover:text-green-800 font-semibold text-xs border border-green-200 px-2 py-1 rounded">Pagar</a>
+                                                    <a href="{{ route('admin.prestamos.edit', $prestamo->id) }}" class="text-yellow-600 hover:text-yellow-900 font-bold text-xs border border-yellow-300 px-2 py-1 rounded ml-1">Editar</a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -98,46 +103,16 @@
                             </div>
                         @endif
 
+                        {{-- BOTÓN DE HISTORIAL PAGADO (Nueva Página) --}}
                         @if($prestamosInactivos->isNotEmpty())
                             <div class="mt-6 border-t pt-4 text-center">
-                                <button onclick="toggleHistorial()" class="text-gray-500 hover:text-gray-700 text-sm font-bold flex items-center justify-center gap-2 mx-auto focus:outline-none">
-                                    <span>⬇ Ver Historial de Préstamos Pagados</span>
-                                </button>
+                                <a href="{{ route('admin.socios.historial.prestamos', $socio->id) }}" class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-bold rounded-md shadow-sm text-gray-600 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                                    📊 Ver Historial de Préstamos Pagados ({{ $prestamosInactivos->count() }})
+                                </a>
                             </div>
                         @endif
                     </div>
-
-                    <div id="historial-inactivo" class="bg-gray-100 shadow-inner rounded-lg p-6 hidden">
-                        <h3 class="text-md font-bold text-gray-600 mb-3">Historial de Préstamos Pagados</h3>
-                        <div class="overflow-x-auto bg-white rounded shadow-sm">
-                            <table class="min-w-full text-sm">
-                                <thead class="bg-gray-200">
-                                    <tr>
-                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">ID</th>
-                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Fecha</th>
-                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Tipo</th>
-                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Monto</th>
-                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Estado</th>
-                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Acción</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-100">
-                                    @foreach($prestamosInactivos as $prestamo)
-                                    <tr class="opacity-75 hover:opacity-100 transition-opacity">
-                                        <td class="px-4 py-3">#{{ $prestamo->id }}</td>
-                                        <td class="px-4 py-3">{{ \Carbon\Carbon::parse($prestamo->fecha_inicio)->format('d/m/Y') }}</td>
-                                        <td class="px-4 py-3">{{ $prestamo->tipoPrestamo->nombre ?? 'N/A' }}</td>
-                                        <td class="px-4 py-3">RD$ {{ number_format($prestamo->monto, 2) }}</td>
-                                        <td class="px-4 py-3"><span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-bold">Pagado</span></td>
-                                        <td class="px-4 py-3">
-                                            <a href="{{ route('admin.prestamos.show', $prestamo->id) }}" class="text-gray-500 hover:text-gray-900 text-xs underline font-bold">Consultar</a>
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    {{-- FIN: TARJETA DE PRÉSTAMOS ACTIVOS --}}
 
                     <div class="bg-white shadow rounded-lg p-6 mt-8" id="seccion-ahorros">
 
@@ -152,13 +127,11 @@
                             <form action="{{ route('admin.socios.show', $socio->id) }}#seccion-ahorros" method="GET" class="flex items-center gap-2 mt-4 md:mt-0">
                                 <label class="font-bold text-gray-700">Año:</label>
                                 <select name="anio_ahorro" onchange="this.form.submit()" class="border-gray-300 rounded shadow-sm py-1 font-bold text-gray-700 focus:ring-indigo-500 focus:border-indigo-500">
-                                    @if(isset($aniosDisponibles) && $aniosDisponibles->isNotEmpty())
-                                        @foreach($aniosDisponibles as $anio)
-                                            <option value="{{ $anio }}" {{ (isset($anioSeleccionado) && $anioSeleccionado == $anio) ? 'selected' : '' }}>{{ $anio }}</option>
-                                        @endforeach
-                                    @else
-                                        <option value="{{ date('Y') }}">{{ date('Y') }}</option>
-                                    @endif
+                                    @foreach($aniosDisponibles as $anio)
+                                        <option value="{{ $anio }}" {{ (isset($anioSeleccionado) && (string)$anioSeleccionado == (string)$anio) ? 'selected' : '' }}>
+                                            {{ $anio }}
+                                        </option>
+                                    @endforeach
                                 </select>
                             </form>
                         </div>
@@ -173,7 +146,11 @@
                                     </div>
                                     <div class="flex items-center justify-between bg-white px-3 py-2 rounded border border-blue-200">
                                         <span class="text-xs font-bold text-gray-500 uppercase">Cuota Mensual Definida:</span>
-                                        <span class="text-sm font-bold text-blue-700">RD$ {{ number_format($cuentaAportacion->recurring_amount ?? 0, 2) }}</span>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm font-bold text-blue-700">RD$ {{ number_format($cuentaAportacion->recurring_amount ?? 0, 2) }}</span>
+                                            <button onclick="abrirModalCuota('{{ $cuentaAportacion->id }}', '{{ $cuentaAportacion->recurring_amount }}', 'Aportación Normal')"
+                                                     class="text-blue-500 hover:bg-blue-100 p-1 rounded transition" title="Editar Cuota">✏️</button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="overflow-x-auto bg-white">
@@ -188,20 +165,35 @@
                                         <tbody class="divide-y divide-gray-100">
                                             @if(isset($matrizAportacion))
                                                 @foreach($matrizAportacion as $mesNum => $data)
-                                                <tr class="hover:bg-gray-50 group">
-                                                    <td class="px-4 py-2 font-bold text-gray-500 capitalize">{{ \Carbon\Carbon::create()->month($mesNum)->locale('es')->monthName }}</td>
-                                                    <td class="px-4 py-2 text-right font-mono" title="{{ implode(', ', $data['comentarios']) }}">
-                                                        @if($data['aporte'] > 0)
-                                                            <span class="text-green-700 font-bold cursor-help border-b border-dotted border-green-400">{{ number_format($data['aporte'], 2) }}</span>
-                                                            @if(count($data['comentarios']) > 0) <span class="text-[9px] align-top text-gray-400 ml-1">💬</span> @endif
-                                                        @else <span class="text-gray-300">-</span> @endif
+                                                <tr class="hover:bg-gray-50 group transition">
+                                                    <td class="px-4 py-2 font-bold text-gray-500 capitalize">
+                                                        {{ \Carbon\Carbon::create()->month($mesNum)->locale('es')->monthName }}
                                                     </td>
-                                                    <td class="px-4 py-2 text-right font-mono text-red-600">
-                                                        {{ $data['retiro'] > 0 ? number_format($data['retiro'], 2) : '-' }}
+
+                                                    <td class="px-4 py-2 text-right">
+                                                        <button onclick='gestionarMes(@json($data["transacciones"]), "{{ $cuentaAportacion->id }}", "{{ $anioSeleccionado }}", "{{ $mesNum }}", "deposit")'
+                                                                class="hover:bg-blue-100 px-2 py-1 rounded text-right w-full focus:outline-none transition">
+                                                            @if($data['aporte'] > 0)
+                                                                <span class="text-green-700 font-bold font-mono">{{ number_format($data['aporte'], 2) }}</span>
+                                                            @else
+                                                                <span class="text-gray-300">-</span>
+                                                            @endif
+                                                        </button>
+                                                    </td>
+
+                                                    <td class="px-4 py-2 text-right">
+                                                        <button onclick='gestionarMes(@json($data["transacciones"]), "{{ $cuentaAportacion->id }}", "{{ $anioSeleccionado }}", "{{ $mesNum }}", "withdrawal")'
+                                                                class="hover:bg-red-50 px-2 py-1 rounded text-right w-full focus:outline-none transition">
+                                                            @if($data['retiro'] > 0)
+                                                                <span class="text-red-600 font-bold font-mono">{{ number_format($data['retiro'], 2) }}</span>
+                                                            @else
+                                                                <span class="text-gray-300">-</span>
+                                                            @endif
+                                                        </button>
                                                     </td>
                                                 </tr>
                                                 @endforeach
-                                            @else <tr><td colspan="3" class="p-4 text-center">No hay datos.</td></tr> @endif
+                                            @endif
                                         </tbody>
                                     </table>
                                 </div>
@@ -215,7 +207,11 @@
                                     </div>
                                     <div class="flex items-center justify-between bg-white px-3 py-2 rounded border border-yellow-200">
                                         <span class="text-xs font-bold text-gray-500 uppercase">Cuota Mensual Definida:</span>
-                                        <span class="text-sm font-bold text-yellow-700">RD$ {{ number_format($cuentaVoluntario->recurring_amount ?? 0, 2) }}</span>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm font-bold text-yellow-700">RD$ {{ number_format($cuentaVoluntario->recurring_amount ?? 0, 2) }}</span>
+                                            <button onclick="abrirModalCuota('{{ $cuentaVoluntario->id }}', '{{ $cuentaVoluntario->recurring_amount }}', 'Ahorro Retirable')"
+                                                     class="text-yellow-600 hover:bg-yellow-100 p-1 rounded transition" title="Editar Cuota">✏️</button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="overflow-x-auto bg-white">
@@ -230,20 +226,35 @@
                                         <tbody class="divide-y divide-gray-100">
                                             @if(isset($matrizVoluntario))
                                                 @foreach($matrizVoluntario as $mesNum => $data)
-                                                <tr class="hover:bg-gray-50 group">
-                                                    <td class="px-4 py-2 font-bold text-gray-500 capitalize">{{ \Carbon\Carbon::create()->month($mesNum)->locale('es')->monthName }}</td>
-                                                    <td class="px-4 py-2 text-right font-mono" title="{{ implode(', ', $data['comentarios']) }}">
-                                                        @if($data['aporte'] > 0)
-                                                            <span class="text-green-700 font-bold cursor-help border-b border-dotted border-green-400">{{ number_format($data['aporte'], 2) }}</span>
-                                                            @if(count($data['comentarios']) > 0) <span class="text-[9px] align-top text-gray-400 ml-1">💬</span> @endif
-                                                        @else <span class="text-gray-300">-</span> @endif
+                                                <tr class="hover:bg-gray-50 group transition">
+                                                    <td class="px-4 py-2 font-bold text-gray-500 capitalize">
+                                                        {{ \Carbon\Carbon::create()->month($mesNum)->locale('es')->monthName }}
                                                     </td>
-                                                    <td class="px-4 py-2 text-right font-mono text-red-600">
-                                                        {{ $data['retiro'] > 0 ? number_format($data['retiro'], 2) : '-' }}
+
+                                                    <td class="px-4 py-2 text-right">
+                                                        <button onclick='gestionarMes(@json($data["transacciones"]), "{{ $cuentaVoluntario->id }}", "{{ $anioSeleccionado }}", "{{ $mesNum }}", "deposit")'
+                                                                class="hover:bg-yellow-100 px-2 py-1 rounded text-right w-full focus:outline-none transition">
+                                                            @if($data['aporte'] > 0)
+                                                                <span class="text-green-700 font-bold font-mono">{{ number_format($data['aporte'], 2) }}</span>
+                                                            @else
+                                                                <span class="text-gray-300">-</span>
+                                                            @endif
+                                                        </button>
+                                                    </td>
+
+                                                    <td class="px-4 py-2 text-right">
+                                                        <button onclick='gestionarMes(@json($data["transacciones"]), "{{ $cuentaVoluntario->id }}", "{{ $anioSeleccionado }}", "{{ $mesNum }}", "withdrawal")'
+                                                                class="hover:bg-red-50 px-2 py-1 rounded text-right w-full focus:outline-none transition">
+                                                            @if($data['retiro'] > 0)
+                                                                <span class="text-red-600 font-bold font-mono">{{ number_format($data['retiro'], 2) }}</span>
+                                                            @else
+                                                                <span class="text-gray-300">-</span>
+                                                            @endif
+                                                        </button>
                                                     </td>
                                                 </tr>
                                                 @endforeach
-                                            @else <tr><td colspan="3" class="p-4 text-center">No hay datos.</td></tr> @endif
+                                            @endif
                                         </tbody>
                                     </table>
                                 </div>
@@ -257,14 +268,183 @@
         </div>
     </div>
 
+    {{-- MODAL CUOTA --}}
+    <div id="modal-cuota" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl w-96 p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4" id="modal-titulo-texto">Editar Cuota</h3>
+            <form id="form-cuota" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Nuevo Monto Mensual:</label>
+                    <input type="number" step="0.01" name="recurring_amount" id="modal-input-monto"
+                           class="w-full border rounded py-2 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="cerrarModalCuota()" class="px-4 py-2 bg-gray-300 rounded text-gray-800">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- MODAL GESTOR DE TRANSACCIONES --}}
+    <div id="modal-gestor" class="fixed inset-0 bg-gray-900 bg-opacity-60 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl p-6 mx-4">
+
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h3 class="text-xl font-bold text-gray-800">Gestionar Movimientos</h3>
+                <button onclick="cerrarGestor()" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            </div>
+
+            <div id="lista-transacciones" class="mb-6 space-y-3">
+            </div>
+
+            <hr class="border-gray-200 my-4">
+
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h4 class="text-sm font-bold text-gray-700 mb-3 uppercase" id="form-titulo">➕ Agregar Nuevo Movimiento</h4>
+
+                <form id="form-transaccion" method="POST" action="{{ route('admin.ahorros.transaction.store') }}">
+                    @csrf
+                    <input type="hidden" name="_method" id="form-method" value="POST">
+                    <input type="hidden" name="savings_account_id" id="input-account-id">
+                    <input type="hidden" name="type" id="input-type">
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Fecha</label>
+                            <input type="date" name="date" id="input-date" required class="w-full text-sm border-gray-300 rounded shadow-sm focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Monto (RD$)</label>
+                            <input type="number" step="0.01" name="amount" id="input-amount" required class="w-full text-sm border-gray-300 rounded shadow-sm focus:ring-blue-500 font-bold text-green-700">
+                        </div>
+                        <div class="md:col-span-3">
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Comentario / Descripción</label>
+                            <input type="text" name="description" id="input-desc" placeholder="Ej: Depósito Extra Marzo" class="w-full text-sm border-gray-300 rounded shadow-sm focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-2 mt-4">
+                        <button type="button" onclick="resetFormulario()" id="btn-cancelar-edit" class="hidden px-3 py-1 bg-gray-300 rounded text-sm font-bold">Cancelar Edición</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded text-sm font-bold hover:bg-blue-700 shadow">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
-        function toggleHistorial() {
-            const historial = document.getElementById('historial-inactivo');
-            if (historial.classList.contains('hidden')) {
-                historial.classList.remove('hidden');
+        // Variables globales para recordar el contexto
+        let currentAccountId = null;
+        let currentYear = null;
+        let currentMonth = null;
+        let currentType = null; // 'deposit' o 'withdrawal'
+        const socioId = '{{ $socio->id }}'; // ID del socio para las redirecciones
+
+        function abrirModalCuota(id, monto, nombre) {
+            document.getElementById('modal-titulo-texto').innerText = 'Editar: ' + nombre;
+            document.getElementById('modal-input-monto').value = monto;
+            document.getElementById('form-cuota').action = "/admin/cuentas/update-cuota/" + id;
+            document.getElementById('modal-cuota').classList.remove('hidden');
+        }
+        function cerrarModalCuota() {
+            document.getElementById('modal-cuota').classList.add('hidden');
+        }
+
+        function gestionarMes(transacciones, accountId, year, month, type) {
+            currentAccountId = accountId;
+            currentYear = year;
+            currentMonth = month.toString().padStart(2, '0'); // Asegurar "03" en vez de "3"
+            currentType = type;
+
+            const lista = document.getElementById('lista-transacciones');
+            lista.innerHTML = '';
+            resetFormulario();
+
+            const filteredTx = transacciones.filter(tx => {
+                if (type === 'deposit') return (tx.type === 'deposit' || tx.type === 'interest');
+                if (type === 'withdrawal') return tx.type === 'withdrawal';
+                return false;
+            });
+
+            if (filteredTx.length === 0) {
+                lista.innerHTML = '<p class="text-sm text-gray-400 italic text-center">No hay movimientos registrados en este mes.</p>';
             } else {
-                historial.classList.add('hidden');
+                filteredTx.forEach(tx => {
+                    const item = document.createElement('div');
+                    item.className = 'flex justify-between items-center bg-white p-3 rounded border border-gray-100 shadow-sm hover:shadow-md transition';
+
+                    const fecha = new Date(tx.date).toLocaleDateString('es-DO', { year: 'numeric', month: '2-digit', day: '2-digit' });
+
+                    item.innerHTML = `
+                        <div>
+                            <p class="font-bold text-gray-800">RD$ ${parseFloat(tx.amount).toFixed(2)}</p>
+                            <p class="text-xs text-gray-500">${fecha} - ${tx.description || 'Sin comentario'}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick='editarTx(${JSON.stringify(tx)})' class="text-blue-600 hover:text-blue-800 text-xs font-bold border border-blue-200 px-2 py-1 rounded">Editar</button>
+
+                            <form action="/admin/ahorros/transaccion/${tx.id}?socio_id=${socioId}&anio_ahorro=${currentYear}#seccion-ahorros" method="POST" onsubmit="return confirm('¿Eliminar este registro?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-red-600 hover:text-red-800 text-xs font-bold border border-red-200 px-2 py-1 rounded">X</button>
+                            </form>
+                        </div>
+                    `;
+                    lista.appendChild(item);
+                });
             }
+
+            resetFormulario();
+            document.getElementById('modal-gestor').classList.remove('hidden');
+        }
+
+        function editarTx(tx) {
+            document.getElementById('form-titulo').innerText = '✏️ Editar Movimiento Existente';
+            document.getElementById('form-titulo').className = 'text-sm font-bold text-blue-600 mb-3 uppercase';
+
+            document.getElementById('input-date').value = tx.date.split('T')[0];
+            document.getElementById('input-amount').value = tx.amount;
+            document.getElementById('input-desc').value = tx.description;
+
+            const form = document.getElementById('form-transaccion');
+
+            const txDate = new Date(tx.date);
+            const txYear = txDate.getFullYear();
+
+            form.action = `/admin/ahorros/transaccion/${tx.id}?socio_id=${socioId}&anio_ahorro=${txYear}#seccion-ahorros`;
+            document.getElementById('form-method').value = 'PUT';
+
+            document.getElementById('btn-cancelar-edit').classList.remove('hidden');
+        }
+
+        function resetFormulario() {
+            document.getElementById('form-titulo').innerText = '➕ Agregar Nuevo Movimiento';
+            document.getElementById('form-titulo').className = 'text-sm font-bold text-gray-700 mb-3 uppercase';
+
+            document.getElementById('input-amount').value = '';
+            document.getElementById('input-desc').value = '';
+
+            const defaultDate = `${currentYear}-${currentMonth}-15`;
+            document.getElementById('input-date').value = defaultDate;
+
+            document.getElementById('input-account-id').value = currentAccountId;
+            document.getElementById('input-type').value = currentType;
+
+            const form = document.getElementById('form-transaccion');
+
+            const storeUrl = `{{ route('admin.ahorros.transaction.store') }}?socio_id=${socioId}&anio_ahorro=${currentYear}#seccion-ahorros`;
+            form.action = storeUrl;
+
+            document.getElementById('form-method').value = 'POST';
+
+            document.getElementById('btn-cancelar-edit').classList.add('hidden');
+        }
+
+        function cerrarGestor() {
+            document.getElementById('modal-gestor').classList.add('hidden');
         }
     </script>
 </x-app-layout>
