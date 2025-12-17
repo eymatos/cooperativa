@@ -45,7 +45,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="space-y-2">
-                        <p class="text-xs font-bold text-gray-400">SOCIOS</p>
+                        <p class="text-xs font-bold text-gray-400 uppercase">Socios</p>
                         <a href="{{ route('admin.socios.index') }}" class="flex items-center p-3 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition font-bold text-sm">
                             👥 Directorio General
                         </a>
@@ -55,7 +55,7 @@
                     </div>
 
                     <div class="space-y-2">
-                        <p class="text-xs font-bold text-gray-400">PRÉSTAMOS</p>
+                        <p class="text-xs font-bold text-gray-400 uppercase">Préstamos</p>
                         <a href="{{ route('admin.prestamos.index') }}" class="flex items-center p-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition font-bold text-sm">
                             📋 Ver Listado Completo
                         </a>
@@ -65,16 +65,20 @@
                     </div>
 
                     <div class="space-y-2 lg:col-span-2">
-                        <p class="text-xs font-bold text-gray-400">REPORTES E INTELIGENCIA</p>
+                        <p class="text-xs font-bold text-gray-400 uppercase">Reportes e Inteligencia</p>
                         <div class="grid grid-cols-2 gap-2">
                             <a href="{{ route('admin.reportes.visitas') }}" class="p-2 border rounded hover:bg-gray-50 text-xs font-semibold text-gray-600">📊 Visitas</a>
-                            <a href="{{ route('admin.reportes.morosidad') }}" class="p-2 border rounded hover:bg-red-50 text-xs font-semibold text-red-600">⚠️ Morosidad</a>
-                            <a href="{{ route('admin.reportes.utilidades') }}" class="p-2 border rounded hover:bg-green-50 text-xs font-semibold text-green-600">💰 Intereses</a>
-                            <a href="{{ route('admin.reportes.proyeccion') }}" class="p-2 border rounded hover:bg-purple-50 text-xs font-semibold text-purple-600">📅 Proyección</a>
-                            <a href="{{ route('admin.reportes.concentracion') }}" class="p-2 border rounded hover:bg-indigo-50 text-xs font-semibold text-indigo-600">📈 Cartera</a>
-                            <a href="{{ route('admin.reportes.ahorros') }}" class="p-2 border rounded hover:bg-blue-50 text-xs font-semibold text-blue-600">🏦 Pasivos</a>
-                            <a href="{{ route('admin.reportes.auditoria') }}" class="p-2 border rounded hover:bg-gray-100 text-xs font-semibold text-gray-700">🔍 Auditoría</a>
-                            <a href="{{ route('admin.reportes.mensual') }}" class="p-2 border rounded hover:bg-slate-100 text-xs font-semibold text-slate-700 font-bold">📄 Informe Gestión</a>
+                            <a href="{{ route('admin.reportes.morosidad') }}" class="p-2 border rounded hover:bg-gray-50 text-xs font-semibold text-gray-600">⚠️ Morosidad</a>
+                            <a href="{{ route('admin.reportes.utilidades') }}" class="p-2 border rounded hover:bg-gray-50 text-xs font-semibold text-gray-600">💰 Intereses</a>
+                            <a href="{{ route('admin.reportes.variacion') }}" class="p-2 border rounded hover:bg-gray-50 text-xs font-semibold text-gray-600">💵 Proyección Cobro</a>
+                            <a href="{{ route('admin.reportes.proyeccion') }}" class="p-2 border rounded hover:bg-gray-50 text-xs font-semibold text-gray-600">📅 Proyección Meses</a>
+                            <a href="{{ route('admin.reportes.concentracion') }}" class="p-2 border rounded hover:bg-gray-50 text-xs font-semibold text-gray-600">📈 Cartera</a>
+                            <a href="{{ route('admin.reportes.ahorros') }}" class="p-2 border rounded hover:bg-gray-50 text-xs font-semibold text-gray-600">🏦 Pasivos</a>
+                            <a href="{{ route('admin.logs.index') }}" class="p-2 border rounded hover:bg-gray-50 text-xs font-semibold text-gray-600">🔍 Auditoría de Logs</a>
+
+                            <a href="{{ route('admin.reportes.mensual') }}" class="p-2 border rounded hover:bg-gray-50 text-xs font-bold text-gray-700 lg:col-span-2 text-center">
+                                📄 Informe de Gestión Mensual
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -84,10 +88,10 @@
                         <span class="mr-2">📥</span> Nómina para Descuento
                     </h3>
                     <div class="flex flex-wrap gap-4">
-                        <a href="{{ route('admin.reportes.nomina', 'fijo') }}" class="bg-green-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700 shadow-lg shadow-green-200 transition flex items-center">
+                        <a href="{{ route('admin.reportes.nomina', 'fijo') }}" class="bg-green-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700 shadow-lg shadow-green-200 transition">
                             Excel Empleados FIJOS
                         </a>
-                        <a href="{{ route('admin.reportes.nomina', 'contratado') }}" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition flex items-center">
+                        <a href="{{ route('admin.reportes.nomina', 'contratado') }}" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition">
                             Excel CONTRATADOS
                         </a>
                     </div>

@@ -19,12 +19,12 @@ class SavingsAccount extends Model
         return $this->belongsTo(SavingType::class, 'saving_type_id');
     }
 
-    // Relación: Una cuenta tiene muchas transacciones (historial)
     public function transactions()
     {
         return $this->hasMany(SavingsTransaction::class);
     }
+
     protected $casts = [
-    'recurring_amount' => 'decimal:2',
-];
+        'recurring_amount' => 'decimal:2',
+    ];
 }

@@ -409,4 +409,39 @@ class SocioController extends Controller
 
         return view('socio.dashboard', compact('socio', 'cuentaApo', 'cuentaVol', 'prestamosActivos'));
     }
+    // app/Http/Controllers/SocioController.php
+
+// app/Http/Controllers/SocioController.php
+
+public function variacionNomina() {
+    // 1. Suma de ahorros mensuales ( recurring_amount )
+    $ahorrosActuales = \App\Models\SavingsAccount::sum('recurring_amount');
+
+    // 2. Suma de cuotas de préstamos pendientes para el mes y año actual
+    // Usamos 'fecha_vencimiento' que es el nombre real de tu columna
+    $cuotasMes = \App\Models\Cuota::where('estado', 'pendiente')
+        ->whereMonth('fecha_vencimiento', now()->month)
+        ->whereYear('fecha_vencimiento', now()->year)
+        ->sum('monto_total'); // Usamos monto_total directamente ya que la tienes en la tabla
+
+    $totalNominaActual = $ahorrosActuales + $cuotasMes;
+
+    return view('admin.reportes.variacion', [
+        'total' => $totalNominaActual,
+        'ahorros' => $ahorrosActuales,
+        'prestamos' => $cuotasMes,
+        'mes' => now()->translatedFormat('F Y')
+    ]);
+}
+// app/Http/Controllers/SocioController.php
+
+public function logs()
+{
+    // Traemos los registros de actividad usando tu modelo ActivityLog
+    $logs = \App\Models\ActivityLog::with('user')
+        ->latest()
+        ->paginate(20);
+
+    return view('admin.logs.index', compact('logs'));
+}
 }

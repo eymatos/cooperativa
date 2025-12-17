@@ -7,118 +7,89 @@ use App\Http\Controllers\PrestamoController;
 use App\Http\Controllers\PagoController;
 use App\Http\Controllers\AhorroController;
 use App\Http\Controllers\Admin\ReporteController;
-use App\Http\Controllers\SocioController; // <--- IMPRESCINDIBLE
+use App\Http\Controllers\SocioController;
+use App\Http\Controllers\AdminController;
 use App\Exports\NominaExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 /* --------------------------------------------------------------------------
-   RUTAS PÚBLICAS (Login / Logout)
+   RUTAS PÚBLICAS
 -------------------------------------------------------------------------- */
-
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// Rutas de Autenticación
 Route::get('/login', [LoginController::class, 'show'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.post');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-
 /* --------------------------------------------------------------------------
-   RUTAS GENERALES (Para usuarios logueados)
+   RUTAS GENERALES (Middleware auth)
 -------------------------------------------------------------------------- */
-Route::middleware('auth')->group(function () {
-
-    // 1. EL "SEMÁFORO" (Dashboard Redirect)
-    Route::get('/dashboard', function () {
-        $user = Auth::user();
-
-        if ($user->tipo == 2) {
-            return redirect()->route('admin.dashboard');
-        }
-        return redirect()->route('socio.dashboard');
-    })->name('dashboard');
-
-
-    // 2. UTILIDADES (Simulación de Préstamo - AJAX)
-    Route::post('prestamos/simular', [PrestamoController::class, 'simular'])->name('prestamos.simular');
-});
-
 Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(function () {
 
-    /* Aquí dentro van tus grupos actuales de:
-       - AREA DE SOCIOS
-       - AREA DE ADMINISTRADOR
-    */
+    Route::get('/dashboard', function () {
+        $user = Auth::user();
+        return ($user->tipo == 2) ? redirect()->route('admin.dashboard') : redirect()->route('socio.dashboard');
+    })->name('dashboard');
 
+    Route::post('prestamos/simular', [PrestamoController::class, 'simular'])->name('prestamos.simular');
 
-/* --------------------------------------------------------------------------
-   AREA DE SOCIOS (Tipo 0)
--------------------------------------------------------------------------- */
-Route::middleware('auth')->prefix('socio')->group(function () {
+    /* --------------------------------------------------------------------------
+       AREA DE SOCIOS (Tipo 0)
+    -------------------------------------------------------------------------- */
+    Route::prefix('socio')->name('socio.')->group(function () {
+        Route::get('/', function () { return view('socio.dashboard'); })->name('dashboard');
+        Route::get('/mis-ahorros', [AhorroController::class, 'index'])->name('ahorros.index');
+        Route::get('/mis-ahorros/{id}', [AhorroController::class, 'show'])->name('ahorros.show');
+        Route::get('/mis-prestamos', [PrestamoController::class, 'misPrestamos'])->name('prestamos.mis_prestamos');
+        Route::get('/mis-prestamos/{prestamo}', [PrestamoController::class, 'show'])->name('prestamos.show_socio');
+    });
 
-    // Dashboard Socio
-    Route::get('/', function () {
-        return view('socio.dashboard');
-    })->name('socio.dashboard');
+    /* --------------------------------------------------------------------------
+       AREA DE ADMINISTRADOR (Tipo 2)
+    -------------------------------------------------------------------------- */
+    Route::prefix('admin')->name('admin.')->group(function () {
 
-    // Módulos de Lectura
-    Route::get('/mis-ahorros', [AhorroController::class, 'index'])->name('ahorros.index');
-    Route::get('/mis-ahorros/{id}', [AhorroController::class, 'show'])->name('ahorros.show');
+        // Dashboard
+        Route::get('/', [SocioController::class, 'adminDashboard'])->name('dashboard');
 
-    Route::get('/mis-prestamos', [PrestamoController::class, 'misPrestamos'])->name('prestamos.mis_prestamos');
-    Route::get('/mis-prestamos/{prestamo}', [PrestamoController::class, 'show'])->name('prestamos.show_socio');
-});
-});
+        // Gestión de Socios y Préstamos
+        Route::resource('socios', SocioController::class);
+        Route::resource('prestamos', PrestamoController::class);
+        Route::patch('/socios/{socio}/toggle-status', [SocioController::class, 'toggleStatus'])->name('socios.toggle_status');
+        Route::get('socios/{socio}/prestamos/historial-pagados', [SocioController::class, 'showHistorialPrestamos'])->name('socios.historial.prestamos');
 
-/* --------------------------------------------------------------------------
-   AREA DE ADMINISTRADOR (Tipo 2)
--------------------------------------------------------------------------- */
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+        // Caja y Ahorros
+        Route::get('/prestamos/{prestamo}/pagar', [PagoController::class, 'create'])->name('pagos.create');
+        Route::post('/prestamos/{prestamo}/pagar', [PagoController::class, 'store'])->name('pagos.store');
+        Route::put('/cuentas/update-cuota/{id}', [SocioController::class, 'updateCuota'])->name('cuentas.update_cuota');
+        Route::post('/ahorros/transaccion', [SocioController::class, 'storeTransaction'])->name('ahorros.transaction.store');
+        Route::put('/ahorros/transaccion/{id}', [SocioController::class, 'updateTransaction'])->name('ahorros.transaction.update');
+        Route::delete('/ahorros/transaccion/{id}', [SocioController::class, 'destroyTransaction'])->name('ahorros.transaction.destroy');
 
-    // Dashboard Admin
-    // Ahora apuntamos al método que procesa los datos financieros
-    Route::get('/', [SocioController::class, 'adminDashboard'])->name('dashboard');
+        // Reportes e Inteligencia
+        Route::get('/vencimientos-prestamos', [PrestamoController::class, 'reporteVencimientos'])->name('prestamos.vencimientos');
+        Route::get('/reportes/visitas', [SocioController::class, 'estadisticasVisitas'])->name('reportes.visitas');
+        Route::get('/reportes/morosidad', [PrestamoController::class, 'reporteMorosidad'])->name('reportes.morosidad');
+        Route::get('/reportes/utilidades', [ReporteController::class, 'utilidades'])->name('reportes.utilidades');
+        Route::get('/reportes/proyeccion', [ReporteController::class, 'proyeccion'])->name('reportes.proyeccion');
+        Route::get('/reportes/concentracion', [ReporteController::class, 'concentracion'])->name('reportes.concentracion');
+        Route::get('/reportes/ahorros-pasivos', [ReporteController::class, 'ahorros'])->name('reportes.ahorros');
+        Route::get('/reportes/informe-mensual', [ReporteController::class, 'informeMensual'])->name('reportes.mensual');
 
-    // 1. GESTIÓN DE SOCIOS
-    Route::resource('socios', SocioController::class);
+        // NUEVAS RUTAS DE AUDITORÍA Y VARIACIÓN
+        Route::get('/reportes/variacion', [SocioController::class, 'variacionNomina'])->name('reportes.variacion');
+        // Busca esta línea y cámbiala:
+        Route::get('/logs-auditoria', [SocioController::class, 'logs'])->name('logs.index');
 
-    // NUEVA RUTA: Historial de Préstamos Pagados (LIMPIA)
-    Route::get('socios/{socio}/prestamos/historial-pagados', [SocioController::class, 'showHistorialPrestamos'])
-        ->name('socios.historial.prestamos');
+        // Exportación Nómina
+        Route::get('/exportar-nomina/{tipo}', function ($tipo) {
+            $nombre = "Nomina_" . ucfirst($tipo) . "_" . now()->format('m_Y') . ".xlsx";
+            return Excel::download(new NominaExport($tipo), $nombre);
+        })->name('reportes.nomina');
 
-    // 2. GESTIÓN DE PRÉSTAMOS
-    Route::resource('prestamos', PrestamoController::class);
+        Route::get('/mi-perfil', [SocioController::class, 'miPerfilSocio'])->name('perfil.propio');
+    });
 
-    // 3. CAJA
-    Route::get('/prestamos/{prestamo}/pagar', [PagoController::class, 'create'])->name('pagos.create');
-    Route::post('/prestamos/{prestamo}/pagar', [PagoController::class, 'store'])->name('pagos.store');
-
-    // ACTUALIZAR CUOTA DE AHORRO
-    Route::put('/cuentas/update-cuota/{id}', [SocioController::class, 'updateCuota'])->name('cuentas.update_cuota');
-    // --- GESTIÓN DE TRANSACCIONES DE AHORRO (Correcciones) ---
-    Route::post('/ahorros/transaccion', [SocioController::class, 'storeTransaction'])->name('ahorros.transaction.store');
-    Route::put('/ahorros/transaccion/{id}', [SocioController::class, 'updateTransaction'])->name('ahorros.transaction.update');
-    // Ruta para eliminar (opcional pero útil para correcciones)
-    Route::delete('/ahorros/transaccion/{id}', [SocioController::class, 'destroyTransaction'])->name('ahorros.transaction.destroy');
-    Route::patch('/socios/{socio}/toggle-status', [SocioController::class, 'toggleStatus'])->name('socios.toggle_status');
-    Route::get('/vencimientos-prestamos', [PrestamoController::class, 'reporteVencimientos'])->name('prestamos.vencimientos');
-    // Reporte de visitas y estadísticas de socios
-    Route::get('/reportes-visitas', [SocioController::class, 'estadisticasVisitas'])->name('reportes.visitas');
-    Route::get('/mi-perfil', [SocioController::class, 'miPerfilSocio'])->name('perfil.propio');
-    Route::get('/reportes/morosidad', [PrestamoController::class, 'reporteMorosidad'])->name('reportes.morosidad');
-    Route::get('/reportes/auditoria', [App\Http\Controllers\Admin\ReporteController::class, 'auditoria'])
-        ->name('reportes.auditoria');
-    Route::get('/reportes/utilidades', [ReporteController::class, 'utilidades'])->name('reportes.utilidades');
-    Route::get('/reportes/proyeccion', [ReporteController::class, 'proyeccion'])->name('reportes.proyeccion');
-    Route::get('/reportes/concentracion', [ReporteController::class, 'concentracion'])->name('reportes.concentracion');
-    Route::get('/reportes/ahorros-pasivos', [ReporteController::class, 'ahorrosPasivos'])->name('reportes.ahorros');
-    Route::get('/reportes/informe-mensual', [App\Http\Controllers\Admin\ReporteController::class, 'informeMensual'])
-        ->name('reportes.mensual');
-    Route::get('/exportar-nomina/{tipo}', function ($tipo) {
-        $nombre = "Nomina_" . ucfirst($tipo) . "_" . now()->format('m_Y') . ".xlsx";
-        return Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\NominaExport($tipo), $nombre);
-    })->name('reportes.nomina');
-
-});
+}); // Cierre del middleware auth principal

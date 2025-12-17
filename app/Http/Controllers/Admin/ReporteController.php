@@ -132,4 +132,33 @@ public function informeMensual()
         'inicioMes'
     ));
 }
+// app/Http/Controllers/AdminController.php
+
+public function logs() {
+    // Traemos los registros de actividad con el nombre del usuario que lo hizo
+    $logs = \App\Models\ActivityLog::with('user')
+        ->latest() // Del más reciente al más antiguo
+        ->paginate(20); // De 20 en 20 para no saturar la página
+
+    return view('admin.logs.index', compact('logs'));
+}
+public function variacionNomina() {
+    // 1. Sumamos todos los ahorros fijos que tienen los socios hoy
+    $ahorrosActuales = \App\Models\SavingsAccount::sum('recurring_amount');
+
+    // 2. Sumamos las cuotas de préstamos que vencen este mes y están pendientes
+    $cuotasMes = \App\Models\Cuota::where('estado', 'pendiente')
+        ->whereMonth('fecha_pago', now()->month)
+        ->whereYear('fecha_pago', now()->year)
+        ->sum(\DB::raw('capital + interes'));
+
+    $totalNominaActual = $ahorrosActuales + $cuotasMes;
+
+    return view('admin.reportes.variacion', [
+        'total' => $totalNominaActual,
+        'ahorros' => $ahorrosActuales,
+        'prestamos' => $cuotasMes,
+        'mes' => now()->translatedFormat('F Y')
+    ]);
+}
 }
