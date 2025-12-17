@@ -7,6 +7,10 @@ use App\Models\Socio;
 use App\Models\SavingType;
 use App\Models\SavingsAccount;
 use App\Models\SavingsTransaction;
+use App\Models\Cuota;
+use App\Models\Prestamo;
+use App\Models\ActivityLog;
+use App\Models\Visit;
 use Carbon\Carbon;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -19,9 +23,7 @@ class SocioController extends Controller
     {
         $buscar = $request->get('buscar');
 
-        $socios = \App\Models\User::where('tipo', 0)
-            // 'socio.cuentas' carga las cuentas de ahorro para no hacer 100 consultas a la vez (Eager Loading)
-            // Por esto (Carga anidada):
+        $socios = User::where('tipo', 0)
             ->with(['socio.cuentas.type'])
             ->when($buscar, function ($query) use ($buscar) {
                 return $query->where(function ($q) use ($buscar) {
@@ -40,186 +42,164 @@ class SocioController extends Controller
 
         return view('admin.socios.index', compact('socios'));
     }
-    // --- NUEVOS MÉTODOS PARA CREACIÓN ---
 
-    /**
-     * Muestra el formulario para crear un nuevo socio.
-     */
     public function create()
     {
         return view('admin.socios.create');
     }
 
-    /**
-     * Procesa el registro del Usuario y del Socio simultáneamente.
-     */
     public function store(Request $request)
-{
-    // 1. ACTUALIZAR VALIDACIÓN: Añade 'tipo_contrato'
-    $request->validate([
-        'cedula'    => 'required|unique:users,cedula',
-        'nombres'   => 'required|string|max:255',
-        'apellidos' => 'required|string|max:255',
-        'email'     => 'required|email|unique:users,email',
-        'password'  => 'required|min:6',
-        'sueldo'    => 'required|numeric',
-        'tipo_contrato' => 'required|in:fijo,contratado', // <--- NUEVA LÍNEA
-    ]);
+    {
+        $request->validate([
+            'cedula'    => 'required|unique:users,cedula',
+            'nombres'   => 'required|string|max:255',
+            'apellidos' => 'required|string|max:255',
+            'email'     => 'required|email|unique:users,email',
+            'password'  => 'required|min:6',
+            'sueldo'    => 'required|numeric',
+            'salario'   => 'required|numeric|min:0',
+            'tipo_contrato' => 'required|in:fijo,contratado',
+        ]);
 
-    try {
-        return DB::transaction(function () use ($request) {
+        try {
+            return DB::transaction(function () use ($request) {
+                $user = User::create([
+                    'name'     => $request->nombres . ' ' . $request->apellidos,
+                    'email'    => $request->email,
+                    'cedula'   => $request->cedula,
+                    'password' => Hash::make($request->password),
+                    'tipo'     => 0,
+                ]);
 
-            $user = User::create([
-                'name'     => $request->nombres . ' ' . $request->apellidos,
-                'email'    => $request->email,
-                'cedula'   => $request->cedula,
-                'password' => Hash::make($request->password),
-                'tipo'     => 0,
-            ]);
+                $user->socio()->create([
+                    'nombres'       => $request->nombres,
+                    'apellidos'     => $request->apellidos,
+                    'telefono'      => $request->telefono,
+                    'direccion'     => $request->direccion,
+                    'sueldo'        => $request->sueldo,
+                    'salario'       => $request->salario,
+                    'lugar_trabajo' => $request->lugar_trabajo,
+                    'tipo_contrato' => $request->tipo_contrato,
+                    'ahorro_total'  => 0,
+                ]);
 
-            // 4. ACTUALIZAR CREACIÓN DEL SOCIO: Añade 'tipo_contrato'
-            $user->socio()->create([
-                'nombres'       => $request->nombres,
-                'apellidos'     => $request->apellidos,
-                'telefono'      => $request->telefono,
-                'direccion'     => $request->direccion,
-                'sueldo'        => $request->sueldo,
-                'lugar_trabajo' => $request->lugar_trabajo,
-                'tipo_contrato' => $request->tipo_contrato, // <--- NUEVA LÍNEA
-                'ahorro_total'  => 0,
-            ]);
-
-            return redirect()->route('admin.socios.index')
-                ->with('success', 'Socio y Usuario creados exitosamente.');
-        });
-
-    } catch (\Exception $e) {
-        return back()->with('error', 'Error al registrar: ' . $e->getMessage())->withInput();
+                return redirect()->route('admin.socios.index')
+                    ->with('success', 'Socio y Usuario creados exitosamente.');
+            });
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error al registrar: ' . $e->getMessage())->withInput();
+        }
     }
-}
 
-    // 2. PERFIL 360 DEL SOCIO
+    // 2. PERFIL 360 DEL SOCIO (CORREGIDO)
     public function show(Request $request, $id)
     {
-        // 1. CARGAR DATOS
-        $socio = \App\Models\Socio::with('user')->findOrFail($id);
-
-        // --- LÓGICA DE PRÉSTAMOS ---
-        // Préstamos Activos (NO pagados)
-        $prestamosActivos = $socio->prestamos()->where('estado', '!=', 'pagado')->get();
-        // Préstamos Inactivos (Pagados) - Usados para el contador del botón de historial
-        $prestamosInactivos = $socio->prestamos()->where('estado', 'pagado')->get();
-        $totalDeuda = $prestamosActivos->sum('saldo_capital');
+        // 1. CARGAR DATOS BASE
+        $socio = Socio::with(['user', 'prestamos.cuotas', 'cuentas.type'])->findOrFail($id);
 
         // --- LÓGICA DE AHORROS ---
-        $tipoAportacion = \App\Models\SavingType::where('code', 'aportacion')->first();
-        $tipoVoluntario = \App\Models\SavingType::where('code', 'voluntario')->first();
+        $tipoAportacion = SavingType::where('code', 'aportacion')->first();
+        $tipoVoluntario = SavingType::where('code', 'voluntario')->first();
 
         if (!$tipoAportacion || !$tipoVoluntario) {
             return back()->with('error', 'Faltan configurar los tipos de ahorro.');
         }
 
-        $cuentaAportacion = \App\Models\SavingsAccount::firstOrCreate(
+        $cuentaAportacion = SavingsAccount::firstOrCreate(
             ['socio_id' => $socio->id, 'saving_type_id' => $tipoAportacion->id],
             ['balance' => 0, 'recurring_amount' => 0]
         );
 
-        $cuentaVoluntario = \App\Models\SavingsAccount::firstOrCreate(
+        $cuentaVoluntario = SavingsAccount::firstOrCreate(
             ['socio_id' => $socio->id, 'saving_type_id' => $tipoVoluntario->id],
             ['balance' => 0, 'recurring_amount' => 0]
         );
 
-        // 4. PREPARAR EL FILTRO DE AÑOS
-        $cuentasIds = [$cuentaAportacion->id, $cuentaVoluntario->id];
-
-        // Obtenemos años con datos de la BD
-        $aniosBD = \App\Models\SavingsTransaction::whereIn('savings_account_id', $cuentasIds)
-            ->selectRaw('YEAR(date) as anio')
-            ->distinct()
-            ->pluck('anio')
-            ->toArray();
-
-        // Forzamos que siempre aparezca el año actual y el próximo (para registro futuro)
-        $aniosDisponibles = array_unique(array_merge($aniosBD, [(int)date('Y'), (int)date('Y') + 1]));
-        rsort($aniosDisponibles);
-
-        // Capturamos el año seleccionado o el año actual por defecto
-        $anioSeleccionado = $request->get('anio_ahorro', (string)date('Y'));
-
-
-        // 5. FUNCIÓN MAESTRA MEJORADA (Ahora guarda los objetos completos para editar)
-        $armarMatrizMensual = function($cuenta) use ($anioSeleccionado) {
-            $meses = [];
-            for ($i = 1; $i <= 12; $i++) {
-                $meses[$i] = [
-                    'aporte' => 0,
-                    'retiro' => 0,
-                    'transacciones' => [] // Aquí guardaremos los detalles
-                ];
-            }
-
-            $transaccionesQuery = $cuenta->transactions();
-            if ($anioSeleccionado != 'todos') {
-                $transaccionesQuery->whereYear('date', $anioSeleccionado);
-            }
-
-            $transacciones = $transaccionesQuery->orderBy('date', 'asc')->get();
-
-            foreach ($transacciones as $tx) {
-
-                if ($anioSeleccionado != 'todos' && $tx->date->year != $anioSeleccionado) {
-                    continue;
-                }
-
-                $mes = $tx->date->month;
-
-                // Sumar totales
-                if ($tx->type == 'deposit' || $tx->type == 'interest') {
-                    $meses[$mes]['aporte'] += $tx->amount;
-                } elseif ($tx->type == 'withdrawal') {
-                    $meses[$mes]['retiro'] += $tx->amount;
-                }
-
-                // Guardar la transacción completa en el array del mes
-                $meses[$mes]['transacciones'][] = $tx;
-            }
-            return $meses;
-        };
-
-        // 6. EJECUTAR LÓGICA
-        $matrizAportacion = $armarMatrizMensual($cuentaAportacion);
-        $matrizVoluntario = $armarMatrizMensual($cuentaVoluntario);
-
-        // 7. TOTALES GENERALES
         $totalAportaciones = $cuentaAportacion->balance;
         $totalRetirable = $cuentaVoluntario->balance;
         $totalAhorradoGlobal = $totalAportaciones + $totalRetirable;
 
-        // 8. ENVIAR A LA VISTA
-        return view('admin.socios.show', compact(
-            'socio', 'totalDeuda', 'prestamosActivos', 'prestamosInactivos',
-            'aniosDisponibles', 'anioSeleccionado',
-            'matrizAportacion', 'matrizVoluntario',
-            'cuentaAportacion', 'cuentaVoluntario',
-            'totalAportaciones', 'totalRetirable', 'totalAhorradoGlobal'
-        ));
+        // --- MOTOR DE RIESGO ---
+        $salario = $socio->salario ?? 0;
+        $maximoCreditoPosible = $totalAhorradoGlobal * 1.5; // REGLA 1.5x Ahorros
+        $limiteMensualDescuento = $salario * 0.40; // REGLA 40% Salario
+
+        // 1. Calculamos la cuota de préstamos (Si hay préstamo activo, hay descuento)
+        $cuotasPrestamosMes = $socio->prestamos()
+            ->where('estado', 'activo')
+            ->get()
+            ->sum(function($prestamo) {
+                // Buscamos la siguiente cuota a cobrar
+                $cuota = $prestamo->cuotas()->where('estado', 'pendiente')->orderBy('numero_cuota', 'asc')->first();
+                return $cuota ? $cuota->monto_total : 0;
+            });
+
+        // 2. Ahorros fijos configurados
+        $ahorrosFijosMes = $cuentaAportacion->recurring_amount + $cuentaVoluntario->recurring_amount;
+
+        // 3. Compromisos Totales (Lo que sale en el recibo oscuro)
+        $compromisosActuales = $cuotasPrestamosMes + $ahorrosFijosMes;
+        $capacidadDisponibleMensual = $limiteMensualDescuento - $compromisosActuales;
+
+        // --- PRÉSTAMOS PARA VISTA ---
+        $prestamosActivos = $socio->prestamos()->where('estado', '!=', 'pagado')->get();
+        $prestamosInactivos = $socio->prestamos()->where('estado', 'pagado')->get();
+        $totalDeuda = $prestamosActivos->sum('saldo_capital');
+
+        // --- HISTÓRICO DE AHORROS ---
+        $cuentasIds = [$cuentaAportacion->id, $cuentaVoluntario->id];
+        $aniosBD = SavingsTransaction::whereIn('savings_account_id', $cuentasIds)
+            ->selectRaw('YEAR(date) as anio')->distinct()->pluck('anio')->toArray();
+        $aniosDisponibles = array_unique(array_merge($aniosBD, [(int)date('Y')]));
+        rsort($aniosDisponibles);
+        $anioSeleccionado = $request->get('anio_ahorro', (string)date('Y'));
+
+        $armarMatriz = function($cuenta) use ($anioSeleccionado) {
+            $meses = [];
+            for ($i = 1; $i <= 12; $i++) { $meses[$i] = ['aporte' => 0, 'retiro' => 0, 'transacciones' => []]; }
+            $txs = $cuenta->transactions()->whereYear('date', $anioSeleccionado)->get();
+            foreach ($txs as $tx) {
+                $m = $tx->date->month;
+                if ($tx->type == 'deposit' || $tx->type == 'interest') $meses[$m]['aporte'] += $tx->amount;
+                else $meses[$m]['retiro'] += $tx->amount;
+                $meses[$m]['transacciones'][] = $tx;
+            }
+            return $meses;
+        };
+
+        $matrizAportacion = $armarMatriz($cuentaAportacion);
+        $matrizVoluntario = $armarMatriz($cuentaVoluntario);
+
+        return view('admin.socios.show', [
+            'socio' => $socio,
+            'totalDeuda' => $totalDeuda,
+            'prestamosActivos' => $prestamosActivos,
+            'prestamosInactivos' => $prestamosInactivos,
+            'totalAportaciones' => $totalAportaciones,
+            'totalRetirable' => $totalRetirable,
+            'totalAhorradoGlobal' => $totalAhorradoGlobal,
+            'salario' => $salario,
+            'limiteMensual' => $limiteMensualDescuento,
+            'compromisosActuales' => $compromisosActuales,
+            'cuotasPrestamos' => $cuotasPrestamosMes, // Enviado para desglose
+            'ahorrosFijos' => $ahorrosFijosMes,       // Enviado para desglose
+            'capacidadDisponible' => $capacidadDisponibleMensual,
+            'maximoCredito' => $maximoCreditoPosible,
+            'aniosDisponibles' => $aniosDisponibles,
+            'anioSeleccionado' => $anioSeleccionado,
+            'matrizAportacion' => $matrizAportacion,
+            'matrizVoluntario' => $matrizVoluntario,
+            'cuentaAportacion' => $cuentaAportacion,
+            'cuentaVoluntario' => $cuentaVoluntario,
+        ]);
     }
 
-    // 3. NUEVO MÉTODO: Muestra la lista de préstamos Pagados
     public function showHistorialPrestamos(Socio $socio)
     {
-        // Carga los préstamos cuyo estado es 'pagado'
-        $prestamosPagados = $socio->prestamos()
-                                  ->where('estado', 'pagado')
-                                  ->orderBy('fecha_inicio', 'desc')
-                                  ->get();
-
+        $prestamosPagados = $socio->prestamos()->where('estado', 'pagado')->orderBy('fecha_inicio', 'desc')->get();
         return view('admin.socios.historial_prestamos', compact('socio', 'prestamosPagados'));
     }
 
-    // --- MÉTODOS PARA GESTIÓN DE TRANSACCIONES ---
-
-    // 1. Guardar una NUEVA transacción manual (Corrección o Agregado)
     public function storeTransaction(Request $request)
     {
         $request->validate([
@@ -230,8 +210,7 @@ class SocioController extends Controller
             'description' => 'nullable|string|max:255'
         ]);
 
-        $cuenta = \App\Models\SavingsAccount::findOrFail($request->savings_account_id);
-
+        $cuenta = SavingsAccount::findOrFail($request->savings_account_id);
         $tx = $cuenta->transactions()->create([
             'type' => $request->type,
             'amount' => $request->amount,
@@ -246,17 +225,12 @@ class SocioController extends Controller
         }
         $cuenta->save();
 
-        // REDIRECCIÓN INTELIGENTE
-        $anioRedireccion = Carbon::parse($tx->date)->year;
-        $socioId = $cuenta->socio_id;
-
         return redirect()->route('admin.socios.show', [
-            'socio' => $socioId,
-            'anio_ahorro' => $anioRedireccion
-        ])->with('success', 'Transacción agregada correctamente. Mostrando año ' . $anioRedireccion);
+            'socio' => $cuenta->socio_id,
+            'anio_ahorro' => Carbon::parse($tx->date)->year
+        ])->with('success', 'Transacción registrada.');
     }
 
-    // 2. Actualizar una transacción existente
     public function updateTransaction(Request $request, $id)
     {
         $request->validate([
@@ -265,183 +239,106 @@ class SocioController extends Controller
             'description' => 'nullable|string|max:255'
         ]);
 
-        $tx = \App\Models\SavingsTransaction::findOrFail($id);
+        $tx = SavingsTransaction::findOrFail($id);
         $cuenta = $tx->account;
 
-        $socioId = $cuenta->socio_id;
+        // Revertir balance anterior
+        if ($tx->type == 'deposit' || $tx->type == 'interest') $cuenta->balance -= $tx->amount;
+        else $cuenta->balance += $tx->amount;
 
-        if ($tx->type == 'deposit' || $tx->type == 'interest') {
-            $cuenta->balance -= $tx->amount;
-        } else {
-            $cuenta->balance += $tx->amount;
-        }
+        $tx->update($request->only('amount', 'date', 'description'));
 
-        $tx->amount = $request->amount;
-        $tx->date = $request->date;
-        $tx->description = $request->description;
-        $tx->save();
+        // Aplicar nuevo balance
+        if ($tx->type == 'deposit' || $tx->type == 'interest') $cuenta->balance += $tx->amount;
+        else $cuenta->balance -= $tx->amount;
 
-        if ($tx->type == 'deposit' || $tx->type == 'interest') {
-            $cuenta->balance += $tx->amount;
-        } else {
-            $cuenta->balance -= $tx->amount;
-        }
         $cuenta->save();
 
-        // REDIRECCIÓN INTELIGENTE
-        $anioRedireccion = Carbon::parse($request->date)->year;
-
         return redirect()->route('admin.socios.show', [
-            'socio' => $socioId,
-            'anio_ahorro' => $anioRedireccion
-        ])->with('success', 'Transacción actualizada correctamente. Mostrando año ' . $anioRedireccion);
+            'socio' => $cuenta->socio_id,
+            'anio_ahorro' => Carbon::parse($request->date)->year
+        ])->with('success', 'Transacción actualizada.');
     }
 
-    // 3. Eliminar transacción
     public function destroyTransaction($id)
     {
-        $tx = \App\Models\SavingsTransaction::findOrFail($id);
+        $tx = SavingsTransaction::findOrFail($id);
         $cuenta = $tx->account;
 
-        $socioId = $cuenta->socio_id;
-        $anioRedireccion = Carbon::parse($tx->date)->year;
+        if ($tx->type == 'deposit' || $tx->type == 'interest') $cuenta->balance -= $tx->amount;
+        else $cuenta->balance += $tx->amount;
 
-        if ($tx->type == 'deposit' || $tx->type == 'interest') {
-            $cuenta->balance -= $tx->amount;
-        } else {
-            $cuenta->balance += $tx->amount;
-        }
         $cuenta->save();
-
         $tx->delete();
 
-        // REDIRECCIÓN INTELIGENTE
-        return redirect()->route('admin.socios.show', [
-            'socio' => $socioId,
-            'anio_ahorro' => $anioRedireccion
-        ])->with('success', 'Transacción eliminada. Volviendo al año ' . $anioRedireccion);
+        return back()->with('success', 'Transacción eliminada.');
     }
 
     public function updateCuota(Request $request, $id)
     {
-        $request->validate([
-            'recurring_amount' => 'required|numeric|min:0'
-        ]);
-
-        $cuenta = \App\Models\SavingsAccount::findOrFail($id);
-        $cuenta->recurring_amount = $request->recurring_amount;
-        $cuenta->save();
-
-        return back()->with('success', 'Cuota mensual actualizada correctamente.');
+        $request->validate(['recurring_amount' => 'required|numeric|min:0']);
+        $cuenta = SavingsAccount::findOrFail($id);
+        $cuenta->update(['recurring_amount' => $request->recurring_amount]);
+        return back()->with('success', 'Cuota actualizada.');
     }
+
     public function toggleStatus($id)
     {
         $socio = Socio::findOrFail($id);
-        // Cambiamos el estado al opuesto (si es 1 pasa a 0, y viceversa)
-        $socio->activo = !$socio->activo;
-        $socio->save();
-
-        $mensaje = $socio->activo ? 'Socio activado correctamente.' : 'Socio desactivado correctamente.';
-        return back()->with('success', $mensaje);
+        $socio->update(['activo' => !$socio->activo]);
+        return back()->with('success', $socio->activo ? 'Socio activado.' : 'Socio desactivado.');
     }
+
     public function estadisticasVisitas()
     {
-        // 1. Visitas totales por mes en el año actual
-        $visitasEsteAnio = \App\Models\Visit::selectRaw('MONTH(created_at) as mes, COUNT(*) as total')
+        $visitasEsteAnio = Visit::selectRaw('MONTH(created_at) as mes, COUNT(*) as total')
             ->whereYear('created_at', date('Y'))
-            ->groupBy('mes')
-            ->orderBy('mes')
-            ->get();
+            ->groupBy('mes')->orderBy('mes')->get();
 
-        // 2. Ranking de socios más activos (Top 10)
-        $topVisitantes = \App\Models\Visit::with('user')
+        $topVisitantes = Visit::with('user')
             ->selectRaw('user_id, COUNT(*) as total')
-            ->groupBy('user_id')
-            ->orderBy('total', 'desc')
-            ->limit(10)
-            ->get();
+            ->groupBy('user_id')->orderBy('total', 'desc')->limit(10)->get();
 
         return view('admin.socios.visitas', compact('visitasEsteAnio', 'topVisitantes'));
     }
+
     public function adminDashboard()
     {
-        // Estadísticas para las tarjetas
-        $totalAhorrado = \App\Models\SavingsAccount::sum('balance');
-        $totalPrestado = \App\Models\Prestamo::where('estado', 'activo')->sum('saldo_capital');
-        $sociosActivos = \App\Models\Socio::where('activo', true)->count();
+        $totalAhorrado = SavingsAccount::sum('balance');
+        $totalPrestado = Prestamo::where('estado', 'activo')->sum('saldo_capital');
+        $sociosActivos = Socio::where('activo', true)->count();
 
-        // Datos para el gráfico (Últimos 6 meses)
         $meses = []; $ahorros = []; $prestamos = [];
-
         for ($i = 5; $i >= 0; $i--) {
             $fecha = now()->subMonths($i);
             $meses[] = $fecha->translatedFormat('F');
-
-            $ahorros[] = \App\Models\SavingsTransaction::whereIn('type', ['deposit', 'interest'])
-                ->whereMonth('date', $fecha->month)
-                ->whereYear('date', $fecha->year)
-                ->sum('amount');
-
-            $prestamos[] = \App\Models\Prestamo::whereMonth('fecha_inicio', $fecha->month)
-                ->whereYear('fecha_inicio', $fecha->year)
-                ->sum('monto');
+            $ahorros[] = SavingsTransaction::whereIn('type', ['deposit', 'interest'])
+                ->whereMonth('date', $fecha->month)->whereYear('date', $fecha->year)->sum('amount');
+            $prestamos[] = Prestamo::whereMonth('fecha_inicio', $fecha->month)
+                ->whereYear('fecha_inicio', $fecha->year)->sum('monto');
         }
 
-        // Es vital que 'meses' esté aquí dentro
-        return view('admin.dashboard', compact(
-            'totalAhorrado', 'totalPrestado', 'sociosActivos',
-            'meses', 'ahorros', 'prestamos'
-        ));
+        return view('admin.dashboard', compact('totalAhorrado', 'totalPrestado', 'sociosActivos', 'meses', 'ahorros', 'prestamos'));
     }
-    public function dashboardSocio()
+
+    public function variacionNomina() {
+        $ahorrosActuales = SavingsAccount::sum('recurring_amount');
+        $cuotasMes = Cuota::where('estado', 'pendiente')
+            ->whereMonth('fecha_vencimiento', now()->month)
+            ->whereYear('fecha_vencimiento', now()->year)
+            ->sum('monto_total');
+
+        return view('admin.reportes.variacion', [
+            'total' => $ahorrosActuales + $cuotasMes,
+            'ahorros' => $ahorrosActuales,
+            'prestamos' => $cuotasMes,
+            'mes' => now()->translatedFormat('F Y')
+        ]);
+    }
+
+    public function logs()
     {
-        $socio = auth()->user()->socio;
-
-        // Buscar cuentas por sus códigos (los que vimos en el Tinker)
-        $cuentaApo = $socio->cuentas->whereIn('type.code', ['APO', 'aportacion'])->first();
-        $cuentaVol = $socio->cuentas->whereIn('type.code', ['RET', 'voluntario'])->first();
-
-        // Préstamos que el socio aún está pagando
-        $prestamosActivos = $socio->prestamos()
-            ->with('tipoPrestamo')
-            ->where('estado', 'activo')
-            ->get();
-
-        return view('socio.dashboard', compact('socio', 'cuentaApo', 'cuentaVol', 'prestamosActivos'));
+        $logs = ActivityLog::with('user')->latest()->paginate(20);
+        return view('admin.logs.index', compact('logs'));
     }
-    // app/Http/Controllers/SocioController.php
-
-// app/Http/Controllers/SocioController.php
-
-public function variacionNomina() {
-    // 1. Suma de ahorros mensuales ( recurring_amount )
-    $ahorrosActuales = \App\Models\SavingsAccount::sum('recurring_amount');
-
-    // 2. Suma de cuotas de préstamos pendientes para el mes y año actual
-    // Usamos 'fecha_vencimiento' que es el nombre real de tu columna
-    $cuotasMes = \App\Models\Cuota::where('estado', 'pendiente')
-        ->whereMonth('fecha_vencimiento', now()->month)
-        ->whereYear('fecha_vencimiento', now()->year)
-        ->sum('monto_total'); // Usamos monto_total directamente ya que la tienes en la tabla
-
-    $totalNominaActual = $ahorrosActuales + $cuotasMes;
-
-    return view('admin.reportes.variacion', [
-        'total' => $totalNominaActual,
-        'ahorros' => $ahorrosActuales,
-        'prestamos' => $cuotasMes,
-        'mes' => now()->translatedFormat('F Y')
-    ]);
-}
-// app/Http/Controllers/SocioController.php
-
-public function logs()
-{
-    // Traemos los registros de actividad usando tu modelo ActivityLog
-    $logs = \App\Models\ActivityLog::with('user')
-        ->latest()
-        ->paginate(20);
-
-    return view('admin.logs.index', compact('logs'));
-}
 }

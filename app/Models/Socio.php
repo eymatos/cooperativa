@@ -22,6 +22,7 @@ class Socio extends Model
     'lugar_trabajo',
     'tipo_contrato', // <--- DEBE ESTAR AQUÍ
     'ahorro_total',
+    'salario',
     'activo'
 ];
 
