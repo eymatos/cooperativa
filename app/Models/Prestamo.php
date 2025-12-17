@@ -30,9 +30,9 @@ class Prestamo extends Model
 
     // Relación con las Cuotas
     public function cuotas()
-    {
-        return $this->hasMany(Cuota::class);
-    }
+{
+    return $this->hasMany(Cuota::class, 'prestamo_id');
+}
 
     // ✅ NUEVA RELACIÓN: Un Préstamo pertenece a un Tipo de Préstamo
     public function tipoPrestamo()

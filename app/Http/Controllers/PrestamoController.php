@@ -211,4 +211,37 @@ class PrestamoController extends Controller
         return redirect()->route('admin.socios.show', $prestamo->socio_id)
             ->with('success', 'Préstamo actualizado y tabla regenerada correctamente.');
     }
+    public function reporteVencimientos()
+{
+    // Buscamos préstamos activos
+    $prestamosVenciendo = Prestamo::with(['socio.user', 'tipoPrestamo', 'cuotas'])
+        ->where('estado', 'activo')
+        ->get()
+        ->filter(function($prestamo) {
+            // Obtenemos la fecha de la última cuota
+            $ultimaCuota = $prestamo->cuotas->last();
+            if (!$ultimaCuota) return false;
+
+            // Filtramos los que vencen en los próximos 45 días
+            $fechaVencimiento = \Carbon\Carbon::parse($ultimaCuota->fecha_vencimiento);
+            return $fechaVencimiento->isBetween(now(), now()->addDays(45));
+        })
+        ->groupBy(function($item) {
+            // Agrupamos por el nombre del tipo de préstamo
+            return $item->tipoPrestamo->nombre ?? 'Otros';
+        });
+
+    return view('admin.prestamos.vencimientos', compact('prestamosVenciendo'));
+}
+public function reporteMorosidad()
+{
+    // Buscamos cuotas vencidas no pagadas con su socio y préstamo
+    $cuotasVencidas = \App\Models\Cuota::with(['prestamo.socio.user'])
+        ->where('estado', 'pendiente')
+        ->where('fecha_vencimiento', '<', now())
+        ->orderBy('fecha_vencimiento', 'asc')
+        ->get();
+
+    return view('admin.prestamos.morosidad', compact('cuotasVencidas'));
+}
 }

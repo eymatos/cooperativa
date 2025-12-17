@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\PrestamoController;
 use App\Http\Controllers\PagoController;
 use App\Http\Controllers\AhorroController;
+use App\Http\Controllers\Admin\ReporteController;
 use App\Http\Controllers\SocioController; // <--- IMPRESCINDIBLE
 
 /* --------------------------------------------------------------------------
@@ -42,6 +43,13 @@ Route::middleware('auth')->group(function () {
     Route::post('prestamos/simular', [PrestamoController::class, 'simular'])->name('prestamos.simular');
 });
 
+Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(function () {
+
+    /* Aquí dentro van tus grupos actuales de:
+       - AREA DE SOCIOS
+       - AREA DE ADMINISTRADOR
+    */
+
 
 /* --------------------------------------------------------------------------
    AREA DE SOCIOS (Tipo 0)
@@ -60,7 +68,7 @@ Route::middleware('auth')->prefix('socio')->group(function () {
     Route::get('/mis-prestamos', [PrestamoController::class, 'misPrestamos'])->name('prestamos.mis_prestamos');
     Route::get('/mis-prestamos/{prestamo}', [PrestamoController::class, 'show'])->name('prestamos.show_socio');
 });
-
+});
 
 /* --------------------------------------------------------------------------
    AREA DE ADMINISTRADOR (Tipo 2)
@@ -68,9 +76,8 @@ Route::middleware('auth')->prefix('socio')->group(function () {
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
 
     // Dashboard Admin
-    Route::get('/', function () {
-        return view('admin.dashboard');
-    })->name('dashboard');
+    // Ahora apuntamos al método que procesa los datos financieros
+    Route::get('/', [SocioController::class, 'adminDashboard'])->name('dashboard');
 
     // 1. GESTIÓN DE SOCIOS
     Route::resource('socios', SocioController::class);
@@ -93,4 +100,16 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::put('/ahorros/transaccion/{id}', [SocioController::class, 'updateTransaction'])->name('ahorros.transaction.update');
     // Ruta para eliminar (opcional pero útil para correcciones)
     Route::delete('/ahorros/transaccion/{id}', [SocioController::class, 'destroyTransaction'])->name('ahorros.transaction.destroy');
+    Route::patch('/socios/{socio}/toggle-status', [SocioController::class, 'toggleStatus'])->name('socios.toggle_status');
+    Route::get('/vencimientos-prestamos', [PrestamoController::class, 'reporteVencimientos'])->name('prestamos.vencimientos');
+    // Reporte de visitas y estadísticas de socios
+    Route::get('/reportes-visitas', [SocioController::class, 'estadisticasVisitas'])->name('reportes.visitas');
+    Route::get('/mi-perfil', [SocioController::class, 'miPerfilSocio'])->name('perfil.propio');
+    Route::get('/reportes/morosidad', [PrestamoController::class, 'reporteMorosidad'])->name('reportes.morosidad');
+    Route::get('/reportes/auditoria', [App\Http\Controllers\Admin\ReporteController::class, 'auditoria'])
+        ->name('reportes.auditoria');
+    Route::get('/reportes/utilidades', [ReporteController::class, 'utilidades'])->name('reportes.utilidades');
+    Route::get('/reportes/proyeccion', [ReporteController::class, 'proyeccion'])->name('reportes.proyeccion');
+    Route::get('/reportes/concentracion', [ReporteController::class, 'concentracion'])->name('reportes.concentracion');
+    Route::get('/reportes/ahorros-pasivos', [ReporteController::class, 'ahorrosPasivos'])->name('reportes.ahorros');
 });

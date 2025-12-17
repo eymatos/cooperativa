@@ -44,15 +44,94 @@
                 📋 Ver Lista de Préstamos
             </a>
 
-            <a href="{{ route('admin.prestamos.create') }}" class="btn btn-green">
-                ➕ Crear Nuevo Préstamo
-            </a>
-
             <a href="{{ route('admin.socios.index') }}" class="btn btn-indigo">
                 👥 Directorio de Socios
             </a>
+            <a href="{{ route('admin.socios.create') }}" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest hover:bg-green-700 active:bg-green-900 focus:outline-none focus:border-green-900 focus:ring focus:ring-green-300 disabled:opacity-25 transition">
+                <span class="mr-2">+</span> Registrar Nuevo Socio
+            </a>
+            <a href="{{ route('admin.prestamos.vencimientos') }}" class="inline-flex items-center px-4 py-2 bg-orange-500 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest hover:bg-orange-600 active:bg-orange-700 transition">
+                <span class="mr-2">⏰</span> Préstamos a Vencer
+            </a>
+            <a href="{{ route('admin.reportes.visitas') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-800 transition shadow-sm">
+                <span class="mr-2">📊</span> Ver Estadísticas de Visitas
+            </a>
+            <a href="{{ route('admin.reportes.morosidad') }}" class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest hover:bg-red-700 transition shadow-md">
+                <span class="mr-2">⚠️</span> Morosidad
+            </a>
+            <a href="{{ route('admin.reportes.auditoria') }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest hover:bg-gray-700 transition shadow-lg">
+                <span class="mr-2">🔍</span> Auditoría de Logs
+            </a>
+            <a href="{{ route('admin.reportes.utilidades') }}" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest hover:bg-green-700 transition shadow-lg">
+                <span class="mr-2">💰</span> Intereses cobrados
+            </a>
+            <a href="{{ route('admin.reportes.proyeccion') }}" class="inline-flex items-center px-4 py-2 bg-purple-600 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest hover:bg-purple-700 transition shadow-lg">
+                <span class="mr-2">📅</span> Proyección de Cobros
+            </a>
+            <a href="{{ route('admin.reportes.concentracion') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 transition shadow-lg">
+                <span class="mr-2">📈</span> Concentración Cartera
+            </a>
+            <a href="{{ route('admin.reportes.ahorros') }}" class="inline-flex items-center px-4 py-2 bg-blue-800 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-widest hover:bg-blue-900 transition shadow-lg">
+                <span class="mr-2">🏦</span> Reporte de Pasivos
+            </a>
         </div>
+<div class="bg-white p-6 rounded-lg shadow-lg">
+    <h3 class="text-lg font-bold text-gray-700 mb-4 text-center">Tendencia Financiera Semestral</h3>
+    <div style="position: relative; height:350px; width:100%">
+        <canvas id="graficoFinanciero"></canvas>
+    </div>
+</div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('graficoFinanciero').getContext('2d');
+
+        // Convertimos los datos de PHP a arreglos puros de JS
+        const labels = @json(array_values($meses));
+        const dataAhorros = @json(array_values($ahorros));
+        const dataPrestamos = @json(array_values($prestamos));
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Entrada de Ahorros (RD$)',
+                    data: dataAhorros,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }, {
+                    label: 'Desembolso Préstamos (RD$)',
+                    data: dataPrestamos,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) { return 'RD$ ' + value.toLocaleString(); }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
         <div class="card">
             <h3 style="margin-top: 0;">Estadísticas Rápidas</h3>
 

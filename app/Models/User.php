@@ -10,6 +10,8 @@ class User extends Authenticatable
     use Notifiable;
 
     protected $fillable = [
+        'name',    // Añadimos esto
+        'email',   // Añadimos esto
         'cedula',
         'password',
         'tipo',

@@ -8,6 +8,9 @@ use App\Models\SavingType;
 use App\Models\SavingsAccount;
 use App\Models\SavingsTransaction;
 use Carbon\Carbon;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class SocioController extends Controller
 {
@@ -16,19 +19,14 @@ class SocioController extends Controller
     {
         $buscar = $request->get('buscar');
 
-        // 1. Buscamos en la tabla USUARIOS (User), filtrando solo los que son socios (tipo 0)
         $socios = \App\Models\User::where('tipo', 0)
-            ->with('socio')
+            // 'socio.cuentas' carga las cuentas de ahorro para no hacer 100 consultas a la vez (Eager Loading)
+            // Por esto (Carga anidada):
+            ->with(['socio.cuentas.type'])
             ->when($buscar, function ($query) use ($buscar) {
                 return $query->where(function ($q) use ($buscar) {
-
-                    // A. Buscar por Cédula (Directamente en tabla users)
                     $q->where('cedula', 'LIKE', "%$buscar%")
-
-                    // B. Buscar por Nombre de Usuario (backup)
                       ->orWhere('name', 'LIKE', "%$buscar%")
-
-                    // C. Buscar por Nombres/Apellidos (Dentro de la relación 'socio')
                       ->orWhereHas('socio', function ($sq) use ($buscar) {
                           $sq->where('nombres', 'LIKE', "%$buscar%")
                              ->orWhere('apellidos', 'LIKE', "%$buscar%");
@@ -41,6 +39,64 @@ class SocioController extends Controller
         $socios->appends(['buscar' => $buscar]);
 
         return view('admin.socios.index', compact('socios'));
+    }
+    // --- NUEVOS MÉTODOS PARA CREACIÓN ---
+
+    /**
+     * Muestra el formulario para crear un nuevo socio.
+     */
+    public function create()
+    {
+        return view('admin.socios.create');
+    }
+
+    /**
+     * Procesa el registro del Usuario y del Socio simultáneamente.
+     */
+    public function store(Request $request)
+    {
+        // 1. VALIDACIÓN: Aseguramos que los datos sean correctos antes de tocar la BD.
+        $request->validate([
+            'cedula'    => 'required|unique:users,cedula', // No permite cédulas duplicadas
+            'nombres'   => 'required|string|max:255',
+            'apellidos' => 'required|string|max:255',
+            'email'     => 'required|email|unique:users,email', // No permite correos duplicados
+            'password'  => 'required|min:6', // Contraseña mínima de 6 caracteres
+            'sueldo'    => 'required|numeric',
+        ]);
+
+        try {
+            // 2. TRANSACCIÓN: Si falla la creación del socio, se "deshace" la del usuario.
+            return DB::transaction(function () use ($request) {
+
+                // 3. CREAR EL USUARIO (Credenciales de acceso)
+                $user = User::create([
+                    'name'     => $request->nombres . ' ' . $request->apellidos,
+                    'email'    => $request->email,
+                    'cedula'   => $request->cedula,
+                    'password' => Hash::make($request->password), // Encriptación obligatoria
+                    'tipo'     => 0, // Definimos que es tipo Socio (0)
+                ]);
+
+                // 4. CREAR EL SOCIO (Perfil detallado vinculado al usuario)
+                $user->socio()->create([
+                    'nombres'       => $request->nombres,
+                    'apellidos'     => $request->apellidos,
+                    'telefono'      => $request->telefono,
+                    'direccion'     => $request->direccion,
+                    'sueldo'        => $request->sueldo,
+                    'lugar_trabajo' => $request->lugar_trabajo,
+                    'ahorro_total'  => 0, // Inicia en cero
+                ]);
+
+                return redirect()->route('admin.socios.index')
+                    ->with('success', 'Socio y Usuario creados exitosamente.');
+            });
+
+        } catch (\Exception $e) {
+            // Si algo sale mal, volvemos atrás con el error para corregir.
+            return back()->with('error', 'Error al registrar: ' . $e->getMessage())->withInput();
+        }
     }
 
     // 2. PERFIL 360 DEL SOCIO
@@ -278,5 +334,80 @@ class SocioController extends Controller
         $cuenta->save();
 
         return back()->with('success', 'Cuota mensual actualizada correctamente.');
+    }
+    public function toggleStatus($id)
+    {
+        $socio = Socio::findOrFail($id);
+        // Cambiamos el estado al opuesto (si es 1 pasa a 0, y viceversa)
+        $socio->activo = !$socio->activo;
+        $socio->save();
+
+        $mensaje = $socio->activo ? 'Socio activado correctamente.' : 'Socio desactivado correctamente.';
+        return back()->with('success', $mensaje);
+    }
+    public function estadisticasVisitas()
+    {
+        // 1. Visitas totales por mes en el año actual
+        $visitasEsteAnio = \App\Models\Visit::selectRaw('MONTH(created_at) as mes, COUNT(*) as total')
+            ->whereYear('created_at', date('Y'))
+            ->groupBy('mes')
+            ->orderBy('mes')
+            ->get();
+
+        // 2. Ranking de socios más activos (Top 10)
+        $topVisitantes = \App\Models\Visit::with('user')
+            ->selectRaw('user_id, COUNT(*) as total')
+            ->groupBy('user_id')
+            ->orderBy('total', 'desc')
+            ->limit(10)
+            ->get();
+
+        return view('admin.socios.visitas', compact('visitasEsteAnio', 'topVisitantes'));
+    }
+    public function adminDashboard()
+    {
+        // Estadísticas para las tarjetas
+        $totalAhorrado = \App\Models\SavingsAccount::sum('balance');
+        $totalPrestado = \App\Models\Prestamo::where('estado', 'activo')->sum('saldo_capital');
+        $sociosActivos = \App\Models\Socio::where('activo', true)->count();
+
+        // Datos para el gráfico (Últimos 6 meses)
+        $meses = []; $ahorros = []; $prestamos = [];
+
+        for ($i = 5; $i >= 0; $i--) {
+            $fecha = now()->subMonths($i);
+            $meses[] = $fecha->translatedFormat('F');
+
+            $ahorros[] = \App\Models\SavingsTransaction::whereIn('type', ['deposit', 'interest'])
+                ->whereMonth('date', $fecha->month)
+                ->whereYear('date', $fecha->year)
+                ->sum('amount');
+
+            $prestamos[] = \App\Models\Prestamo::whereMonth('fecha_inicio', $fecha->month)
+                ->whereYear('fecha_inicio', $fecha->year)
+                ->sum('monto');
+        }
+
+        // Es vital que 'meses' esté aquí dentro
+        return view('admin.dashboard', compact(
+            'totalAhorrado', 'totalPrestado', 'sociosActivos',
+            'meses', 'ahorros', 'prestamos'
+        ));
+    }
+    public function dashboardSocio()
+    {
+        $socio = auth()->user()->socio;
+
+        // Buscar cuentas por sus códigos (los que vimos en el Tinker)
+        $cuentaApo = $socio->cuentas->whereIn('type.code', ['APO', 'aportacion'])->first();
+        $cuentaVol = $socio->cuentas->whereIn('type.code', ['RET', 'voluntario'])->first();
+
+        // Préstamos que el socio aún está pagando
+        $prestamosActivos = $socio->prestamos()
+            ->with('tipoPrestamo')
+            ->where('estado', 'activo')
+            ->get();
+
+        return view('socio.dashboard', compact('socio', 'cuentaApo', 'cuentaVol', 'prestamosActivos'));
     }
 }
