@@ -104,4 +104,32 @@ public function ahorrosPasivos()
 
     return view('admin.reportes.ahorros_pasivos', compact('distribucionAhorros', 'topAhorrantes', 'totalGeneralAhorros'));
 }
+// app/Http/Controllers/Admin/ReporteController.php
+
+public function informeMensual()
+{
+    $inicioMes = now()->startOfMonth();
+    $finMes = now()->endOfMonth();
+
+    // 1. Conteo simple de socios nuevos (sin usar tipo_contrato aún)
+    $totalNuevosSocios = \App\Models\Socio::whereBetween('created_at', [$inicioMes, $finMes])->count();
+
+    // 2. Dinero prestado en el mes
+    $totalDesembolsado = \App\Models\Prestamo::whereBetween('created_at', [$inicioMes, $finMes])
+        ->where('estado', 'activo')
+        ->sum('monto');
+
+    // 3. Recaudación total del mes
+    $recaudacion = \App\Models\Cuota::where('estado', 'pagada')
+        ->whereBetween('updated_at', [$inicioMes, $finMes])
+        ->selectRaw('SUM(capital) as capital, SUM(interes) as interes')
+        ->first();
+
+    return view('admin.reportes.informe_mensual', compact(
+        'totalNuevosSocios',
+        'totalDesembolsado',
+        'recaudacion',
+        'inicioMes'
+    ));
+}
 }

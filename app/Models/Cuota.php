@@ -26,4 +26,8 @@ class Cuota extends Model
         // Asegúrate de que el nombre de la columna en la DB sea prestamo_id
         return $this->belongsTo(Prestamo::class, 'prestamo_id');
     }
+    protected $casts = [
+    'capital' => 'decimal:2',
+    'interes' => 'decimal:2',
+];
 }

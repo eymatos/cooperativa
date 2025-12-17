@@ -24,4 +24,7 @@ class SavingsAccount extends Model
     {
         return $this->hasMany(SavingsTransaction::class);
     }
+    protected $casts = [
+    'recurring_amount' => 'decimal:2',
+];
 }

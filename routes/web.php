@@ -8,6 +8,8 @@ use App\Http\Controllers\PagoController;
 use App\Http\Controllers\AhorroController;
 use App\Http\Controllers\Admin\ReporteController;
 use App\Http\Controllers\SocioController; // <--- IMPRESCINDIBLE
+use App\Exports\NominaExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 /* --------------------------------------------------------------------------
    RUTAS PÚBLICAS (Login / Logout)
@@ -112,4 +114,11 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/reportes/proyeccion', [ReporteController::class, 'proyeccion'])->name('reportes.proyeccion');
     Route::get('/reportes/concentracion', [ReporteController::class, 'concentracion'])->name('reportes.concentracion');
     Route::get('/reportes/ahorros-pasivos', [ReporteController::class, 'ahorrosPasivos'])->name('reportes.ahorros');
+    Route::get('/reportes/informe-mensual', [App\Http\Controllers\Admin\ReporteController::class, 'informeMensual'])
+        ->name('reportes.mensual');
+    Route::get('/exportar-nomina/{tipo}', function ($tipo) {
+        $nombre = "Nomina_" . ucfirst($tipo) . "_" . now()->format('m_Y') . ".xlsx";
+        return Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\NominaExport($tipo), $nombre);
+    })->name('reportes.nomina');
+
 });

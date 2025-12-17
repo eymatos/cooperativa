@@ -13,15 +13,17 @@ class Socio extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
-        'nombres',
-        'apellidos',
-        'telefono',
-        'direccion',
-        'ahorro_total',
-        'sueldo',
-        'lugar_trabajo',
-    ];
+    'user_id',
+    'nombres',
+    'apellidos',
+    'telefono',
+    'direccion',
+    'sueldo',
+    'lugar_trabajo',
+    'tipo_contrato', // <--- DEBE ESTAR AQUÍ
+    'ahorro_total',
+    'activo'
+];
 
     // Relación con el usuario
     public function user()
@@ -46,4 +48,15 @@ class Socio extends Model
     {
         return $this->hasMany(SavingsAccount::class);
     }
+    public function cuotas()
+{
+    return $this->hasManyThrough(
+        \App\Models\Cuota::class,
+        \App\Models\Prestamo::class,
+        'socio_id',      // Clave foránea en tabla Prestamos
+        'prestamo_id',   // Clave foránea en tabla Cuotas
+        'id',            // Clave local en tabla Socios
+        'id'             // Clave local en tabla Prestamos
+    );
+}
 }

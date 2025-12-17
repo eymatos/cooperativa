@@ -62,10 +62,23 @@
                         <input type="text" name="telefono" value="{{ old('telefono') }}" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm block mt-1 w-full">
                     </div>
 
-                    <div>
-                        <label class="block font-medium text-sm text-gray-700">Sueldo Mensual (RD$)</label>
-                        <input type="number" step="0.01" name="sueldo" value="{{ old('sueldo') }}" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm block mt-1 w-full font-bold text-green-700" required>
-                    </div>
+
+<div>
+    <label class="block font-medium text-sm text-gray-700">Sueldo Mensual (RD$)</label>
+    <input type="number" step="0.01" name="sueldo" value="{{ old('sueldo') }}" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm block mt-1 w-full font-bold text-green-700" required>
+</div>
+
+<div>
+    <label class="block font-medium text-sm text-gray-700">Tipo de Contrato</label>
+    <select name="tipo_contrato" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm block mt-1 w-full" required>
+        <option value="" disabled selected>Seleccione una opción</option>
+        <option value="fijo" {{ old('tipo_contrato') == 'fijo' ? 'selected' : '' }}>Fijo</option>
+        <option value="contratado" {{ old('tipo_contrato') == 'contratado' ? 'selected' : '' }}>Contratado</option>
+    </select>
+    @error('tipo_contrato') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+</div>
+
+
 
                     <div class="md:col-span-2">
                         <label class="block font-medium text-sm text-gray-700">Empresa / Lugar de Trabajo</label>

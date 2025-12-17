@@ -54,50 +54,49 @@ class SocioController extends Controller
      * Procesa el registro del Usuario y del Socio simultáneamente.
      */
     public function store(Request $request)
-    {
-        // 1. VALIDACIÓN: Aseguramos que los datos sean correctos antes de tocar la BD.
-        $request->validate([
-            'cedula'    => 'required|unique:users,cedula', // No permite cédulas duplicadas
-            'nombres'   => 'required|string|max:255',
-            'apellidos' => 'required|string|max:255',
-            'email'     => 'required|email|unique:users,email', // No permite correos duplicados
-            'password'  => 'required|min:6', // Contraseña mínima de 6 caracteres
-            'sueldo'    => 'required|numeric',
-        ]);
+{
+    // 1. ACTUALIZAR VALIDACIÓN: Añade 'tipo_contrato'
+    $request->validate([
+        'cedula'    => 'required|unique:users,cedula',
+        'nombres'   => 'required|string|max:255',
+        'apellidos' => 'required|string|max:255',
+        'email'     => 'required|email|unique:users,email',
+        'password'  => 'required|min:6',
+        'sueldo'    => 'required|numeric',
+        'tipo_contrato' => 'required|in:fijo,contratado', // <--- NUEVA LÍNEA
+    ]);
 
-        try {
-            // 2. TRANSACCIÓN: Si falla la creación del socio, se "deshace" la del usuario.
-            return DB::transaction(function () use ($request) {
+    try {
+        return DB::transaction(function () use ($request) {
 
-                // 3. CREAR EL USUARIO (Credenciales de acceso)
-                $user = User::create([
-                    'name'     => $request->nombres . ' ' . $request->apellidos,
-                    'email'    => $request->email,
-                    'cedula'   => $request->cedula,
-                    'password' => Hash::make($request->password), // Encriptación obligatoria
-                    'tipo'     => 0, // Definimos que es tipo Socio (0)
-                ]);
+            $user = User::create([
+                'name'     => $request->nombres . ' ' . $request->apellidos,
+                'email'    => $request->email,
+                'cedula'   => $request->cedula,
+                'password' => Hash::make($request->password),
+                'tipo'     => 0,
+            ]);
 
-                // 4. CREAR EL SOCIO (Perfil detallado vinculado al usuario)
-                $user->socio()->create([
-                    'nombres'       => $request->nombres,
-                    'apellidos'     => $request->apellidos,
-                    'telefono'      => $request->telefono,
-                    'direccion'     => $request->direccion,
-                    'sueldo'        => $request->sueldo,
-                    'lugar_trabajo' => $request->lugar_trabajo,
-                    'ahorro_total'  => 0, // Inicia en cero
-                ]);
+            // 4. ACTUALIZAR CREACIÓN DEL SOCIO: Añade 'tipo_contrato'
+            $user->socio()->create([
+                'nombres'       => $request->nombres,
+                'apellidos'     => $request->apellidos,
+                'telefono'      => $request->telefono,
+                'direccion'     => $request->direccion,
+                'sueldo'        => $request->sueldo,
+                'lugar_trabajo' => $request->lugar_trabajo,
+                'tipo_contrato' => $request->tipo_contrato, // <--- NUEVA LÍNEA
+                'ahorro_total'  => 0,
+            ]);
 
-                return redirect()->route('admin.socios.index')
-                    ->with('success', 'Socio y Usuario creados exitosamente.');
-            });
+            return redirect()->route('admin.socios.index')
+                ->with('success', 'Socio y Usuario creados exitosamente.');
+        });
 
-        } catch (\Exception $e) {
-            // Si algo sale mal, volvemos atrás con el error para corregir.
-            return back()->with('error', 'Error al registrar: ' . $e->getMessage())->withInput();
-        }
+    } catch (\Exception $e) {
+        return back()->with('error', 'Error al registrar: ' . $e->getMessage())->withInput();
     }
+}
 
     // 2. PERFIL 360 DEL SOCIO
     public function show(Request $request, $id)
