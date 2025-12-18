@@ -13,7 +13,7 @@ use App\Exports\NominaExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 /* --------------------------------------------------------------------------
-   RUTAS PÚBLICAS (Visitantes y Aspirantes)
+   RUTAS PÚBLICAS
 -------------------------------------------------------------------------- */
 Route::get('/', function () {
     return redirect()->route('login');
@@ -23,7 +23,6 @@ Route::get('/quienes-somos', function () {
     return view('quienes-somos');
 })->name('quienes-somos');
 
-// Formulario de inscripción público para no socios
 Route::get('/inscripcion', [SocioController::class, 'formulariosSocio'])->name('formularios.publicos');
 
 // Rutas de Autenticación
@@ -31,16 +30,14 @@ Route::get('/login', [LoginController::class, 'show'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.post');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-// Ruta para guardar solicitudes (tanto públicas como privadas)
+// Solicitudes
 Route::post('/solicitudes/guardar', [SolicitudController::class, 'store'])->name('solicitudes.store');
-// En web.php
 Route::get('/formularios/inscripcion', function () {
-    // Detectamos si es público o si el socio está logueado
     return view('socio.formularios.inscripcion', ['publico' => !auth()->check()]);
 })->name('socio.formularios.inscripcion');
 
 /* --------------------------------------------------------------------------
-   RUTAS PROTEGIDAS (Requieren Login)
+   RUTAS PROTEGIDAS
 -------------------------------------------------------------------------- */
 Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(function () {
 
@@ -52,7 +49,7 @@ Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(fun
     Route::post('prestamos/simular', [PrestamoController::class, 'simular'])->name('prestamos.simular');
 
     /* --------------------------------------------------------------------------
-       AREA DE SOCIOS (Tipo 0)
+       AREA DE SOCIOS (Prefijo: socio / Nombre: socio.)
     -------------------------------------------------------------------------- */
     Route::prefix('socio')->name('socio.')->group(function () {
         Route::get('/', [SocioController::class, 'dashboardSocio'])->name('dashboard');
@@ -65,26 +62,51 @@ Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(fun
         Route::get('/mis-prestamos', [PrestamoController::class, 'misPrestamos'])->name('prestamos.mis_prestamos');
         Route::get('/mis-prestamos/{prestamo}', [PrestamoController::class, 'show'])->name('prestamos.show_socio');
 
-        // Centro de servicios digitales para el socio
+        // Formularios
         Route::get('/formularios', [SocioController::class, 'formulariosSocio'])->name('formularios');
+
+        // CORRECCIÓN AQUÍ: Quitamos el "socio/" de la URL porque ya está en el prefijo del grupo
+        Route::get('/formularios/autorizacion-ahorro', function () {
+            return view('socio.formularios.autorizacion_ahorro');
+        })->name('formularios.ahorro');
+        Route::get('/formularios/inscripcion-ahorro-retirable', function () {
+            return view('socio.formularios.inscripcion_retirable');
+        })->name('formularios.ahorro_retirable');
+        // Busca en el grupo prefix('socio')->name('socio.') y asegúrate de que esté así:
+        Route::get('/formularios/gestion-ahorro-retirable', function () {
+            return view('socio.formularios.gestion_retirable');
+        })->name('formularios.gestion_ahorro_retirable'); // <-- SIN el prefijo 'socio.' aquí, porque el grupo ya se lo pone automáticamente
+        // Esta es la ruta que falta o tiene el nombre distinto
+        Route::get('/formularios/solicitud-prestamo', function () {
+            return view('socio.formularios.solicitud_prestamo');
+        })->name('formularios.prestamo');
+        Route::get('/formularios/suspension-ahorro-retirable', function () {
+        return view('socio.formularios.suspension_retirable');
+        })->name('formularios.suspension_ahorro_retirable');
+        Route::get('/formularios/retiro-ahorro-retirable', function () {
+            return view('socio.formularios.retiro_retirable');
+        })->name('formularios.retiro_retirable');
     });
 
     /* --------------------------------------------------------------------------
-       AREA DE ADMINISTRADOR (Tipo 2)
+       AREA DE ADMINISTRADOR (Prefijo: admin / Nombre: admin.)
     -------------------------------------------------------------------------- */
     Route::prefix('admin')->name('admin.')->group(function () {
 
-        // Dashboard Principal
         Route::get('/', [SocioController::class, 'adminDashboard'])->name('dashboard');
 
-        // Gestión de Socios y Préstamos
+        // Socios y Préstamos
         Route::resource('socios', SocioController::class);
         Route::resource('prestamos', PrestamoController::class);
         Route::patch('/socios/{socio}/toggle-status', [SocioController::class, 'toggleStatus'])->name('socios.toggle_status');
         Route::get('socios/{socio}/prestamos/historial-pagados', [SocioController::class, 'showHistorialPrestamos'])->name('socios.historial.prestamos');
+        Route::delete('/socios/limpiar-usuario/{id}', [SocioController::class, 'destroyUser'])->name('socios.limpiar');
 
-        // Gestión de Solicitudes Digitales
+        // Solicitudes
         Route::get('/solicitudes', [SolicitudController::class, 'indexAdmin'])->name('solicitudes.index');
+        Route::get('/solicitudes/{id}', [SolicitudController::class, 'showAdmin'])->name('solicitudes.show');
+        Route::patch('/solicitudes/{id}/estado', [SolicitudController::class, 'updateEstado'])->name('solicitudes.estado');
+        Route::get('/solicitudes/{id}/descargar', [SolicitudController::class, 'descargarPdf'])->name('solicitudes.descargar');
 
         // Caja y Ahorros
         Route::get('/prestamos/{prestamo}/pagar', [PagoController::class, 'create'])->name('pagos.create');
@@ -94,7 +116,7 @@ Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(fun
         Route::put('/ahorros/transaccion/{id}', [SocioController::class, 'updateTransaction'])->name('ahorros.transaction.update');
         Route::delete('/ahorros/transaccion/{id}', [SocioController::class, 'destroyTransaction'])->name('ahorros.transaction.destroy');
 
-        // Reportes e Inteligencia
+        // Reportes
         Route::get('/vencimientos-prestamos', [PrestamoController::class, 'reporteVencimientos'])->name('prestamos.vencimientos');
         Route::get('/reportes/visitas', [SocioController::class, 'estadisticasVisitas'])->name('reportes.visitas');
         Route::get('/reportes/morosidad', [PrestamoController::class, 'reporteMorosidad'])->name('reportes.morosidad');
@@ -106,21 +128,10 @@ Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(fun
         Route::get('/reportes/variacion', [SocioController::class, 'variacionNomina'])->name('reportes.variacion');
         Route::get('/logs-auditoria', [SocioController::class, 'logs'])->name('logs.index');
 
-        // Exportación de Nómina
+        // Nómina
         Route::get('/exportar-nomina/{tipo}', function ($tipo) {
             $nombre = "Nomina_" . ucfirst($tipo) . "_" . now()->format('m_Y') . ".xlsx";
             return Excel::download(new NominaExport($tipo), $nombre);
         })->name('reportes.nomina');
-
-        Route::get('/mi-perfil', [SocioController::class, 'miPerfilSocio'])->name('perfil.propio');
-        // ESTA ES LA LÍNEA QUE DEBES AGREGAR:
-Route::get('/solicitudes/{id}', [SolicitudController::class, 'showAdmin'])->name('solicitudes.show');
-// Dentro de Route::prefix('admin')->name('admin.')->group(function () { ...
-
-Route::patch('/solicitudes/{id}/estado', [SolicitudController::class, 'updateEstado'])->name('solicitudes.estado');
-Route::get('/solicitudes/{id}/descargar', [SolicitudController::class, 'descargarPdf'])->name('solicitudes.descargar');
     });
-// Cambiamos el controlador a SocioController y el método a destroyUser
-Route::delete('/admin/socios/limpiar-usuario/{id}', [App\Http\Controllers\SocioController::class, 'destroyUser'])->name('admin.socios.limpiar');
-
 });

@@ -7,11 +7,13 @@
             return $cuota ? $cuota->monto_total : 0;
         });
 
-        // 2. Ahorros fijos mensuales
-        $ahorrosFijosSocio = ($cuentaApo->recurring_amount ?? 0) + ($cuentaVol->recurring_amount ?? 0);
+        // 2. Ahorros desglosados
+        $montoAportacion = $cuentaApo->recurring_amount ?? 0;
+        $montoRetirable = $cuentaVol->recurring_amount ?? 0;
+        $totalAhorrosMensuales = $montoAportacion + $montoRetirable;
 
         // 3. Total que se descontará en la siguiente nómina
-        $totalDescuentoSocio = $cuotasPrestamosSocio + $ahorrosFijosSocio;
+        $totalDescuentoSocio = $cuotasPrestamosSocio + $totalAhorrosMensuales;
     @endphp
 
     <x-slot name="header">
@@ -85,7 +87,7 @@
                             <tr class="group hover:bg-gray-50/50 transition-colors">
                                 <td class="py-6 pr-4">
                                     <span class="block text-xs font-black text-gray-700 uppercase italic leading-none">Aportación</span>
-                                    <span class="text-[9px] text-gray-400 font-bold tracking-tighter italic">Nómina</span>
+                                    <span class="text-[9px] text-gray-400 font-bold tracking-tighter italic font-sans">Ahorro Normal</span>
                                 </td>
                                 @foreach($matrizAportacion as $mes => $data)
                                     <td class="px-1 text-center">
@@ -104,8 +106,8 @@
                             </tr>
                             <tr class="group hover:bg-gray-50/50 transition-colors">
                                 <td class="py-6 pr-4 border-t border-gray-50">
-                                    <span class="block text-xs font-black text-orange-600 uppercase italic leading-none">Voluntario</span>
-                                    <span class="text-[9px] text-gray-400 font-bold tracking-tighter italic">Extra</span>
+                                    <span class="block text-xs font-black text-orange-600 uppercase italic leading-none">Retirable</span>
+                                    <span class="text-[9px] text-gray-400 font-bold tracking-tighter italic font-sans">Voluntario</span>
                                 </td>
                                 @foreach($matrizVoluntario as $mes => $data)
                                     <td class="px-1 text-center border-t border-gray-50">
@@ -129,34 +131,50 @@
 
             {{-- 3. PRÓXIMO DESCUENTO (Estimado de Nómina) --}}
             <div class="bg-gray-900 text-white p-8 rounded-[2.5rem] shadow-xl relative overflow-hidden border-b-8 border-orange-500">
-                <div class="absolute top-0 right-0 p-6 opacity-10 text-8xl">📊</div>
+                <div class="absolute top-0 right-0 p-6 opacity-10 text-8xl font-black">📊</div>
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <div>
                         <h3 class="text-xl font-black text-white uppercase tracking-wider flex items-center gap-2 italic">
                             <span class="w-2 h-8 bg-orange-500 rounded-full"></span>
-                            Estimado de Nómina
+                            Estimado de Próxima Nómina
                         </h3>
-                        <p class="text-[11px] text-gray-500 font-bold uppercase mt-1 tracking-widest italic font-mono">Deducción prevista para este mes</p>
+                        <p class="text-[11px] text-gray-500 font-bold uppercase mt-1 tracking-widest italic font-mono">Deducción total prevista</p>
                     </div>
                     <div class="text-right">
                         <span class="text-4xl font-black text-orange-400 font-mono italic">RD$ {{ number_format($totalDescuentoSocio, 2) }}</span>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-gray-800 pt-8 italic font-sans">
-                    <div class="bg-gray-800/40 p-4 rounded-2xl border border-gray-800 flex justify-between items-center transition-all hover:bg-gray-800/60">
+
+                {{-- DESGLOSE DE DEDUCCIONES --}}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-gray-800 pt-8 italic font-sans text-xs">
+
+                    {{-- Cuotas de Préstamo --}}
+                    <div class="bg-gray-800/40 p-4 rounded-2xl border border-gray-800 flex justify-between items-center group transition-all hover:bg-gray-800/60">
                         <div>
-                            <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1 italic">Deducción Préstamos</p>
-                            <p class="text-xl font-black font-mono italic leading-none text-white font-mono">RD$ {{ number_format($cuotasPrestamosSocio, 2) }}</p>
+                            <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1 italic">Deducción Préstamos</p>
+                            <p class="text-lg font-black font-mono text-white">RD$ {{ number_format($cuotasPrestamosSocio, 2) }}</p>
                         </div>
-                        <span class="text-2xl opacity-40">💳</span>
+                        <span class="text-xl opacity-30 group-hover:opacity-100 transition-opacity">💳</span>
                     </div>
-                    <div class="bg-gray-800/40 p-4 rounded-2xl border border-gray-800 flex justify-between items-center transition-all hover:bg-gray-800/60">
+
+                    {{-- Ahorro Normal --}}
+                    <div class="bg-blue-900/20 p-4 rounded-2xl border border-blue-900/30 flex justify-between items-center group transition-all hover:bg-blue-900/30">
                         <div>
-                            <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1 italic">Deducción Ahorros</p>
-                            <p class="text-xl font-black font-mono italic leading-none text-white font-mono">RD$ {{ number_format($ahorrosFijosSocio, 2) }}</p>
+                            <p class="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1 italic">Ahorro Normal (Aport.)</p>
+                            <p class="text-lg font-black font-mono text-blue-100">RD$ {{ number_format($montoAportacion, 2) }}</p>
                         </div>
-                        <span class="text-2xl opacity-40">📥</span>
+                        <span class="text-xl opacity-30 group-hover:opacity-100 transition-opacity text-blue-400">🛡️</span>
                     </div>
+
+                    {{-- Ahorro Retirable --}}
+                    <div class="bg-orange-900/20 p-4 rounded-2xl border border-orange-900/30 flex justify-between items-center group transition-all hover:bg-orange-900/30">
+                        <div>
+                            <p class="text-[9px] font-black text-orange-400 uppercase tracking-widest mb-1 italic">Ahorro Retirable (Vol.)</p>
+                            <p class="text-lg font-black font-mono text-orange-100">RD$ {{ number_format($montoRetirable, 2) }}</p>
+                        </div>
+                        <span class="text-xl opacity-30 group-hover:opacity-100 transition-opacity text-orange-400">💰</span>
+                    </div>
+
                 </div>
             </div>
 

@@ -13,32 +13,32 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
-            {{-- Resumen del Préstamo --}}
+            {{-- Resumen de Crédito --}}
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-b-4 border-indigo-500">
-                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Monto Original</p>
+                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 leading-none">Monto Original</p>
                     <p class="text-xl font-black text-gray-800 font-mono italic">RD$ {{ number_format($prestamo->monto, 2) }}</p>
                 </div>
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-b-4 border-red-500">
-                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 italic">Saldo Pendiente</p>
+                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 italic leading-none">Saldo Pendiente</p>
                     <p class="text-xl font-black text-red-600 font-mono italic">RD$ {{ number_format($prestamo->saldo_capital, 2) }}</p>
                 </div>
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-b-4 border-blue-500">
-                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 italic">Tipo de Crédito</p>
-                    <p class="text-lg font-black text-blue-600 uppercase italic">{{ $prestamo->tipoPrestamo->nombre }}</p>
+                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 italic leading-none">Tipo de Préstamo</p>
+                    <p class="text-lg font-black text-blue-600 uppercase italic leading-tight">{{ $prestamo->tipoPrestamo->nombre }}</p>
                 </div>
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-b-4 border-green-500">
-                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 italic">Tasa de Interés</p>
-                    <p class="text-xl font-black text-green-600 font-mono italic">{{ $prestamo->tasa_interes }}% <span class="text-[10px]">Anual</span></p>
+                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 italic leading-none">Interés Mensual</p>
+                    <p class="text-xl font-black text-green-600 font-mono italic">{{ number_format($prestamo->tasa_interes, 2) }}%</p>
                 </div>
             </div>
 
             {{-- Tabla de Cuotas --}}
             <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
                 <div class="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
-                    <h3 class="font-black text-gray-800 uppercase italic tracking-tighter text-lg">📅 Calendario de Pagos</h3>
+                    <h3 class="font-black text-gray-800 uppercase italic tracking-tighter text-lg leading-none">📅 Calendario de Cuotas y Pagos</h3>
                     <div class="flex gap-2">
-                        <span class="px-4 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase italic border border-green-200">
+                         <span class="px-4 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase italic border border-green-200">
                             {{ $prestamo->cuotas->where('estado', 'pagada')->count() }} Pagadas
                         </span>
                         <span class="px-4 py-1 bg-indigo-100 text-indigo-600 rounded-full text-[10px] font-black uppercase italic border border-indigo-200">
@@ -47,21 +47,21 @@
                     </div>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left font-mono">
+                <div class="overflow-x-auto font-sans">
+                    <table class="w-full text-left">
                         <thead>
                             <tr class="bg-gray-900 text-white text-[10px] uppercase tracking-[0.2em]">
-                                <th class="py-4 px-6 italic">No.</th>
-                                <th class="py-4 px-6 italic">Vencimiento</th>
-                                <th class="py-4 px-6 italic text-right">Capital</th>
-                                <th class="py-4 px-6 italic text-right">Interés</th>
-                                <th class="py-4 px-6 italic text-right">Total Cuota</th>
-                                <th class="py-4 px-6 text-center italic">Estado</th>
+                                <th class="py-4 px-6 italic font-medium">Cuota</th>
+                                <th class="py-4 px-6 italic font-medium">Fecha Vencimiento</th>
+                                <th class="py-4 px-6 italic font-medium text-right">Capital</th>
+                                <th class="py-4 px-6 italic font-medium text-right">Interés</th>
+                                <th class="py-4 px-6 italic font-medium text-right">Total Cuota</th>
+                                <th class="py-4 px-6 text-center italic font-medium">Estado</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-100">
+                        <tbody class="divide-y divide-gray-100 font-mono text-sm">
                             @foreach($prestamo->cuotas as $cuota)
-                                <tr class="{{ $cuota->estado == 'pagada' ? 'bg-green-50/20' : '' }} hover:bg-gray-50 transition-colors">
+                                <tr class="{{ $cuota->estado == 'pagada' ? 'bg-green-50/20' : 'hover:bg-gray-50' }} transition-colors">
                                     <td class="py-4 px-6 font-black text-gray-400 italic">#{{ $cuota->numero_cuota }}</td>
                                     <td class="py-4 px-6 text-xs font-bold text-gray-600 uppercase italic">
                                         {{ \Carbon\Carbon::parse($cuota->fecha_vencimiento)->translatedFormat('d M Y') }}
@@ -87,14 +87,18 @@
                 </div>
             </div>
 
-            {{-- Footer Informativo --}}
-            <div class="bg-indigo-900 text-white p-6 rounded-3xl flex items-center justify-between shadow-xl">
+            {{-- Footer con aviso --}}
+            <div class="bg-gray-900 text-white p-8 rounded-3xl flex flex-col md:flex-row items-center justify-between shadow-xl gap-6 border-b-8 border-indigo-600">
                 <div class="flex items-center gap-4">
-                    <span class="text-3xl italic">🛡️</span>
+                    <div class="p-3 bg-white/10 rounded-2xl text-2xl">🛡️</div>
                     <div>
-                        <p class="text-[10px] font-black uppercase tracking-widest text-indigo-300">Aviso del Sistema</p>
-                        <p class="text-sm italic font-medium">Los pagos se procesan automáticamente mediante descuento de nómina.</p>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-indigo-400">Certificación de Datos</p>
+                        <p class="text-sm italic font-medium text-gray-300">Este calendario de pagos es generado automáticamente. Las deducciones se procesan vía nómina según las políticas de COOPROCON.</p>
                     </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-[9px] font-black text-gray-500 uppercase italic mb-1 leading-none">Generado para:</p>
+                    <p class="text-lg font-black text-white italic leading-tight uppercase">{{ Auth::user()->name }}</p>
                 </div>
             </div>
 
