@@ -46,7 +46,7 @@
             portador de la cédula No. <span class="data-underline">{{ $solicitud->datos['cedula'] }}</span>,
             en mi calidad de socio de **COOPROCON**, autorizo formalmente a **PRO CONSUMIDOR**, a descontar de mi salario la suma mensual de:
 
-            <div class="my-8 bg-orange-50 border-2 border-dashed border-orange-200 p-8 rounded-[2rem] text-center shadow-inner">
+            <div class="my-8 bg-orange-50 border-2 border-dashed border-orange-200 p-8 rounded-4xl text-center shadow-inner">
                 <span class="block text-[10px] font-black text-orange-400 uppercase tracking-widest mb-1 leading-none">Cuota Mensual Autorizada</span>
                 <span class="text-4xl font-black text-orange-700 font-mono italic">RD$ {{ number_format($solicitud->datos['monto_retirable'], 2) }}</span>
             </div>

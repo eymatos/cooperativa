@@ -14,7 +14,7 @@
 <body class="bg-gray-50 text-gray-800 antialiased">
     <div class="max-w-4xl mx-auto px-6 py-12">
         <div class="text-center mb-12">
-            <div class="inline-flex items-center justify-center w-20 h-20 bg-green-600 rounded-[2rem] shadow-xl mb-6 transform -rotate-6">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-green-600 rounded-4xl shadow-xl mb-6 transform -rotate-6">
                 <span class="text-white text-4xl font-black italic">C</span>
             </div>
             <h1 class="text-4xl font-black text-gray-900 uppercase tracking-tighter italic">COOPROCON</h1>
@@ -22,7 +22,7 @@
         </div>
 
         <div class="bg-white rounded-[2.5rem] shadow-2xl p-10 border border-gray-100 relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-500 to-indigo-600"></div>
+            <div class="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-green-500 to-indigo-600"></div>
 
             <section class="mb-10">
                 <h2 class="text-2xl font-black mb-4 flex items-center gap-3 text-indigo-600 italic">

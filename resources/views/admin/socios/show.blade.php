@@ -341,7 +341,7 @@
     </div>
 
     {{-- MODALES Y SCRIPTS (IGUAL QUE TU ARCHIVO ORIGINAL) --}}
-    <div id="modal-cuota" class="fixed inset-0 bg-gray-900 bg-opacity-80 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+    <div id="modal-cuota" class="fixed inset-0 bg-gray-900 bg-opacity-80 hidden z-50 items-center justify-center backdrop-blur-sm">
         <div class="bg-white rounded-3xl shadow-2xl w-96 p-8">
             <h3 class="text-xl font-black text-gray-800 mb-6 flex items-center gap-2 uppercase tracking-wide border-b pb-3" id="modal-titulo-texto">Editar Cuota</h3>
             <form id="form-cuota" method="POST">
@@ -362,7 +362,7 @@
         </div>
     </div>
 
-    <div id="modal-gestor" class="fixed inset-0 bg-gray-900 bg-opacity-80 hidden z-50 flex items-center justify-center backdrop-blur-md">
+    <div id="modal-gestor" class="fixed inset-0 bg-gray-900 bg-opacity-80 hidden z-50 items-center justify-center backdrop-blur-md">
         <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl p-8 mx-4 overflow-hidden relative border border-gray-100">
             <div class="flex justify-between items-center mb-8 border-b border-gray-50 pb-4">
                 <div>
@@ -372,7 +372,7 @@
                 <button onclick="cerrarGestor()" class="w-10 h-10 flex items-center justify-center bg-gray-50 text-gray-400 hover:text-red-500 rounded-2xl hover:bg-red-50 transition-all text-2xl font-black">&times;</button>
             </div>
             <div id="lista-transacciones" class="mb-8 space-y-4 max-h-56 overflow-y-auto pr-2 custom-scrollbar border-b border-dashed border-gray-100 pb-6"></div>
-            <div class="bg-indigo-50/50 p-6 rounded-[2rem] border border-indigo-100 shadow-inner">
+            <div class="bg-indigo-50/50 p-6 rounded-4xl border border-indigo-100 shadow-inner">
                 <h4 class="text-[11px] font-black text-indigo-400 mb-4 uppercase tracking-[0.2em] italic" id="form-titulo">➕ Registrar Nueva Transacción</h4>
                 <form id="form-transaccion" method="POST" action="{{ route('admin.ahorros.transaction.store') }}">
                     @csrf
