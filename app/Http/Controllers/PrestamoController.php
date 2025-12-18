@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Prestamo;
-use App\Models\TipoPrestamo; // <--- Importamos el modelo
+use App\Models\TipoPrestamo;
 use App\Services\AmortizacionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,11 +23,14 @@ class PrestamoController extends Controller
 
     public function index(Request $request)
     {
-        // Tu lógica de búsqueda y paginación (asumo que la tienes del paso anterior, la dejo básica por ahora si no)
+        $buscar = $request->get('buscar');
         $query = Prestamo::with('socio.user');
 
-        if ($request->has('buscar') && $request->buscar != '') {
-             // ... tu lógica de busqueda ...
+        if ($buscar) {
+            $query->whereHas('socio.user', function($q) use ($buscar) {
+                $q->where('name', 'LIKE', "%$buscar%")
+                  ->orWhere('cedula', 'LIKE', "%$buscar%");
+            });
         }
 
         $prestamos = $query->orderBy('created_at', 'desc')->paginate(10);
@@ -36,13 +39,8 @@ class PrestamoController extends Controller
 
     public function create(Request $request)
     {
-        // 1. Lista de Socios
         $socios = User::where('tipo', 0)->get();
-
-        // 2. NUEVO: Cargamos los Tipos de Préstamo
         $tiposPrestamo = TipoPrestamo::all();
-
-        // 3. Verificamos si hay preselección desde el perfil
         $socioPreseleccionado = $request->query('user_id');
 
         return view('admin.prestamos.create', compact('socios', 'socioPreseleccionado', 'tiposPrestamo'));
@@ -81,37 +79,24 @@ class PrestamoController extends Controller
         $socio = \App\Models\Socio::where('user_id', $request->user_id)->firstOrFail();
 
         DB::transaction(function () use ($request, $socio) {
-
-            // 1. LÓGICA PARA GENERAR EL NÚMERO DE PRÉSTAMO (YYYY-###)
-
-            // A. Obtenemos el año de inicio (Ej: 2026)
             $anioInicio = \Carbon\Carbon::parse($request->fecha_inicio)->year;
-
-            // B. Buscamos el último préstamo registrado QUE TENGA ESE MISMO AÑO en su código
-            // Buscamos algo que empiece con "2026-"
             $ultimoPrestamo = Prestamo::where('numero_prestamo', 'LIKE', "$anioInicio-%")
                                     ->orderBy('id', 'desc')
                                     ->first();
 
-            // C. Determinamos la secuencia
             if ($ultimoPrestamo) {
-                // Si existe "2026-005", extraemos el "005", lo convertimos a número (5) y sumamos 1
                 $partes = explode('-', $ultimoPrestamo->numero_prestamo);
                 $secuencia = intval(end($partes)) + 1;
             } else {
-                // Si es el primero del año
                 $secuencia = 1;
             }
 
-            // D. Formateamos: Año + Guion + Numero rellenado con ceros a la izquierda (Ej: 2026-001)
             $codigoGenerado = $anioInicio . '-' . str_pad($secuencia, 3, '0', STR_PAD_LEFT);
 
-
-            // 2. CREAMOS EL PRÉSTAMO
             $prestamo = Prestamo::create([
                 'socio_id'         => $socio->id,
                 'tipo_prestamo_id' => $request->tipo_prestamo_id,
-                'numero_prestamo'  => $codigoGenerado, // <--- GUARDAMOS EL CÓDIGO
+                'numero_prestamo'  => $codigoGenerado,
                 'monto'            => $request->monto,
                 'tasa_interes'     => $request->tasa_interes,
                 'plazo'            => $request->plazo,
@@ -121,7 +106,6 @@ class PrestamoController extends Controller
                 'estado'           => 'activo'
             ]);
 
-            // 3. CALCULAR Y GUARDAR CUOTAS
             $tabla = $this->amortizacion->calcularCuotas(
                 $request->monto,
                 $request->tasa_interes,
@@ -142,29 +126,39 @@ class PrestamoController extends Controller
 
     public function misPrestamos()
     {
-        $prestamos = Auth::user()->prestamos()->latest()->get();
+        // Corregido: Obtenemos los préstamos a través de la relación del socio
+        $socio = Auth::user()->socio;
+        $prestamos = $socio ? $socio->prestamos()->with('tipoPrestamo')->latest()->get() : collect();
+
         return view('socio.prestamos.index', compact('prestamos'));
     }
 
     public function show($id)
     {
         $prestamo = Prestamo::with(['socio.user', 'cuotas', 'tipoPrestamo'])->findOrFail($id);
+
+        // Lógica inteligente: Si el usuario es tipo 0 (Socio), mostrar vista de socio
+        if (Auth::user()->tipo == 0) {
+            // Seguridad: Un socio no puede ver préstamos de otros
+            if ($prestamo->socio_id !== Auth::user()->socio->id) {
+                abort(403, 'No tienes permiso para ver este préstamo.');
+            }
+            return view('socio.prestamos.show', compact('prestamo'));
+        }
+
+        // Si es Admin (Tipo 2), mostrar vista de admin
         return view('admin.prestamos.show', compact('prestamo'));
     }
-    // --- EDICIÓN DE PRÉSTAMOS ---
 
     public function edit($id)
     {
-        // Cargamos el préstamo y sus relaciones
         $prestamo = Prestamo::with('socio.user')->findOrFail($id);
         $tiposPrestamo = TipoPrestamo::all();
-
         return view('admin.prestamos.edit', compact('prestamo', 'tiposPrestamo'));
     }
 
     public function update(Request $request, $id)
     {
-        // 1. Validamos igual que en el store
         $request->validate([
             'tipo_prestamo_id' => 'required|exists:tipo_prestamos,id',
             'monto' => 'required|numeric|min:100',
@@ -175,26 +169,18 @@ class PrestamoController extends Controller
 
         $prestamo = Prestamo::findOrFail($id);
 
-        // 2. Transacción para asegurar integridad (Borrar y Crear)
         DB::transaction(function () use ($request, $prestamo) {
-
-            // A. Actualizamos la Cabecera
             $prestamo->update([
                 'tipo_prestamo_id' => $request->tipo_prestamo_id,
                 'monto'            => $request->monto,
                 'tasa_interes'     => $request->tasa_interes,
                 'plazo'            => $request->plazo,
                 'fecha_inicio'     => $request->fecha_inicio,
-                // OJO: Al editar, reseteamos el saldo al nuevo monto (asumiendo re-estructuración)
-                // Si solo quieres corregir un error de dedo y ya pagaron cuotas, la lógica sería más compleja.
-                // Aquí asumimos que es una CORRECCIÓN de un préstamo mal creado.
                 'saldo_capital'    => $request->monto,
             ]);
 
-            // B. ELIMINAMOS LAS CUOTAS VIEJAS (Porque el cálculo cambió)
             $prestamo->cuotas()->delete();
 
-            // C. RECALCULAMOS LA TABLA NUEVA
             $tabla = $this->amortizacion->calcularCuotas(
                 $request->monto,
                 $request->tasa_interes,
@@ -202,46 +188,45 @@ class PrestamoController extends Controller
                 $request->fecha_inicio
             );
 
-            // D. GUARDAMOS LAS NUEVAS CUOTAS
             foreach ($tabla as $fila) {
                 $prestamo->cuotas()->create($fila);
             }
         });
 
         return redirect()->route('admin.socios.show', $prestamo->socio_id)
-            ->with('success', 'Préstamo actualizado y tabla regenerada correctamente.');
+            ->with('success', 'Préstamo actualizado y tabla regenerada.');
     }
+
     public function reporteVencimientos()
+    {
+        $prestamosVenciendo = Prestamo::with(['socio.user', 'tipoPrestamo', 'cuotas'])
+            ->where('estado', 'activo')
+            ->get()
+            ->filter(function($prestamo) {
+                $ultimaCuota = $prestamo->cuotas->last();
+                if (!$ultimaCuota) return false;
+                $fechaVencimiento = \Carbon\Carbon::parse($ultimaCuota->fecha_vencimiento);
+                return $fechaVencimiento->isBetween(now(), now()->addDays(45));
+            })
+            ->groupBy(function($item) {
+                return $item->tipoPrestamo->nombre ?? 'Otros';
+            });
+
+        return view('admin.prestamos.vencimientos', compact('prestamosVenciendo'));
+    }
+
+    public function reporteMorosidad()
+    {
+        $cuotasVencidas = \App\Models\Cuota::with(['prestamo.socio.user'])
+            ->where('estado', 'pendiente')
+            ->where('fecha_vencimiento', '<', now())
+            ->orderBy('fecha_vencimiento', 'asc')
+            ->get();
+
+        return view('admin.prestamos.morosidad', compact('cuotasVencidas'));
+    }
+    public function calculadoraSocio()
 {
-    // Buscamos préstamos activos
-    $prestamosVenciendo = Prestamo::with(['socio.user', 'tipoPrestamo', 'cuotas'])
-        ->where('estado', 'activo')
-        ->get()
-        ->filter(function($prestamo) {
-            // Obtenemos la fecha de la última cuota
-            $ultimaCuota = $prestamo->cuotas->last();
-            if (!$ultimaCuota) return false;
-
-            // Filtramos los que vencen en los próximos 45 días
-            $fechaVencimiento = \Carbon\Carbon::parse($ultimaCuota->fecha_vencimiento);
-            return $fechaVencimiento->isBetween(now(), now()->addDays(45));
-        })
-        ->groupBy(function($item) {
-            // Agrupamos por el nombre del tipo de préstamo
-            return $item->tipoPrestamo->nombre ?? 'Otros';
-        });
-
-    return view('admin.prestamos.vencimientos', compact('prestamosVenciendo'));
-}
-public function reporteMorosidad()
-{
-    // Buscamos cuotas vencidas no pagadas con su socio y préstamo
-    $cuotasVencidas = \App\Models\Cuota::with(['prestamo.socio.user'])
-        ->where('estado', 'pendiente')
-        ->where('fecha_vencimiento', '<', now())
-        ->orderBy('fecha_vencimiento', 'asc')
-        ->get();
-
-    return view('admin.prestamos.morosidad', compact('cuotasVencidas'));
+    return view('socio.calculadora');
 }
 }

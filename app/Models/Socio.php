@@ -12,18 +12,18 @@ class Socio extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
+protected $fillable = [
     'user_id',
     'nombres',
     'apellidos',
     'telefono',
     'direccion',
-    'sueldo',
-    'lugar_trabajo',
-    'tipo_contrato', // <--- DEBE ESTAR AQUÍ
+    'activo',
     'ahorro_total',
+    'sueldo',
     'salario',
-    'activo'
+    'lugar_trabajo',
+    'tipo_contrato'
 ];
 
     // Relación con el usuario

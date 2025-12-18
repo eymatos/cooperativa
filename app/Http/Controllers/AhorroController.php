@@ -22,7 +22,6 @@ class AhorroController extends Controller
         $socio = $user->socio;
 
         // Cargar las cuentas del socio con su tipo
-        // Si no existen, la colección estará vacía (luego migraremos la data)
         $cuentas = $socio->cuentas()->with('type')->get();
 
         // Obtenemos los tipos de ahorro por si queremos mostrar opciones disponibles
@@ -30,6 +29,7 @@ class AhorroController extends Controller
 
         return view('ahorros.index', compact('socio', 'cuentas', 'tiposDisponibles'));
     }
+
     // Mostrar el historial de una cuenta específica
     public function show($id)
     {
@@ -42,7 +42,7 @@ class AhorroController extends Controller
             abort(403, 'No tienes permiso para ver esta cuenta.');
         }
 
+        // Ajustado para que busque en la carpeta ahorros
         return view('ahorros.show', compact('cuenta'));
     }
-    // Aquí luego agregaremos métodos para 'deposit' (Aportar) y 'withdraw' (Retirar)
 }

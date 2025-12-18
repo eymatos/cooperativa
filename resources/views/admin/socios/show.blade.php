@@ -118,7 +118,7 @@
                 {{-- COLUMNA DERECHA: DESGLOSE DE DESCUENTOS Y OPERACIONES --}}
                 <div class="md:col-span-2 space-y-6">
 
-                    {{-- DETALLE DE DESCUENTOS DE NÓMINA --}}
+                    {{-- DETALLE DE DESCUENTOS DE NÓMINA (CORREGIDO Y DESGLOSADO) --}}
                     <div class="bg-gray-900 text-white p-6 rounded-2xl shadow-xl overflow-hidden relative">
                         <div class="absolute top-0 right-0 p-4 opacity-10 text-6xl">📝</div>
 
@@ -127,7 +127,7 @@
                                 <h3 class="text-lg font-black text-white flex items-center gap-2 uppercase tracking-wide">
                                     <span class="p-1 bg-orange-500 rounded text-xs">📊</span> Proyección de Descuentos
                                 </h3>
-                                <p class="text-[11px] text-gray-400 italic">Cálculo proyectado para la próxima nómina del socio.</p>
+                                <p class="text-[11px] text-gray-400 italic">Desglose detallado de deducciones automáticas.</p>
                             </div>
                             <div class="text-right mt-3 md:mt-0">
                                 <span class="text-3xl font-black text-orange-400 font-mono">RD$ {{ number_format($compromisosActuales, 2) }}</span>
@@ -135,31 +135,36 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-800 pt-4">
-                            <div class="flex items-center justify-between bg-gray-800/50 p-3 rounded-lg border border-gray-700">
-                                <div>
-                                    <span class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Por Préstamos</span>
-                                    @php
-                                        $cuotasPrestamos = $compromisosActuales - ($cuentaAportacion->recurring_amount + $cuentaVoluntario->recurring_amount);
-                                    @endphp
-                                    <span class="text-lg font-bold text-white font-mono leading-none">RD$ {{ number_format($cuotasPrestamos, 2) }}</span>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-gray-800 pt-4">
+
+                            {{-- Bloque: Ahorro Normal --}}
+                            <div class="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+                                <span class="block text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1 italic">Ahorro Normal</span>
+                                <div class="flex items-baseline gap-2">
+                                    <span class="text-lg font-bold text-white font-mono">RD$ {{ number_format($cuentaAportacion->recurring_amount, 2) }}</span>
                                 </div>
-                                <span class="text-xs font-bold text-gray-500 px-2 py-1 bg-gray-900 rounded border border-gray-700">
-                                    {{ round(($cuotasPrestamos / max($salario, 1)) * 100) }}% Salario
-                                </span>
+                                <p class="text-[9px] text-green-500 font-bold uppercase mt-1">Patrimonio (AP)</p>
                             </div>
 
-                            <div class="flex items-center justify-between bg-gray-800/50 p-3 rounded-lg border border-gray-700">
-                                <div>
-                                    <span class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Por Ahorro Fijo</span>
-                                    @php
-                                        $ahorrosFijos = $cuentaAportacion->recurring_amount + $cuentaVoluntario->recurring_amount;
-                                    @endphp
-                                    <span class="text-lg font-bold text-white font-mono leading-none">RD$ {{ number_format($ahorrosFijos, 2) }}</span>
+                            {{-- Bloque: Ahorro Retirable --}}
+                            <div class="bg-gray-800/50 p-3 rounded-lg border border-gray-700 {{ $cuentaVoluntario->recurring_amount <= 0 ? 'opacity-40' : '' }}">
+                                <span class="block text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1 italic">Ahorro Retirable</span>
+                                <div class="flex items-baseline gap-2">
+                                    <span class="text-lg font-bold text-white font-mono">RD$ {{ number_format($cuentaVoluntario->recurring_amount, 2) }}</span>
                                 </div>
-                                <span class="text-xs font-bold text-gray-500 px-2 py-1 bg-gray-900 rounded border border-gray-700">
-                                    {{ round(($ahorrosFijos / max($salario, 1)) * 100) }}% Salario
-                                </span>
+                                <p class="text-[9px] text-yellow-500 font-bold uppercase mt-1">Disponible (RT)</p>
+                            </div>
+
+                            {{-- Bloque: Préstamos --}}
+                            @php
+                                $cuotasPrestamosCalculadas = $compromisosActuales - ($cuentaAportacion->recurring_amount + $cuentaVoluntario->recurring_amount);
+                            @endphp
+                            <div class="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+                                <span class="block text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1 italic">Cuotas Préstamos</span>
+                                <div class="flex items-baseline gap-2">
+                                    <span class="text-lg font-bold text-red-400 font-mono">RD$ {{ number_format($cuotasPrestamosCalculadas, 2) }}</span>
+                                </div>
+                                <p class="text-[9px] text-red-500/70 font-bold uppercase mt-1">Amortización</p>
                             </div>
                         </div>
 
@@ -168,7 +173,6 @@
                             <span class="text-2xl animate-bounce">🚨</span>
                             <p class="text-xs font-bold text-red-200 uppercase tracking-tighter">
                                 ¡Peligro! El socio ha superado el límite del 40% de descuento.
-                                No se recomienda aprobar más cargos a nómina.
                             </p>
                         </div>
                         @endif
@@ -303,10 +307,10 @@
                                         <button onclick="abrirModalCuota('{{ $cuentaVoluntario->id }}', '{{ $cuentaVoluntario->recurring_amount }}', 'Retirable')" class="text-yellow-600 hover:scale-125 transition">✏️</button>
                                     </div>
                                 </div>
-                                <div class="bg-white text-gray-900">
-                                    <table class="min-w-full text-xs text-gray-900">
+                                <div class="bg-white">
+                                    <table class="min-w-full text-xs">
                                         <thead class="bg-gray-50 border-b border-gray-100 font-black text-[9px] text-gray-400 uppercase">
-                                            <tr><th class="px-4 py-2 text-left tracking-tighter">Mes</th><th class="px-4 py-2 text-right">Aporte</th><th class="px-4 py-2 text-right text-red-400 italic font-black text-gray-900">Retiro</th></tr>
+                                            <tr><th class="px-4 py-2 text-left tracking-tighter">Mes</th><th class="px-4 py-2 text-right">Aporte</th><th class="px-4 py-2 text-right text-red-400 italic">Retiro</th></tr>
                                         </thead>
                                         <tbody class="divide-y divide-gray-50">
                                             @foreach($matrizVoluntario as $mesNum => $data)
@@ -336,7 +340,7 @@
         </div>
     </div>
 
-    {{-- MODAL CUOTA --}}
+    {{-- MODALES Y SCRIPTS (IGUAL QUE TU ARCHIVO ORIGINAL) --}}
     <div id="modal-cuota" class="fixed inset-0 bg-gray-900 bg-opacity-80 hidden z-50 flex items-center justify-center backdrop-blur-sm">
         <div class="bg-white rounded-3xl shadow-2xl w-96 p-8">
             <h3 class="text-xl font-black text-gray-800 mb-6 flex items-center gap-2 uppercase tracking-wide border-b pb-3" id="modal-titulo-texto">Editar Cuota</h3>
@@ -358,7 +362,6 @@
         </div>
     </div>
 
-    {{-- MODAL GESTOR TRANSACCIONES --}}
     <div id="modal-gestor" class="fixed inset-0 bg-gray-900 bg-opacity-80 hidden z-50 flex items-center justify-center backdrop-blur-md">
         <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl p-8 mx-4 overflow-hidden relative border border-gray-100">
             <div class="flex justify-between items-center mb-8 border-b border-gray-50 pb-4">
@@ -368,12 +371,9 @@
                 </div>
                 <button onclick="cerrarGestor()" class="w-10 h-10 flex items-center justify-center bg-gray-50 text-gray-400 hover:text-red-500 rounded-2xl hover:bg-red-50 transition-all text-2xl font-black">&times;</button>
             </div>
-
             <div id="lista-transacciones" class="mb-8 space-y-4 max-h-56 overflow-y-auto pr-2 custom-scrollbar border-b border-dashed border-gray-100 pb-6"></div>
-
             <div class="bg-indigo-50/50 p-6 rounded-[2rem] border border-indigo-100 shadow-inner">
                 <h4 class="text-[11px] font-black text-indigo-400 mb-4 uppercase tracking-[0.2em] italic" id="form-titulo">➕ Registrar Nueva Transacción</h4>
-
                 <form id="form-transaccion" method="POST" action="{{ route('admin.ahorros.transaction.store') }}">
                     @csrf
                     <input type="hidden" name="_method" id="form-method" value="POST">
@@ -469,7 +469,6 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 20px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e0; }
-
         input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </x-app-layout>

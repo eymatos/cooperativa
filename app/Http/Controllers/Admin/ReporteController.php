@@ -40,22 +40,19 @@ public function utilidades()
 }
 public function proyeccion()
 {
-    // Suma de (capital + interes) de cuotas pendientes para los próximos 30 días
+    // 1. SUMA TOTAL: Todo lo que diga "pendiente" en la base de datos (Sin filtro de fecha)
     $proxima30dias = \App\Models\Cuota::where('estado', 'pendiente')
-        ->whereBetween('fecha_vencimiento', [now(), now()->addDays(30)])
-        ->sum(\DB::raw('capital + interes'));
+        ->sum('monto_total');
 
-    // Suma de (capital + interes) de cuotas pendientes de 31 a 60 días
-    $proxima60dias = \App\Models\Cuota::where('estado', 'pendiente')
-        ->whereBetween('fecha_vencimiento', [now()->addDays(31), now()->addDays(60)])
-        ->sum(\DB::raw('capital + interes'));
+    // 2. SUMA RECAUDADA: Todo lo que ya se cobró (Histórico)
+    $proxima60dias = \App\Models\Cuota::where('estado', 'pagado')
+        ->sum('monto_total');
 
-    // Opcional: Obtener los próximos 5 socios que deben pagar para mostrar en una lista
+    // 3. LISTADO: Las 50 cuotas pendientes más próximas a vencer
     $proximosCobros = \App\Models\Cuota::with(['prestamo.socio.user'])
         ->where('estado', 'pendiente')
-        ->where('fecha_vencimiento', '>=', now())
         ->orderBy('fecha_vencimiento', 'asc')
-        ->limit(5)
+        ->limit(50)
         ->get();
 
     return view('admin.reportes.proyeccion', compact('proxima30dias', 'proxima60dias', 'proximosCobros'));
@@ -74,35 +71,29 @@ public function concentracion()
 
     return view('admin.reportes.concentracion', compact('labels', 'valores', 'datosCartera'));
 }
-public function ahorrosPasivos()
+public function ahorros()
 {
-    // Obtenemos los balances sumados usando Eloquent y sus relaciones
-    // Esto evita errores de nombres de tablas manuales
-    $distribucionAhorros = \App\Models\SavingsAccount::with('type')
-        ->get()
-        ->groupBy(function($account) {
-            return $account->type->name ?? 'Sin Tipo';
-        })
-        ->map(function ($group) {
-            return (object) [
-                'tipo' => $group->first()->type->name ?? 'Sin Tipo',
-                'total' => $group->sum('balance')
-            ];
-        });
+    // 1. Obtenemos la distribución agrupada por el nombre del tipo de ahorro
+    $distribucionAhorros = \App\Models\SavingsAccount::join('saving_types', 'savings_accounts.saving_type_id', '=', 'saving_types.id')
+        ->selectRaw('saving_types.name as tipo, SUM(savings_accounts.balance) as total')
+        ->groupBy('saving_types.name')
+        ->get();
 
-    // Los 10 socios con más ahorros acumulados
-    $topAhorrantes = \App\Models\Socio::with(['user', 'cuentas'])
-        ->get()
-        ->map(function ($socio) {
-            $socio->cuentas_sum_balance = $socio->cuentas->sum('balance');
-            return $socio;
-        })
-        ->sortByDesc('cuentas_sum_balance')
-        ->take(10);
+    // 2. Los 10 socios con más ahorros acumulados (Consultando directo a la BD para mejor rendimiento)
+    $topAhorrantes = \App\Models\Socio::with(['user'])
+        ->withSum('cuentas as cuentas_sum_balance', 'balance')
+        ->orderBy('cuentas_sum_balance', 'desc')
+        ->limit(10)
+        ->get();
 
     $totalGeneralAhorros = $distribucionAhorros->sum('total');
 
-    return view('admin.reportes.ahorros_pasivos', compact('distribucionAhorros', 'topAhorrantes', 'totalGeneralAhorros'));
+    // Retornamos la vista (Asegúrate de que el nombre del archivo sea exacto)
+    return view('admin.reportes.ahorros_pasivos', compact(
+        'distribucionAhorros',
+        'topAhorrantes',
+        'totalGeneralAhorros'
+    ));
 }
 // app/Http/Controllers/Admin/ReporteController.php
 

@@ -33,7 +33,8 @@
 
                             <div class="border-t pt-4 flex justify-between items-center">
                                 <span class="text-xs text-gray-400">Código: {{ $cuenta->type->code }}</span>
-                                <a href="{{ route('ahorros.show', $cuenta->id) }}" class="text-indigo-600 hover:text-indigo-900 text-sm font-semibold">
+                                {{-- RUTA CORREGIDA CON PREFIJO socio. --}}
+                                <a href="{{ route('socio.ahorros.show', $cuenta->id) }}" class="text-indigo-600 hover:text-indigo-900 text-sm font-semibold">
                                     Ver Movimientos →
                                 </a>
                             </div>

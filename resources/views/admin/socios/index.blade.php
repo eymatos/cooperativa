@@ -30,61 +30,83 @@
                                 <th class="px-2 py-3 text-right text-orange-600">Ahorro Retirable</th>
                                 <th class="px-4 py-3 text-center">Estado</th>
                                 <th class="px-4 py-3 text-center">Acción</th>
-
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
                             @foreach($socios as $u)
-                           @php
-                                // Buscamos la cuenta de Aportaciones (Acepta 'APO' o 'aportacion')
-                                $cAportacion = $u->socio->cuentas->first(function($c) {
-                                    $codigo = trim(strtolower($c->type->code));
-                                    return $codigo === 'aportacion' || $codigo === 'apo';
-                                });
+                                @php
+                                    // Blindaje: Buscamos cuentas solo si el socio existe
+                                    $cAportacion = null;
+                                    $cVoluntario = null;
 
-                                // Buscamos la cuenta Voluntaria/Retirable (Acepta 'RET' o 'voluntario')
-                                $cVoluntario = $u->socio->cuentas->first(function($c) {
-                                    $codigo = trim(strtolower($c->type->code));
-                                    return $codigo === 'voluntario' || $codigo === 'ret';
-                                });
-                            @endphp
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-4">
-                                    <div class="font-bold text-gray-900">{{ $u->socio->nombres ?? $u->name }} {{ $u->socio->apellidos ?? '' }}</div>
-                                    <div class="text-gray-500 italic">ID: {{ $u->cedula }}</div>
-                                </td>
+                                    if ($u->socio && $u->socio->cuentas) {
+                                        // Buscamos la cuenta de Aportaciones
+                                        $cAportacion = $u->socio->cuentas->first(function($c) {
+                                            $codigo = trim(strtolower($c->type->code ?? ''));
+                                            return $codigo === 'aportacion' || $codigo === 'apo';
+                                        });
 
-                                <td class="px-4 py-4 text-gray-600">
-                                    {{ $u->created_at->format('d/m/Y') }}
-                                </td>
+                                        // Buscamos la cuenta Voluntaria/Retirable
+                                        $cVoluntario = $u->socio->cuentas->first(function($c) {
+                                            $codigo = trim(strtolower($c->type->code ?? ''));
+                                            return $codigo === 'voluntario' || $codigo === 'ret';
+                                        });
+                                    }
+                                @endphp
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-4">
+                                        {{-- Blindaje con nullsafe --}}
+                                        <div class="font-bold text-gray-900">{{ $u->socio?->nombres ?? $u->name }} {{ $u->socio?->apellidos ?? '' }}</div>
+                                        <div class="text-gray-500 italic">ID: {{ $u->cedula }}</div>
+                                    </td>
 
-                                <td class="px-2 py-4 text-right">
-                                    <div class="font-bold text-blue-700">RD$ {{ number_format($cAportacion->balance ?? 0, 2) }}</div>
-                                    <div class="text-[10px] text-gray-400 font-semibold uppercase">Mensual: RD$ {{ number_format($cAportacion->recurring_amount ?? 0, 2) }}</div>
-                                </td>
+                                    <td class="px-4 py-4 text-gray-600">
+                                        {{ $u->created_at->format('d/m/Y') }}
+                                    </td>
 
-                                <td class="px-2 py-4 text-right">
-                                    <div class="font-bold text-orange-700">RD$ {{ number_format($cVoluntario->balance ?? 0, 2) }}</div>
-                                    <div class="text-[10px] text-gray-400 font-semibold uppercase">Mensual: RD$ {{ number_format($cVoluntario->recurring_amount ?? 0, 2) }}</div>
-                                </td>
-                                <td class="px-4 py-4 text-center">
-                                    <form action="{{ route('admin.socios.toggle_status', $u->socio->id) }}" method="POST">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" class="px-3 py-1 rounded-full text-[10px] font-bold {{ $u->socio->activo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
-                                            {{ $u->socio->activo ? 'ACTIVO' : 'INACTIVO' }}
-                                        </button>
-                                    </form>
-                                </td>
-                                <td class="px-4 py-4 text-center">
-                                    @if($u->socio)
-                                        <a href="{{ route('admin.socios.show', $u->socio->id) }}"
-                                           class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-200 text-[11px] font-extrabold transition">
-                                            PERFIL 360°
-                                        </a>
-                                    @endif
-                                </td>
-                            </tr>
+                                    <td class="px-2 py-4 text-right">
+                                        <div class="font-bold text-blue-700">RD$ {{ number_format($cAportacion->balance ?? 0, 2) }}</div>
+                                        <div class="text-[10px] text-gray-400 font-semibold uppercase">Mensual: RD$ {{ number_format($cAportacion->recurring_amount ?? 0, 2) }}</div>
+                                    </td>
+
+                                    <td class="px-2 py-4 text-right">
+                                        <div class="font-bold text-orange-700">RD$ {{ number_format($cVoluntario->balance ?? 0, 2) }}</div>
+                                        <div class="text-[10px] text-gray-400 font-semibold uppercase">Mensual: RD$ {{ number_format($cVoluntario->recurring_amount ?? 0, 2) }}</div>
+                                    </td>
+
+                                    <td class="px-4 py-4 text-center">
+                                        @if($u->socio)
+                                            <form action="{{ route('admin.socios.toggle_status', $u->socio->id) }}" method="POST">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" class="px-3 py-1 rounded-full text-[10px] font-bold {{ $u->socio->activo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                                                    {{ $u->socio->activo ? 'ACTIVO' : 'INACTIVO' }}
+                                                </button>
+                                            </form>
+                                        @else
+                                            <span class="px-3 py-1 rounded-full text-[10px] font-bold bg-gray-100 text-gray-400 italic">SIN PERFIL</span>
+                                        @endif
+                                    </td>
+
+                                    <td class="px-4 py-4 text-center flex justify-center gap-2">
+                                        @if($u->socio)
+                                            <a href="{{ route('admin.socios.show', $u->socio->id) }}"
+                                            class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-200 text-[11px] font-extrabold transition">
+                                                PERFIL 360°
+                                            </a>
+                                        @else
+                                            {{-- Botón para borrar usuarios incompletos y permitir reintentar la solicitud --}}
+
+                                        <form action="{{ route('admin.socios.limpiar', $u->id) }}" method="POST" onsubmit="return confirm('¿Eliminar registro y resetear solicitud para reintentar?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="bg-red-100 text-red-700 px-3 py-1 rounded-full hover:bg-red-200 text-[11px] font-extrabold transition uppercase">
+                                                Eliminar y Reintentar
+                                            </button>
+                                        </form>
+                                        @endif
+                                    </td>
+                                </tr>
                             @endforeach
                         </tbody>
                     </table>

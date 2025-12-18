@@ -8,23 +8,39 @@ use App\Http\Controllers\PagoController;
 use App\Http\Controllers\AhorroController;
 use App\Http\Controllers\Admin\ReporteController;
 use App\Http\Controllers\SocioController;
-use App\Http\Controllers\AdminController;
+use App\Http\Controllers\SolicitudController;
 use App\Exports\NominaExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 /* --------------------------------------------------------------------------
-   RUTAS PÚBLICAS
+   RUTAS PÚBLICAS (Visitantes y Aspirantes)
 -------------------------------------------------------------------------- */
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
+Route::get('/quienes-somos', function () {
+    return view('quienes-somos');
+})->name('quienes-somos');
+
+// Formulario de inscripción público para no socios
+Route::get('/inscripcion', [SocioController::class, 'formulariosSocio'])->name('formularios.publicos');
+
+// Rutas de Autenticación
 Route::get('/login', [LoginController::class, 'show'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.post');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
+// Ruta para guardar solicitudes (tanto públicas como privadas)
+Route::post('/solicitudes/guardar', [SolicitudController::class, 'store'])->name('solicitudes.store');
+// En web.php
+Route::get('/formularios/inscripcion', function () {
+    // Detectamos si es público o si el socio está logueado
+    return view('socio.formularios.inscripcion', ['publico' => !auth()->check()]);
+})->name('socio.formularios.inscripcion');
+
 /* --------------------------------------------------------------------------
-   RUTAS GENERALES (Middleware auth)
+   RUTAS PROTEGIDAS (Requieren Login)
 -------------------------------------------------------------------------- */
 Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(function () {
 
@@ -39,11 +55,18 @@ Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(fun
        AREA DE SOCIOS (Tipo 0)
     -------------------------------------------------------------------------- */
     Route::prefix('socio')->name('socio.')->group(function () {
-        Route::get('/', function () { return view('socio.dashboard'); })->name('dashboard');
+        Route::get('/', [SocioController::class, 'dashboardSocio'])->name('dashboard');
+        Route::get('/calculadora', [PrestamoController::class, 'calculadoraSocio'])->name('calculadora');
+        Route::get('/perfil', [SocioController::class, 'perfilSocio'])->name('perfil');
+        Route::post('/perfil/update', [SocioController::class, 'updatePerfilSocio'])->name('perfil.update');
+
         Route::get('/mis-ahorros', [AhorroController::class, 'index'])->name('ahorros.index');
         Route::get('/mis-ahorros/{id}', [AhorroController::class, 'show'])->name('ahorros.show');
         Route::get('/mis-prestamos', [PrestamoController::class, 'misPrestamos'])->name('prestamos.mis_prestamos');
         Route::get('/mis-prestamos/{prestamo}', [PrestamoController::class, 'show'])->name('prestamos.show_socio');
+
+        // Centro de servicios digitales para el socio
+        Route::get('/formularios', [SocioController::class, 'formulariosSocio'])->name('formularios');
     });
 
     /* --------------------------------------------------------------------------
@@ -51,7 +74,7 @@ Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(fun
     -------------------------------------------------------------------------- */
     Route::prefix('admin')->name('admin.')->group(function () {
 
-        // Dashboard
+        // Dashboard Principal
         Route::get('/', [SocioController::class, 'adminDashboard'])->name('dashboard');
 
         // Gestión de Socios y Préstamos
@@ -59,6 +82,9 @@ Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(fun
         Route::resource('prestamos', PrestamoController::class);
         Route::patch('/socios/{socio}/toggle-status', [SocioController::class, 'toggleStatus'])->name('socios.toggle_status');
         Route::get('socios/{socio}/prestamos/historial-pagados', [SocioController::class, 'showHistorialPrestamos'])->name('socios.historial.prestamos');
+
+        // Gestión de Solicitudes Digitales
+        Route::get('/solicitudes', [SolicitudController::class, 'indexAdmin'])->name('solicitudes.index');
 
         // Caja y Ahorros
         Route::get('/prestamos/{prestamo}/pagar', [PagoController::class, 'create'])->name('pagos.create');
@@ -77,19 +103,24 @@ Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(fun
         Route::get('/reportes/concentracion', [ReporteController::class, 'concentracion'])->name('reportes.concentracion');
         Route::get('/reportes/ahorros-pasivos', [ReporteController::class, 'ahorros'])->name('reportes.ahorros');
         Route::get('/reportes/informe-mensual', [ReporteController::class, 'informeMensual'])->name('reportes.mensual');
-
-        // NUEVAS RUTAS DE AUDITORÍA Y VARIACIÓN
         Route::get('/reportes/variacion', [SocioController::class, 'variacionNomina'])->name('reportes.variacion');
-        // Busca esta línea y cámbiala:
         Route::get('/logs-auditoria', [SocioController::class, 'logs'])->name('logs.index');
 
-        // Exportación Nómina
+        // Exportación de Nómina
         Route::get('/exportar-nomina/{tipo}', function ($tipo) {
             $nombre = "Nomina_" . ucfirst($tipo) . "_" . now()->format('m_Y') . ".xlsx";
             return Excel::download(new NominaExport($tipo), $nombre);
         })->name('reportes.nomina');
 
         Route::get('/mi-perfil', [SocioController::class, 'miPerfilSocio'])->name('perfil.propio');
-    });
+        // ESTA ES LA LÍNEA QUE DEBES AGREGAR:
+Route::get('/solicitudes/{id}', [SolicitudController::class, 'showAdmin'])->name('solicitudes.show');
+// Dentro de Route::prefix('admin')->name('admin.')->group(function () { ...
 
-}); // Cierre del middleware auth principal
+Route::patch('/solicitudes/{id}/estado', [SolicitudController::class, 'updateEstado'])->name('solicitudes.estado');
+Route::get('/solicitudes/{id}/descargar', [SolicitudController::class, 'descargarPdf'])->name('solicitudes.descargar');
+    });
+// Cambiamos el controlador a SocioController y el método a destroyUser
+Route::delete('/admin/socios/limpiar-usuario/{id}', [App\Http\Controllers\SocioController::class, 'destroyUser'])->name('admin.socios.limpiar');
+
+});
