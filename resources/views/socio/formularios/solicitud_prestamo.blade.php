@@ -65,7 +65,7 @@
                     </section>
 
                     {{-- SECCIÓN 2: DATOS DEL GARANTE (Opcional) --}}
-                    <section class="bg-gray-50 p-6 rounded-[2rem] border border-gray-100">
+                    <section class="bg-gray-50 p-6 rounded-4xl border border-gray-100">
                         <div class="flex items-center gap-2 mb-6">
                             <span class="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center font-black italic">02</span>
                             <h4 class="font-black text-gray-800 uppercase italic tracking-tight">Información del Garante</h4>
@@ -86,7 +86,7 @@
                             <h4 class="font-black text-gray-800 uppercase italic tracking-tight">Autorización Legal</h4>
                         </div>
 
-                        <div class="p-6 bg-gray-900 rounded-[2rem] text-gray-300 text-xs leading-relaxed italic border-b-4 border-indigo-500">
+                        <div class="p-6 bg-gray-900 rounded-4xl text-gray-300 text-xs leading-relaxed italic border-b-4 border-indigo-500">
                             <p class="mb-4">
                                 Yo, <strong>{{ auth()->user()->name }}</strong>, autorizo formalmente a <strong>PROCONSUMIDOR</strong> a descontar de mi salario mensual la cuota resultante de este préstamo una vez sea aprobado.
                             </p>

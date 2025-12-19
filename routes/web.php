@@ -9,6 +9,7 @@ use App\Http\Controllers\AhorroController;
 use App\Http\Controllers\Admin\ReporteController;
 use App\Http\Controllers\SocioController;
 use App\Http\Controllers\SolicitudController;
+use App\Http\Controllers\Admin\ExcedenteController;
 use App\Exports\NominaExport;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -30,14 +31,14 @@ Route::get('/login', [LoginController::class, 'show'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.post');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-// Solicitudes
+// Solicitudes Públicas
 Route::post('/solicitudes/guardar', [SolicitudController::class, 'store'])->name('solicitudes.store');
 Route::get('/formularios/inscripcion', function () {
     return view('socio.formularios.inscripcion', ['publico' => !auth()->check()]);
 })->name('socio.formularios.inscripcion');
 
 /* --------------------------------------------------------------------------
-   RUTAS PROTEGIDAS
+   RUTAS PROTEGIDAS (AUTH)
 -------------------------------------------------------------------------- */
 Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(function () {
 
@@ -49,7 +50,7 @@ Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(fun
     Route::post('prestamos/simular', [PrestamoController::class, 'simular'])->name('prestamos.simular');
 
     /* --------------------------------------------------------------------------
-       AREA DE SOCIOS (Prefijo: socio / Nombre: socio.)
+        AREA DE SOCIOS (Prefijo: socio / Nombre: socio.)
     -------------------------------------------------------------------------- */
     Route::prefix('socio')->name('socio.')->group(function () {
         Route::get('/', [SocioController::class, 'dashboardSocio'])->name('dashboard');
@@ -62,53 +63,37 @@ Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(fun
         Route::get('/mis-prestamos', [PrestamoController::class, 'misPrestamos'])->name('prestamos.mis_prestamos');
         Route::get('/mis-prestamos/{prestamo}', [PrestamoController::class, 'show'])->name('prestamos.show_socio');
 
-        // Formularios
+        // Formularios Socio
         Route::get('/formularios', [SocioController::class, 'formulariosSocio'])->name('formularios');
-
-        // CORRECCIÓN AQUÍ: Quitamos el "socio/" de la URL porque ya está en el prefijo del grupo
-        Route::get('/formularios/autorizacion-ahorro', function () {
-            return view('socio.formularios.autorizacion_ahorro');
-        })->name('formularios.ahorro');
-        Route::get('/formularios/inscripcion-ahorro-retirable', function () {
-            return view('socio.formularios.inscripcion_retirable');
-        })->name('formularios.ahorro_retirable');
-        // Busca en el grupo prefix('socio')->name('socio.') y asegúrate de que esté así:
-        Route::get('/formularios/gestion-ahorro-retirable', function () {
-            return view('socio.formularios.gestion_retirable');
-        })->name('formularios.gestion_ahorro_retirable'); // <-- SIN el prefijo 'socio.' aquí, porque el grupo ya se lo pone automáticamente
-        // Esta es la ruta que falta o tiene el nombre distinto
-        Route::get('/formularios/solicitud-prestamo', function () {
-            return view('socio.formularios.solicitud_prestamo');
-        })->name('formularios.prestamo');
-        Route::get('/formularios/suspension-ahorro-retirable', function () {
-        return view('socio.formularios.suspension_retirable');
-        })->name('formularios.suspension_ahorro_retirable');
-        Route::get('/formularios/retiro-ahorro-retirable', function () {
-            return view('socio.formularios.retiro_retirable');
-        })->name('formularios.retiro_retirable');
+        Route::get('/formularios/autorizacion-ahorro', function () { return view('socio.formularios.autorizacion_ahorro'); })->name('formularios.ahorro');
+        Route::get('/formularios/inscripcion-ahorro-retirable', function () { return view('socio.formularios.inscripcion_retirable'); })->name('formularios.ahorro_retirable');
+        Route::get('/formularios/gestion-ahorro-retirable', function () { return view('socio.formularios.gestion_retirable'); })->name('formularios.gestion_ahorro_retirable');
+        Route::get('/formularios/solicitud-prestamo', function () { return view('socio.formularios.solicitud_prestamo'); })->name('formularios.prestamo');
+        Route::get('/formularios/suspension-ahorro-retirable', function () { return view('socio.formularios.suspension_retirable'); })->name('formularios.suspension_ahorro_retirable');
+        Route::get('/formularios/retiro-ahorro-retirable', function () { return view('socio.formularios.retiro_retirable'); })->name('formularios.retiro_retirable');
     });
 
     /* --------------------------------------------------------------------------
-       AREA DE ADMINISTRADOR (Prefijo: admin / Nombre: admin.)
+        AREA DE ADMINISTRADOR (Prefijo: admin / Nombre: admin.)
     -------------------------------------------------------------------------- */
     Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::get('/', [SocioController::class, 'adminDashboard'])->name('dashboard');
 
-        // Socios y Préstamos
+        // Gestión de Socios y Préstamos
         Route::resource('socios', SocioController::class);
         Route::resource('prestamos', PrestamoController::class);
         Route::patch('/socios/{socio}/toggle-status', [SocioController::class, 'toggleStatus'])->name('socios.toggle_status');
         Route::get('socios/{socio}/prestamos/historial-pagados', [SocioController::class, 'showHistorialPrestamos'])->name('socios.historial.prestamos');
         Route::delete('/socios/limpiar-usuario/{id}', [SocioController::class, 'destroyUser'])->name('socios.limpiar');
 
-        // Solicitudes
+        // Solicitudes Administrativas
         Route::get('/solicitudes', [SolicitudController::class, 'indexAdmin'])->name('solicitudes.index');
         Route::get('/solicitudes/{id}', [SolicitudController::class, 'showAdmin'])->name('solicitudes.show');
         Route::patch('/solicitudes/{id}/estado', [SolicitudController::class, 'updateEstado'])->name('solicitudes.estado');
         Route::get('/solicitudes/{id}/descargar', [SolicitudController::class, 'descargarPdf'])->name('solicitudes.descargar');
 
-        // Caja y Ahorros
+        // Caja, Pagos y Transacciones
         Route::get('/prestamos/{prestamo}/pagar', [PagoController::class, 'create'])->name('pagos.create');
         Route::post('/prestamos/{prestamo}/pagar', [PagoController::class, 'store'])->name('pagos.store');
         Route::put('/cuentas/update-cuota/{id}', [SocioController::class, 'updateCuota'])->name('cuentas.update_cuota');
@@ -128,10 +113,23 @@ Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(fun
         Route::get('/reportes/variacion', [SocioController::class, 'variacionNomina'])->name('reportes.variacion');
         Route::get('/logs-auditoria', [SocioController::class, 'logs'])->name('logs.index');
 
-        // Nómina
+        // Nómina (Exportación Excel)
         Route::get('/exportar-nomina/{tipo}', function ($tipo) {
             $nombre = "Nomina_" . ucfirst($tipo) . "_" . now()->format('m_Y') . ".xlsx";
             return Excel::download(new NominaExport($tipo), $nombre);
         })->name('reportes.nomina');
+
+        // Módulo de Excedentes y Cierre Contable (Ley 127-64)
+Route::prefix('excedentes')->name('excedentes.')->group(function () {
+    // Informe Final y Cierre
+    Route::get('/informe', [ExcedenteController::class, 'informe'])->name('informe');
+    Route::get('/', [ExcedenteController::class, 'index'])->name('index');
+    Route::post('/', [ExcedenteController::class, 'store'])->name('store');
+
+    // Gestión de Gastos Operativos (Nómina, Banco, Eventos, etc.)
+    Route::get('/gastos', [ExcedenteController::class, 'gastosIndex'])->name('gastos.index');
+    Route::post('/gastos', [ExcedenteController::class, 'gastosStore'])->name('gastos.store');
+    Route::delete('/gastos/{gasto}', [ExcedenteController::class, 'gastosDestroy'])->name('gastos.destroy');
+});
     });
 });

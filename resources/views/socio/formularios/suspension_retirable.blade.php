@@ -1,13 +1,13 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-black text-xl text-gray-800 leading-tight uppercase italic tracking-tighter text-red-600">
+        <h2 class="font-black text-xl leading-tight uppercase italic tracking-tighter text-red-600">
             🚫 Suspensión de Ahorro Retirable
         </h2>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-xl rounded-[2rem] border border-gray-100 p-8 md:p-12 relative">
+            <div class="bg-white overflow-hidden shadow-xl rounded-4xl border border-gray-100 p-8 md:p-12 relative">
 
                 <div class="mb-8 border-b pb-6 text-center">
                     <h3 class="text-2xl font-black text-gray-900 uppercase italic">Solicitud de Suspensión</h3>

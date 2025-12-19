@@ -7,7 +7,7 @@
 
     <div class="py-12">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-xl rounded-[2rem] border border-gray-100 p-8 md:p-12">
+            <div class="bg-white overflow-hidden shadow-xl rounded-4xl border border-gray-100 p-8 md:p-12">
 
                 <div class="mb-8 border-b pb-6 text-center">
                     <h3 class="text-2xl font-black text-gray-900 uppercase italic">Autorización de Descuento</h3>

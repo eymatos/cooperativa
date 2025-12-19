@@ -15,19 +15,19 @@
 
             {{-- Resumen de Crédito --}}
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-b-4 border-indigo-500">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-b-4 border-indigo-500">
                     <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 leading-none">Monto Original</p>
                     <p class="text-xl font-black text-gray-800 font-mono italic">RD$ {{ number_format($prestamo->monto, 2) }}</p>
                 </div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-b-4 border-red-500">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-b-4 border-red-500">
                     <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 italic leading-none">Saldo Pendiente</p>
                     <p class="text-xl font-black text-red-600 font-mono italic">RD$ {{ number_format($prestamo->saldo_capital, 2) }}</p>
                 </div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-b-4 border-blue-500">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-b-4 border-blue-500">
                     <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 italic leading-none">Tipo de Préstamo</p>
                     <p class="text-lg font-black text-blue-600 uppercase italic leading-tight">{{ $prestamo->tipoPrestamo->nombre }}</p>
                 </div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-b-4 border-green-500">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-b-4 border-green-500">
                     <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 italic leading-none">Interés Mensual</p>
                     <p class="text-xl font-black text-green-600 font-mono italic">{{ number_format($prestamo->tasa_interes, 2) }}%</p>
                 </div>

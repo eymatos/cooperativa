@@ -35,7 +35,7 @@
 
             {{-- 1. INDICADORES DE INTELIGENCIA FINANCIERA --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-8 border-blue-600 relative overflow-hidden">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-8 relative overflow-hidden">
                     <div class="absolute top-0 right-0 p-4 opacity-5 text-6xl font-black">🏦</div>
                     <p class="text-[10px] uppercase font-black text-gray-400 tracking-[0.2em] mb-4">Ahorro Acumulado Total</p>
                     <h3 class="text-3xl font-black text-gray-800 font-mono">RD$ {{ number_format($totalAhorradoGlobal, 2) }}</h3>
@@ -49,7 +49,7 @@
                     <p class="text-[9px] text-indigo-300 mt-2 italic uppercase font-black">Basado en el balance de tus ahorros</p>
                 </div>
 
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-8 border-green-500 relative overflow-hidden">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-8 relative overflow-hidden">
                     <div class="absolute top-0 right-0 p-4 opacity-5 text-6xl font-black">💵</div>
                     <p class="text-[10px] uppercase font-black text-gray-400 tracking-[0.2em] mb-4">Margen de Descuento Libre</p>
                     <h3 class="text-3xl font-black text-green-700 font-mono">RD$ {{ number_format($capacidadDisponible, 2) }}</h3>
@@ -58,7 +58,7 @@
             </div>
 
             {{-- 2. MATRIZ DE AHORROS MENSUAL --}}
-            <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
+            <div class="bg-white p-8 rounded-4xl shadow-sm border border-gray-100">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h3 class="text-lg font-black text-gray-800 uppercase tracking-tighter flex items-center gap-2 italic font-sans">
                         <span class="p-2 bg-blue-50 rounded-xl text-blue-600 text-sm">📅</span> Seguimiento Mensual de Ahorros
@@ -179,7 +179,7 @@
             </div>
 
             {{-- 4. MIS COMPROMISOS (PRÉSTAMOS) --}}
-            <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
+            <div class="bg-white p-8 rounded-4xl shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between mb-8">
                     <h3 class="text-lg font-black text-gray-800 uppercase tracking-tighter flex items-center gap-2 italic">
                         <span class="p-2 bg-indigo-50 rounded-xl text-indigo-600 text-sm italic">📋</span> Mis Préstamos Vigentes
@@ -187,7 +187,7 @@
                 </div>
 
                 @if($prestamosActivos->isEmpty())
-                    <div class="flex flex-col items-center py-12 bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-200 italic font-sans">
+                    <div class="flex flex-col items-center py-12 bg-gray-50 rounded-4xl border-2 border-dashed border-gray-200 italic font-sans">
                         <span class="text-5xl mb-4 opacity-50">✨</span>
                         <p class="text-gray-400 font-black uppercase text-[10px] tracking-[0.3em]">No posees deudas vigentes</p>
                     </div>

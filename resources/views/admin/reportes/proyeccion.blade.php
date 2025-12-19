@@ -10,7 +10,7 @@
 
             {{-- RESUMEN GLOBAL --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-indigo-900 p-8 rounded-[2rem] text-white shadow-xl relative overflow-hidden">
+                <div class="bg-indigo-900 p-8 rounded-4xl text-white shadow-xl relative overflow-hidden">
                     <div class="absolute right-0 top-0 p-4 opacity-10 text-6xl">💰</div>
                     <span class="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-300 italic">Total por Cobrar (Pendiente)</span>
                     <p class="text-4xl font-black font-mono mt-2 text-white">
@@ -19,7 +19,7 @@
                     <p class="text-[10px] mt-2 opacity-60 italic">Suma de todas las cuotas pendientes en el sistema</p>
                 </div>
 
-                <div class="bg-green-600 p-8 rounded-[2rem] text-white shadow-xl relative overflow-hidden">
+                <div class="bg-green-600 p-8 rounded-4xl text-white shadow-xl relative overflow-hidden">
                     <div class="absolute right-0 top-0 p-4 opacity-10 text-6xl">✅</div>
                     <span class="text-[10px] font-black uppercase tracking-[0.3em] text-green-200 italic">Histórico Recaudado</span>
                     <p class="text-4xl font-black font-mono mt-2 text-white">

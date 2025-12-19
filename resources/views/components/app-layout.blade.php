@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <title>{{ config('app.name', 'Cooperativa') }}</title>
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,900&display=swap" rel="stylesheet" />
@@ -17,12 +17,19 @@
 
         <style>
             body { font-family: 'Figtree', sans-serif; }
+            /* Estilo para ocultar elementos en la impresión */
+            @media print {
+                .no-print { display: none !important; }
+                nav, header { display: none !important; }
+                body { background: white !important; }
+                .max-w-7xl { max-width: 100% !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+            }
         </style>
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100">
 
-            <nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
+            <nav x-data="{ open: false }" class="bg-white border-b border-gray-100 no-print">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex justify-between h-16">
                         <div class="flex">
@@ -54,6 +61,12 @@
                                         <a href="{{ route('admin.solicitudes.index') }}"
                                            class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('admin.solicitudes.*') ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-500' }} text-sm font-bold leading-5 hover:text-gray-700 hover:border-gray-300 focus:outline-none transition duration-150 ease-in-out uppercase tracking-wider">
                                             <i class="fa-solid fa-inbox mr-2 text-indigo-500"></i> Solicitudes
+                                        </a>
+
+                                        {{-- Enlace de Excedentes para Admin --}}
+                                        <a href="{{ route('admin.excedentes.informe') }}"
+                                        class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('admin.excedentes.*') ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-500' }} text-sm font-bold leading-5 hover:text-gray-700 hover:border-gray-300 focus:outline-none transition duration-150 ease-in-out uppercase tracking-wider ml-4">
+                                            <i class="fa-solid fa-coins mr-2 text-yellow-500"></i> Excedentes
                                         </a>
                                     @endif
                                 @endauth
@@ -128,7 +141,7 @@
             </nav>
 
             @if (isset($header))
-                <header class="bg-white shadow-sm border-b border-gray-100">
+                <header class="bg-white shadow-sm border-b border-gray-100 no-print">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>

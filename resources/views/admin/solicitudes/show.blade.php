@@ -36,7 +36,7 @@
             </div>
 {{-- Aviso Especial si es Autorización de Ahorro --}}
             @if($solicitud->tipo == 'autorizacion_ahorro')
-                <div class="bg-indigo-50 border-2 border-indigo-100 p-6 rounded-[2rem] flex items-center justify-between">
+                <div class="bg-indigo-50 border-2 border-indigo-100 p-6 rounded-4xl flex items-center justify-between">
                     <div>
                         <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1 italic">Monto a descontar solicitado:</p>
                         <p class="text-3xl font-black text-indigo-600 italic">RD$ {{ number_format($solicitud->datos['monto_ahorro'], 2) }}</p>

@@ -17,7 +17,7 @@
     <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0">
 
         <div class="mb-8 text-center">
-            <div class="inline-flex items-center justify-center w-20 h-20 bg-indigo-600 rounded-[2rem] shadow-xl shadow-indigo-100 mb-4 transform -rotate-6">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-indigo-600 rounded-4xl shadow-xl shadow-indigo-100 mb-4 transform -rotate-6">
                 <span class="text-white text-4xl font-black italic font-sans">C</span>
             </div>
             <h1 class="text-2xl font-black text-gray-800 uppercase tracking-tighter">Sistema Cooperativa</h1>
@@ -25,7 +25,7 @@
         </div>
 
         <div class="w-full sm:max-w-md px-8 py-10 bg-white shadow-2xl shadow-gray-200/50 rounded-[2.5rem] border border-gray-100 relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-orange-500"></div>
+            <div class="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-indigo-500 via-purple-500 to-orange-500"></div>
 
             <h2 class="text-xl font-black text-gray-800 mb-8 uppercase tracking-tight text-center italic">Ingreso al Portal</h2>
 
@@ -85,7 +85,7 @@
 
                 <div class="pt-4">
                     <button type="submit"
-                        class="w-full py-5 bg-gray-900 text-white rounded-[1.5rem] font-black uppercase tracking-widest text-xs hover:bg-indigo-600 shadow-xl shadow-indigo-100 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2 italic">
+                        class="w-full py-5 bg-gray-900 text-white rounded-3xl font-black uppercase tracking-widest text-xs hover:bg-indigo-600 shadow-xl shadow-indigo-100 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2 italic">
                         <i class="fa-solid fa-rocket mr-1"></i>
                         Entrar al Panel
                     </button>
