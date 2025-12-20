@@ -138,5 +138,8 @@ Route::post('/importar-socios', [App\Http\Controllers\Admin\ImportacionControlle
 // ... dentro de tu grupo de rutas admin ...
 Route::get('importar/historial', [HistorialAhorrosController::class, 'index'])->name('importar.historial');
     Route::post('importar/historial', [HistorialAhorrosController::class, 'store'])->name('importar.historial.store');
+// Rutas para el Importador de Préstamos
+Route::get('importar/prestamos', [App\Http\Controllers\Admin\ImportacionPrestamosController::class, 'index'])->name('importar.prestamos');
+Route::post('importar/prestamos', [App\Http\Controllers\Admin\ImportacionPrestamosController::class, 'store'])->name('importar.prestamos.store');
 });
 

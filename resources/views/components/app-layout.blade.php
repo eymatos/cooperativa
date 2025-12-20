@@ -69,15 +69,36 @@
                                             <i class="fa-solid fa-coins mr-2 text-yellow-500"></i> Excedentes
                                         </a>
 
-                                        {{-- NUEVO: Enlace de Importación para Admin --}}
-                                       <a href="{{ route('admin.importar.index') }}"
-                                           class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('admin.importar.*') ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-500' }} text-sm font-bold leading-5 hover:text-gray-700 hover:border-gray-300 focus:outline-none transition duration-150 ease-in-out uppercase tracking-wider ml-4">
-                                            <i class="fa-solid fa-file-import mr-2 text-green-500"></i> Importar Data
-                                        </a>
-                                       <a href="{{ route('admin.importar.historial') }}" class="...">
-                                            <i class="fa-solid fa-clock-rotate-left mr-2"></i>
-                                            <span>Migrar Historial</span>
-                                        </a>
+                                        {{-- Enlace de Importación (Socios) --}}
+                                        <a href="{{ route('admin.importar.index') }}"
+                                            class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('admin.importar.index') ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-500' }} text-sm font-bold leading-5 hover:text-gray-700 hover:border-gray-300 focus:outline-none transition duration-150 ease-in-out uppercase tracking-wider ml-4">
+                                             <i class="fa-solid fa-file-import mr-2 text-green-500"></i> Importar Socios
+                                         </a>
+
+                                        {{-- Dropdown Migración Histórica --}}
+                                        <div class="inline-flex items-center px-1 pt-1 relative" x-data="{ openMigrar: false }">
+                                            <button @click="openMigrar = !openMigrar" @click.away="openMigrar = false"
+                                                class="flex items-center gap-1 text-sm font-bold {{ request()->routeIs('admin.importar.historial') || request()->routeIs('admin.importar.prestamos') ? 'text-indigo-600' : 'text-gray-500' }} hover:text-gray-700 uppercase tracking-wider transition ml-4">
+                                                <i class="fa-solid fa-clock-rotate-left mr-2 opacity-70"></i> Migración
+                                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform" :class="openMigrar ? 'rotate-180' : ''"></i>
+                                            </button>
+
+                                            <div x-show="openMigrar"
+                                                 x-transition:enter="transition ease-out duration-200"
+                                                 x-transition:enter-start="opacity-0 scale-95"
+                                                 x-transition:enter-end="opacity-100 scale-100"
+                                                 style="display: none;"
+                                                 class="absolute top-full left-0 w-64 bg-white rounded-2xl shadow-2xl py-2 mt-2 border border-gray-100 z-50">
+
+                                                <a href="{{ route('admin.importar.historial') }}" class="block px-6 py-3 text-xs font-black text-gray-700 hover:bg-indigo-50 uppercase tracking-widest transition">
+                                                    <i class="fa-solid fa-piggy-bank mr-2 text-pink-500"></i> Migrar Ahorros
+                                                </a>
+
+                                                <a href="{{ route('admin.importar.prestamos') }}" class="block px-6 py-3 text-xs font-black text-gray-700 hover:bg-teal-50 uppercase tracking-widest transition border-t border-gray-50">
+                                                    <i class="fa-solid fa-hand-holding-dollar mr-2 text-teal-500"></i> Migrar Préstamos
+                                                </a>
+                                            </div>
+                                        </div>
                                     @endif
                                 @endauth
 
