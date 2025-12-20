@@ -77,46 +77,69 @@
             <div class="bg-indigo-700 p-8 rounded-[2.5rem] shadow-xl text-white relative">
                 <p class="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-4">Fondo Neto Repartible</p>
                 <h3 class="text-4xl font-black tracking-tighter mb-2">RD$ {{ number_format($excedenteNetoADistribuir, 2) }}</h3>
-                <p class="text-[9px] font-bold opacity-70 uppercase tracking-widest leading-tight mb-6">Monto neto final tras gastos y reservas.</p>
+                <div class="flex justify-between text-[8px] uppercase font-bold opacity-60 mb-6">
+                    <span>Ahorros: RD$ {{ number_format($fondoCapitalizacion, 2) }}</span>
+                    <span>Préstamos: RD$ {{ number_format($fondoPatrocinio, 2) }}</span>
+                </div>
 
                 {{-- BOTÓN DE CIERRE OFICIAL --}}
-                <form action="{{ route('admin.excedentes.store') }}" method="POST" onsubmit="return confirm('¿Confirmas el cierre oficial del año {{ $anio }}? Esta acción guardará los montos de forma permanente.')">
-                    @csrf
-                    <input type="hidden" name="anio" value="{{ $anio }}">
-                    <button type="submit" class="w-full bg-white text-indigo-700 font-black uppercase italic py-2 rounded-xl text-[9px] tracking-widest hover:bg-indigo-50 transition-all no-print">
-                        <i class="fa-solid fa-lock mr-1"></i> Cerrar Año Fiscal {{ $anio }}
-                    </button>
-                </form>
+                @php
+                    $cierre = \App\Models\CierreAnual::where('anio', $anio)->first();
+                @endphp
+
+                @if(!$cierre)
+                    <form action="{{ route('admin.excedentes.store') }}" method="POST" onsubmit="return confirm('¿Confirmas el cierre oficial del año {{ $anio }}? Esta acción guardará los montos de forma permanente.')">
+                        @csrf
+                        <input type="hidden" name="anio" value="{{ $anio }}">
+                        <button type="submit" class="w-full bg-white text-indigo-700 font-black uppercase italic py-2 rounded-xl text-[9px] tracking-widest hover:bg-indigo-50 transition-all no-print">
+                            <i class="fa-solid fa-lock mr-1"></i> Cerrar Año Fiscal {{ $anio }}
+                        </button>
+                    </form>
+                @else
+                    <div class="w-full bg-green-500/20 border border-green-500 text-white font-black uppercase italic py-2 rounded-xl text-[9px] tracking-widest text-center shadow-inner">
+                        <i class="fa-solid fa-check-double mr-1"></i> Año Fiscal {{ $anio }} Cerrado
+                        <p class="text-[7px] opacity-80 mt-1 italic">Registrado el {{ $cierre->created_at->format('d/m/Y') }}</p>
+                    </div>
+                @endif
             </div>
         </div>
 
-        {{-- TABLA DE DISTRIBUCIÓN --}}
+        {{-- TABLA DE DISTRIBUCIÓN REDISEÑADA 50/50 --}}
         <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-8 py-4 bg-gray-50 border-b flex justify-between items-center">
+                <span class="text-[10px] font-black uppercase italic text-gray-400 tracking-widest">Distribución Equitativa (50% Ahorros / 50% Préstamos)</span>
+            </div>
             <table class="w-full text-left italic">
                 <thead class="bg-gray-800 text-white">
-                    <tr class="text-[10px] font-black uppercase tracking-widest">
-                        <th class="px-8 py-4">Socio Participante</th>
-                        <th class="px-8 py-4 text-right">Intereses Pagados</th>
-                        <th class="px-8 py-4 text-right bg-indigo-600">Retorno Sugerido</th>
+                    <tr class="text-[9px] font-black uppercase tracking-widest">
+                        <th class="px-6 py-4">Socio Participante</th>
+                        <th class="px-4 py-4 text-right">Beneficio Préstamos</th>
+                        <th class="px-4 py-4 text-right">Beneficio Ahorros</th>
+                        <th class="px-6 py-4 text-right bg-indigo-600">Total Sugerido</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
                     @forelse($reporte as $linea)
                         <tr class="hover:bg-gray-50/50 transition-colors">
-                            <td class="px-8 py-4">
+                            <td class="px-6 py-4">
                                 <p class="text-xs font-black text-gray-800 uppercase">{{ $linea['nombre'] }}</p>
                                 <p class="text-[9px] font-bold text-gray-400 mt-1 uppercase">CÉDULA: {{ $linea['cedula'] }}</p>
                             </td>
-                            <td class="px-8 py-4 text-right">
-                                <span class="text-xs font-bold text-gray-600 italic">RD$ {{ number_format($linea['base_intereses'], 2) }}</span>
+                            <td class="px-4 py-4 text-right">
+                                <p class="text-xs font-bold text-gray-700 italic">RD$ {{ number_format($linea['monto_pat'], 2) }}</p>
+                                <p class="text-[8px] text-gray-400 uppercase">Intereses: RD$ {{ number_format($linea['base_intereses'], 2) }}</p>
                             </td>
-                            <td class="px-8 py-4 text-right bg-indigo-50/20">
-                                <span class="text-sm font-black text-indigo-700 italic">RD$ {{ number_format($linea['monto_pat'], 2) }}</span>
+                            <td class="px-4 py-4 text-right">
+                                <p class="text-xs font-bold text-gray-700 italic">RD$ {{ number_format($linea['monto_cap'], 2) }}</p>
+                                <p class="text-[8px] text-gray-400 uppercase">Ahorro: RD$ {{ number_format($linea['base_ahorros'], 2) }}</p>
+                            </td>
+                            <td class="px-6 py-4 text-right bg-indigo-50/20">
+                                <span class="text-sm font-black text-indigo-700 italic">RD$ {{ number_format($linea['total_socio'], 2) }}</span>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3" class="px-8 py-10 text-center text-gray-400 text-xs italic">Sin registros.</td>
+                            <td colspan="4" class="px-8 py-10 text-center text-gray-400 text-xs italic">Sin registros para el periodo {{ $anio }}.</td>
                         </tr>
                     @endforelse
                 </tbody>
