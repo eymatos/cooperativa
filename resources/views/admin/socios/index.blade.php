@@ -24,38 +24,54 @@
                     <table class="min-w-full text-xs">
                         <thead>
                             <tr class="bg-gray-100 text-gray-600 uppercase">
-                                <th class="px-4 py-3 text-left">Datos del Socio</th>
-                                <th class="px-4 py-3 text-left">Inscripción</th>
-                                <th class="px-2 py-3 text-right text-blue-600">Ahorro Normal</th>
-                                <th class="px-2 py-3 text-right text-orange-600">Ahorro Retirable</th>
-                                <th class="px-4 py-3 text-center">Estado</th>
+                                @php
+                                    // Función simple para alternar dirección
+                                    $getSortUrl = function($column) use ($sort, $direction) {
+                                        $newDirection = ($sort == $column && $direction == 'asc') ? 'desc' : 'asc';
+                                        return route('admin.socios.index', array_merge(request()->query(), ['sort' => $column, 'direction' => $newDirection]));
+                                    };
+
+                                    $getIcon = function($column) use ($sort, $direction) {
+                                        if ($sort != $column) return '↕️';
+                                        return $direction == 'asc' ? '🔼' : '🔽';
+                                    };
+                                @endphp
+
+                                <th class="px-4 py-3 text-left">
+                                    <a href="{{ $getSortUrl('name') }}" class="flex items-center gap-1 hover:text-blue-600 transition">
+                                        Datos del Socio {!! $getIcon('name') !!}
+                                    </a>
+                                </th>
+                                <th class="px-4 py-3 text-left">
+                                    <a href="{{ $getSortUrl('created_at') }}" class="flex items-center gap-1 hover:text-blue-600 transition">
+                                        Inscripción {!! $getIcon('created_at') !!}
+                                    </a>
+                                </th>
+                                <th class="px-2 py-3 text-right text-blue-600 font-black">Ahorro Normal</th>
+                                <th class="px-2 py-3 text-right text-orange-600 font-black">Ahorro Retirable</th>
+                                <th class="px-4 py-3 text-center">
+                                    <a href="{{ $getSortUrl('activo') }}" class="flex justify-center items-center gap-1 hover:text-blue-600 transition">
+                                        Estado {!! $getIcon('activo') !!}
+                                    </a>
+                                </th>
                                 <th class="px-4 py-3 text-center">Acción</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
                             @foreach($socios as $u)
                                 @php
-                                    // Blindaje: Buscamos cuentas solo si el socio existe
                                     $cAportacion = null;
                                     $cVoluntario = null;
 
                                     if ($u->socio && $u->socio->cuentas) {
-                                        // Buscamos la cuenta de Aportaciones
-                                        $cAportacion = $u->socio->cuentas->first(function($c) {
-                                            $codigo = trim(strtolower($c->type->code ?? ''));
-                                            return $codigo === 'aportacion' || $codigo === 'apo';
-                                        });
-
-                                        // Buscamos la cuenta Voluntaria/Retirable
-                                        $cVoluntario = $u->socio->cuentas->first(function($c) {
-                                            $codigo = trim(strtolower($c->type->code ?? ''));
-                                            return $codigo === 'voluntario' || $codigo === 'ret';
-                                        });
+                                        // En lugar de buscar por 'aportacion' (texto), buscamos por ID 1 y 2
+                                        $cAportacion = $u->socio->cuentas->where('saving_type_id', 1)->first();
+                                        $cVoluntario = $u->socio->cuentas->where('saving_type_id', 2)->first();
                                     }
                                 @endphp
-                                <tr class="hover:bg-gray-50">
+                                <tr class="hover:bg-gray-50 transition">
+                                    {{-- ... resto de la fila igual ... --}}
                                     <td class="px-4 py-4">
-                                        {{-- Blindaje con nullsafe --}}
                                         <div class="font-bold text-gray-900">{{ $u->socio?->nombres ?? $u->name }} {{ $u->socio?->apellidos ?? '' }}</div>
                                         <div class="text-gray-500 italic">ID: {{ $u->cedula }}</div>
                                     </td>
@@ -79,7 +95,7 @@
                                             <form action="{{ route('admin.socios.toggle_status', $u->socio->id) }}" method="POST">
                                                 @csrf
                                                 @method('PATCH')
-                                                <button type="submit" class="px-3 py-1 rounded-full text-[10px] font-bold {{ $u->socio->activo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                                                <button type="submit" class="px-3 py-1 rounded-full text-[10px] font-black {{ $u->socio->activo ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200' }}">
                                                     {{ $u->socio->activo ? 'ACTIVO' : 'INACTIVO' }}
                                                 </button>
                                             </form>
@@ -91,19 +107,17 @@
                                     <td class="px-4 py-4 text-center flex justify-center gap-2">
                                         @if($u->socio)
                                             <a href="{{ route('admin.socios.show', $u->socio->id) }}"
-                                            class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-200 text-[11px] font-extrabold transition">
+                                            class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-600 hover:text-white text-[11px] font-extrabold transition-all">
                                                 PERFIL 360°
                                             </a>
                                         @else
-                                            {{-- Botón para borrar usuarios incompletos y permitir reintentar la solicitud --}}
-
-                                        <form action="{{ route('admin.socios.limpiar', $u->id) }}" method="POST" onsubmit="return confirm('¿Eliminar registro y resetear solicitud para reintentar?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="bg-red-100 text-red-700 px-3 py-1 rounded-full hover:bg-red-200 text-[11px] font-extrabold transition uppercase">
-                                                Eliminar y Reintentar
-                                            </button>
-                                        </form>
+                                            <form action="{{ route('admin.socios.limpiar', $u->id) }}" method="POST" onsubmit="return confirm('¿Eliminar registro y resetear solicitud?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="bg-red-100 text-red-700 px-3 py-1 rounded-full hover:bg-red-600 hover:text-white text-[11px] font-extrabold transition-all uppercase">
+                                                    Eliminar
+                                                </button>
+                                            </form>
                                         @endif
                                     </td>
                                 </tr>

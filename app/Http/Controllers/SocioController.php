@@ -19,29 +19,51 @@ use App\Models\Solicitud;
 
 class SocioController extends Controller
 {
-    // 1. LISTA DE SOCIOS (Buscador Inteligente Normalizado)
+    // 1. LISTA DE SOCIOS (Actualizado con Buscador y Ordenamiento Dinámico)
     public function index(Request $request)
     {
         $buscar = $request->get('buscar');
 
-        $socios = User::where('tipo', 0)
+        // Parámetros de ordenamiento
+        $sort = $request->get('sort', 'id'); // Columna por defecto
+        $direction = $request->get('direction', 'desc'); // Dirección por defecto
+
+        // Definimos columnas permitidas para evitar inyecciones SQL
+        $columnasPermitidas = ['id', 'name', 'cedula', 'created_at', 'activo'];
+        if (!in_array($sort, $columnasPermitidas)) {
+            $sort = 'id';
+        }
+
+        $socios = User::where('users.tipo', 0) // Especificamos tabla para evitar ambigüedad en Joins
             ->with(['socio.cuentas.type'])
             ->when($buscar, function ($query) use ($buscar) {
                 return $query->where(function ($q) use ($buscar) {
-                    $q->where('cedula', 'LIKE', "%$buscar%")
-                      ->orWhere('name', 'LIKE', "%$buscar%")
+                    $q->where('users.cedula', 'LIKE', "%$buscar%")
+                      ->orWhere('users.name', 'LIKE', "%$buscar%")
                       ->orWhereHas('socio', function ($sq) use ($buscar) {
                           $sq->where('nombres', 'LIKE', "%$buscar%")
                              ->orWhere('apellidos', 'LIKE', "%$buscar%");
                       });
                 });
             })
-            ->orderBy('id', 'desc')
+            // Lógica para ordenar: Si es por "activo" usamos el Join con la tabla socios
+            ->when($sort == 'activo', function($query) use ($direction) {
+                return $query->leftJoin('socios', 'users.id', '=', 'socios.user_id')
+                             ->orderBy('socios.activo', $direction)
+                             ->select('users.*');
+            }, function($query) use ($sort, $direction) {
+                return $query->orderBy("users.$sort", $direction);
+            })
             ->paginate(10);
 
-        $socios->appends(['buscar' => $buscar]);
+        // Adjuntamos los parámetros a los links de paginación para que no se pierdan al cambiar de página
+        $socios->appends([
+            'buscar' => $buscar,
+            'sort' => $sort,
+            'direction' => $direction
+        ]);
 
-        return view('admin.socios.index', compact('socios'));
+        return view('admin.socios.index', compact('socios', 'sort', 'direction'));
     }
 
     public function create()
@@ -51,55 +73,53 @@ class SocioController extends Controller
 
     // MÉTODO STORE ACTUALIZADO: Contraseña por defecto coo123perativa
     public function store(Request $request)
-{
-    // CAMBIO: Validamos 'sueldo' en lugar de 'salario' para que coincida con el HTML
-    $request->validate([
-        'cedula'    => 'required|unique:users,cedula',
-        'nombres'   => 'required|string|max:255',
-        'apellidos' => 'required|string|max:255',
-        'email'     => 'required|email|unique:users,email',
-        'sueldo'    => 'required|numeric|min:0', // <--- Nombre corregido
-        'tipo_contrato' => 'required|in:fijo,contratado',
-    ]);
+    {
+        $request->validate([
+            'cedula'    => 'required|unique:users,cedula',
+            'nombres'   => 'required|string|max:255',
+            'apellidos' => 'required|string|max:255',
+            'email'     => 'required|email|unique:users,email',
+            'sueldo'    => 'required|numeric|min:0',
+            'tipo_contrato' => 'required|in:fijo,contratado',
+        ]);
 
-    try {
-        return DB::transaction(function () use ($request) {
-            $user = User::create([
-                'name'     => $request->nombres . ' ' . $request->apellidos,
-                'email'    => $request->email,
-                'cedula'   => $request->cedula,
-                'password' => Hash::make('coo123perativa'),
-                'tipo'     => 0,
-            ]);
+        try {
+            return DB::transaction(function () use ($request) {
+                $user = User::create([
+                    'name'     => $request->nombres . ' ' . $request->apellidos,
+                    'email'    => $request->email,
+                    'cedula'   => $request->cedula,
+                    'password' => Hash::make('coo123perativa'),
+                    'tipo'     => 0,
+                ]);
 
-            $user->socio()->create([
-                'nombres'       => $request->nombres,
-                'apellidos'     => $request->apellidos,
-                'telefono'      => $request->telefono,
-                'direccion'     => $request->direccion,
-                'sueldo'        => $request->sueldo,
-                // ASIGNACIÓN: Guardamos el valor de sueldo tanto en la columna sueldo como en salario
-                'salario'       => $request->sueldo,
-                'lugar_trabajo' => $request->lugar_trabajo,
-                'tipo_contrato' => $request->tipo_contrato,
-                'ahorro_total'  => 0,
-            ]);
+                $user->socio()->create([
+                    'nombres'       => $request->nombres,
+                    'apellidos'     => $request->apellidos,
+                    'telefono'      => $request->telefono,
+                    'direccion'     => $request->direccion,
+                    'sueldo'        => $request->sueldo,
+                    'salario'       => $request->sueldo,
+                    'lugar_trabajo' => $request->lugar_trabajo,
+                    'tipo_contrato' => $request->tipo_contrato,
+                    'ahorro_total'  => 0,
+                ]);
 
-            return redirect()->route('admin.socios.index')
-                ->with('success', 'Socio registrado exitosamente con clave: coo123perativa');
-        });
-    } catch (\Exception $e) {
-        return back()->with('error', 'Error: ' . $e->getMessage())->withInput();
+                return redirect()->route('admin.socios.index')
+                    ->with('success', 'Socio registrado exitosamente con clave: coo123perativa');
+            });
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error: ' . $e->getMessage())->withInput();
+        }
     }
-}
 
     // 2. PERFIL 360 DEL SOCIO
     public function show(Request $request, $id)
     {
         $socio = Socio::with(['user', 'prestamos.cuotas', 'cuentas.type'])->findOrFail($id);
 
-        $tipoAportacion = SavingType::where('code', 'aportacion')->first();
-        $tipoVoluntario = SavingType::where('code', 'voluntario')->first();
+        $tipoAportacion = SavingType::find(1);
+        $tipoVoluntario = SavingType::find(2);
 
         if (!$tipoAportacion || !$tipoVoluntario) {
             return back()->with('error', 'Faltan configurar los tipos de ahorro.');
@@ -115,11 +135,11 @@ class SocioController extends Controller
             ['balance' => 0, 'recurring_amount' => 0]
         );
 
-        $totalAportaciones = $cuentaAportacion->balance;
-        $totalRetirable = $cuentaVoluntario->balance;
+        $totalAportaciones = (float) $cuentaAportacion->balance;
+        $totalRetirable = (float) $cuentaVoluntario->balance;
         $totalAhorradoGlobal = $totalAportaciones + $totalRetirable;
 
-        $salario = $socio->salario ?? 0;
+        $salario = (float) ($socio->salario ?? 0);
         $maximoCreditoPosible = $totalAhorradoGlobal * 1.5;
         $limiteMensualDescuento = $salario * 0.40;
 
@@ -131,8 +151,7 @@ class SocioController extends Controller
                 return $cuota ? $cuota->monto_total : 0;
             });
 
-        $ahorrosFijosMes = $cuentaAportacion->recurring_amount + $cuentaVoluntario->recurring_amount;
-
+        $ahorrosFijosMes = (float) ($cuentaAportacion->recurring_amount + $cuentaVoluntario->recurring_amount);
         $compromisosActuales = $cuotasPrestamosMes + $ahorrosFijosMes;
         $capacidadDisponibleMensual = $limiteMensualDescuento - $compromisosActuales;
 
@@ -153,15 +172,12 @@ class SocioController extends Controller
             $txs = $cuenta->transactions()->whereYear('date', $anioSeleccionado)->get();
             foreach ($txs as $tx) {
                 $m = $tx->date->month;
-                if ($tx->type == 'deposit' || $tx->type == 'interest') $meses[$m]['aporte'] += $tx->amount;
-                else $meses[$m]['retiro'] += $tx->amount;
+                if (in_array($tx->type, ['deposit', 'interest', 'deposito'])) $meses[$m]['aporte'] += (float)$tx->amount;
+                else $meses[$m]['retiro'] += (float)$tx->amount;
                 $meses[$m]['transacciones'][] = $tx;
             }
             return $meses;
         };
-
-        $matrizAportacion = $armarMatriz($cuentaAportacion);
-        $matrizVoluntario = $armarMatriz($cuentaVoluntario);
 
         return view('admin.socios.show', [
             'socio' => $socio,
@@ -180,8 +196,8 @@ class SocioController extends Controller
             'maximoCredito' => $maximoCreditoPosible,
             'aniosDisponibles' => $aniosDisponibles,
             'anioSeleccionado' => $anioSeleccionado,
-            'matrizAportacion' => $matrizAportacion,
-            'matrizVoluntario' => $matrizVoluntario,
+            'matrizAportacion' => $armarMatriz($cuentaAportacion),
+            'matrizVoluntario' => $armarMatriz($cuentaVoluntario),
             'cuentaAportacion' => $cuentaAportacion,
             'cuentaVoluntario' => $cuentaVoluntario,
         ]);
@@ -293,49 +309,28 @@ class SocioController extends Controller
         return view('admin.socios.visitas', compact('visitasEsteAnio', 'topVisitantes'));
     }
 
-public function adminDashboard()
-{
-    // 1. Tarjetas Superiores (Totales en tiempo real)
-    $totalAhorrado = SavingsAccount::sum('balance');
-    $totalPrestado = Prestamo::where('estado', 'activo')->sum('saldo_capital');
-    $sociosActivos = Socio::where('activo', true)->count();
+    public function adminDashboard()
+    {
+        $totalAhorrado = SavingsAccount::sum('balance');
+        $totalPrestado = Prestamo::where('estado', 'activo')->sum('saldo_capital');
+        $sociosActivos = Socio::where('activo', true)->count();
 
-    // 2. Datos para el Gráfico (Últimos 12 meses para cubrir el año completo)
-    $meses = [];
-    $ahorros = [];
-    $prestamos = [];
+        $meses = []; $ahorros = []; $prestamos = [];
 
-    // Cambiamos el ciclo a 11 para que sean 12 iteraciones (el mes actual + 11 atrás)
-    for ($i = 11; $i >= 0; $i--) {
-        $fecha = now()->subMonths($i);
+        for ($i = 11; $i >= 0; $i--) {
+            $fecha = now()->subMonths($i);
+            $meses[] = ucfirst($fecha->translatedFormat('M y'));
+            $start = $fecha->copy()->startOfMonth()->format('Y-m-d');
+            $end = $fecha->copy()->endOfMonth()->format('Y-m-d');
 
-        // Formato: "Ene 25" (Mes corto y año para mayor claridad)
-        $nombreMes = ucfirst($fecha->translatedFormat('M y'));
-        $meses[] = $nombreMes;
+            $ahorros[] = SavingsTransaction::whereIn('type', ['deposit', 'interest', 'deposito'])
+                ->whereBetween('date', [$start, $end])->sum('amount');
 
-        // Definimos el rango del mes para la consulta
-        $startOfMonth = $fecha->copy()->startOfMonth()->format('Y-m-d');
-        $endOfMonth = $fecha->copy()->endOfMonth()->format('Y-m-d');
+            $prestamos[] = Prestamo::whereBetween('fecha_inicio', [$start, $end])->sum('monto');
+        }
 
-        // SUMA DE AHORROS: Sumamos depósitos e intereses en ese rango
-        $ahorros[] = SavingsTransaction::whereIn('type', ['deposit', 'interest', 'deposito'])
-            ->whereBetween('date', [$startOfMonth, $endOfMonth])
-            ->sum('amount');
-
-        // SUMA DE PRÉSTAMOS: Sumamos el monto total de préstamos iniciados en ese mes
-        $prestamos[] = Prestamo::whereBetween('fecha_inicio', [$startOfMonth, $endOfMonth])
-            ->sum('monto');
+        return view('admin.dashboard', compact('totalAhorrado', 'totalPrestado', 'sociosActivos', 'meses', 'ahorros', 'prestamos'));
     }
-
-    return view('admin.dashboard', [
-        'totalAhorrado' => $totalAhorrado,
-        'totalPrestado' => $totalPrestado,
-        'sociosActivos' => $sociosActivos,
-        'meses' => $meses,
-        'ahorros' => $ahorros,
-        'prestamos' => $prestamos
-    ]);
-}
 
     public function variacionNomina() {
         $ahorrosActuales = SavingsAccount::sum('recurring_amount');
@@ -357,131 +352,119 @@ public function adminDashboard()
         $logs = ActivityLog::with('user')->latest()->paginate(20);
         return view('admin.logs.index', compact('logs'));
     }
-    // app/Http/Controllers/SocioController.php
 
-// app/Http/Controllers/SocioController.php
+    public function dashboardSocio(Request $request)
+    {
+        $user = auth()->user();
+        $socio = Socio::with(['user', 'prestamos.cuotas', 'cuentas.type'])
+                      ->where('user_id', $user->id)
+                      ->firstOrFail();
 
-public function dashboardSocio(Request $request)
-{
-    $user = auth()->user();
-    $socio = Socio::with(['user', 'prestamos.cuotas', 'cuentas.type'])
-                  ->where('user_id', $user->id)
-                  ->firstOrFail();
+        $cuentaAportacion = $socio->cuentas->filter(function($c) {
+            return in_array(strtoupper($c->type->code), ['APO', 'APORTACION', 'APORTACIONES']);
+        })->first();
 
-    // BUSQUEDA FLEXIBLE: Buscamos por varios códigos comunes
-    $cuentaAportacion = $socio->cuentas->filter(function($c) {
-        return in_array(strtoupper($c->type->code), ['APO', 'APORTACION', 'APORTACIONES']);
-    })->first();
+        $cuentaVoluntario = $socio->cuentas->filter(function($c) {
+            return in_array(strtoupper($c->type->code), ['RET', 'VOLUNTARIO', 'AHORRO']);
+        })->first();
 
-    $cuentaVoluntario = $socio->cuentas->filter(function($c) {
-        return in_array(strtoupper($c->type->code), ['RET', 'VOLUNTARIO', 'AHORRO']);
-    })->first();
+        $anioSeleccionado = $request->get('anio_ahorro', date('Y'));
 
-    // ... (el resto del código de la matriz igual que antes) ...
-
-    // Asegurémonos de que la matriz reciba los datos aunque la cuenta sea null
-    $anioSeleccionado = $request->get('anio_ahorro', date('Y'));
-
-    $armarMatriz = function($cuenta) use ($anioSeleccionado) {
-        $meses = [];
-        for ($i = 1; $i <= 12; $i++) { $meses[$i] = ['aporte' => 0, 'retiro' => 0]; }
-
-        if ($cuenta) {
-            // Buscamos transacciones de tipo 'deposit' o 'interest'
-            $txs = $cuenta->transactions()
-                          ->whereYear('date', $anioSeleccionado)
-                          ->get();
-            foreach ($txs as $tx) {
-                $m = \Carbon\Carbon::parse($tx->date)->month;
-                if (in_array($tx->type, ['deposit', 'interest', 'deposito'])) {
-                    $meses[$m]['aporte'] += $tx->amount;
-                } else {
-                    $meses[$m]['retiro'] += $tx->amount;
+        $armarMatriz = function($cuenta) use ($anioSeleccionado) {
+            $meses = [];
+            for ($i = 1; $i <= 12; $i++) { $meses[$i] = ['aporte' => 0, 'retiro' => 0]; }
+            if ($cuenta) {
+                $txs = $cuenta->transactions()->whereYear('date', $anioSeleccionado)->get();
+                foreach ($txs as $tx) {
+                    $m = \Carbon\Carbon::parse($tx->date)->month;
+                    if (in_array($tx->type, ['deposit', 'interest', 'deposito'])) $meses[$m]['aporte'] += (float)$tx->amount;
+                    else $meses[$m]['retiro'] += (float)$tx->amount;
                 }
             }
-        }
-        return $meses;
-    };
+            return $meses;
+        };
 
-    return view('socio.dashboard', [
-        'socio' => $socio,
-        'prestamosActivos' => $socio->prestamos()->where('estado', 'activo')->get(),
-        'totalAhorradoGlobal' => ($cuentaAportacion->balance ?? 0) + ($cuentaVoluntario->balance ?? 0),
-        'maximoCredito' => (($cuentaAportacion->balance ?? 0) + ($cuentaVoluntario->balance ?? 0)) * 1.5,
-        'capacidadDisponible' => ($socio->salario * 0.40) - ($socio->prestamos()->where('estado', 'activo')->get()->sum(function($p){
-             $c = $p->cuotas()->where('estado', 'pendiente')->orderBy('numero_cuota', 'asc')->first();
-             return $c ? $c->monto_total : 0;
-        }) + ($cuentaAportacion->recurring_amount ?? 0) + ($cuentaVoluntario->recurring_amount ?? 0)),
-        'matrizAportacion' => $armarMatriz($cuentaAportacion),
-        'matrizVoluntario' => $armarMatriz($cuentaVoluntario),
-        'cuentaApo' => $cuentaAportacion,
-        'cuentaVol' => $cuentaVoluntario,
-        'anioSeleccionado' => $anioSeleccionado,
-        'aniosDisponibles' => [date('Y'), date('Y')-1]
-    ]);
-}
-public function perfilSocio()
-{
-    $user = auth()->user();
-    $socio = $user->socio;
-    return view('socio.perfil', compact('user', 'socio'));
-}
-
-public function updatePerfilSocio(Request $request)
-{
-    $user = auth()->user();
-
-    $request->validate([
-        'email' => 'required|email|unique:users,email,' . $user->id,
-        'password' => 'nullable|min:8|confirmed',
-    ]);
-
-    $user->email = $request->email;
-
-    if ($request->filled('password')) {
-        $user->password = Hash::make($request->password);
+        return view('socio.dashboard', [
+            'socio' => $socio,
+            'prestamosActivos' => $socio->prestamos()->where('estado', 'activo')->get(),
+            'totalAhorradoGlobal' => ($cuentaAportacion->balance ?? 0) + ($cuentaVoluntario->balance ?? 0),
+            'maximoCredito' => (($cuentaAportacion->balance ?? 0) + ($cuentaVoluntario->balance ?? 0)) * 1.5,
+            'capacidadDisponible' => ($socio->salario * 0.40) - ($socio->prestamos()->where('estado', 'activo')->get()->sum(function($p){
+                 $c = $p->cuotas()->where('estado', 'pendiente')->orderBy('numero_cuota', 'asc')->first();
+                 return $c ? $c->monto_total : 0;
+            }) + ($cuentaAportacion->recurring_amount ?? 0) + ($cuentaVoluntario->recurring_amount ?? 0)),
+            'matrizAportacion' => $armarMatriz($cuentaAportacion),
+            'matrizVoluntario' => $armarMatriz($cuentaVoluntario),
+            'cuentaApo' => $cuentaAportacion,
+            'cuentaVol' => $cuentaVoluntario,
+            'anioSeleccionado' => $anioSeleccionado,
+            'aniosDisponibles' => [date('Y'), date('Y')-1]
+        ]);
     }
 
-    $user->save();
-
-    return back()->with('success', 'Perfil actualizado correctamente.');
-}
-public function formulariosSocio()
-{
-    // Si la ruta es 'formularios.publicos' o el usuario no está logueado, es vista pública
-    $publico = request()->routeIs('formularios.publicos') || !auth()->check();
-
-    return view('socio.formularios', compact('publico'));
-}
-public function destroyUser($id)
-{
-    try {
-        $user = User::findOrFail($id);
-        $cedula = $user->cedula;
-
-        // 1. Buscamos si existe una solicitud procesada para esta cédula
-        // Usamos la cédula porque es el vínculo más seguro entre el form y el usuario
-        $solicitud = Solicitud::where('datos->cedula', $cedula)
-                               ->where('estado', 'procesada')
-                               ->first();
-
-        // 2. Si existe la solicitud, la reseteamos a pendiente
-        if ($solicitud) {
-            $solicitud->update(['estado' => 'pendiente']);
-        }
-
-        // 3. Borramos el Socio primero (si existe) por la llave foránea
-        if ($user->socio) {
-            $user->socio->delete();
-        }
-
-        // 4. Borramos el Usuario
-        $user->delete();
-
-        return redirect()->back()->with('success', '✅ Usuario eliminado y solicitud reseteada a pendiente. Ya puedes volver a aprobarla.');
-
-    } catch (\Exception $e) {
-        return redirect()->back()->with('error', 'Error al limpiar registros: ' . $e->getMessage());
+    public function perfilSocio()
+    {
+        $user = auth()->user();
+        $socio = $user->socio;
+        return view('socio.perfil', compact('user', 'socio'));
     }
-}
+
+    public function updatePerfilSocio(Request $request)
+    {
+        $user = auth()->user();
+        $request->validate([
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'password' => 'nullable|min:8|confirmed',
+        ]);
+        $user->email = $request->email;
+        if ($request->filled('password')) $user->password = Hash::make($request->password);
+        $user->save();
+        return back()->with('success', 'Perfil actualizado correctamente.');
+    }
+
+    public function formulariosSocio()
+    {
+        $publico = request()->routeIs('formularios.publicos') || !auth()->check();
+        return view('socio.formularios', compact('publico'));
+    }
+
+    public function destroyUser($id)
+    {
+        try {
+            $user = User::findOrFail($id);
+            $cedula = $user->cedula;
+            $solicitud = Solicitud::where('datos->cedula', $cedula)->where('estado', 'procesada')->first();
+            if ($solicitud) $solicitud->update(['estado' => 'pendiente']);
+            if ($user->socio) $user->socio->delete();
+            $user->delete();
+            return redirect()->back()->with('success', '✅ Usuario eliminado y solicitud reseteada a pendiente.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error al limpiar registros: ' . $e->getMessage());
+        }
+    }
+
+    public function update(Request $request, $id)
+    {
+        $socio = Socio::findOrFail($id);
+        $request->validate([
+            'nombres'   => 'required|string|max:255',
+            'apellidos' => 'required|string|max:255',
+            'salario'   => 'required|numeric|min:0',
+        ]);
+
+        try {
+            DB::transaction(function () use ($request, $socio) {
+                $socio->user->update(['name' => $request->nombres . ' ' . $request->apellidos]);
+                $socio->update([
+                    'nombres'   => $request->nombres,
+                    'apellidos' => $request->apellidos,
+                    'salario'   => $request->salario,
+                    'sueldo'    => $request->salario,
+                ]);
+            });
+            return back()->with('success', '✅ Perfil y salario actualizados correctamente.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error al actualizar: ' . $e->getMessage());
+        }
+    }
 }

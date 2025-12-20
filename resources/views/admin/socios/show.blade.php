@@ -10,7 +10,8 @@
         </div>
     </x-slot>
 
-    <div class="py-12">
+    {{-- Iniciamos x-data con la variable openEdit --}}
+    <div class="py-12" x-data="{ openEdit: false }">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
             {{-- SECCIÓN SUPERIOR: MOTOR DE RIESGO Y REGLAS DE ORO --}}
@@ -79,7 +80,12 @@
                                 {{ substr($socio->nombres, 0, 1) }}
                             </div>
                             <h3 class="text-lg font-bold text-gray-800">{{ $socio->nombres }} {{ $socio->apellidos }}</h3>
-                            <p class="text-gray-500 text-sm italic">{{ $socio->user->email ?? 'Sin correo' }}</p>
+                            <p class="text-gray-500 text-sm italic mb-2">{{ $socio->user->email ?? 'Sin correo' }}</p>
+
+                            {{-- BOTÓN EDITAR PERFIL --}}
+                            <button @click="openEdit = true" class="text-[10px] bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-full font-black uppercase hover:bg-indigo-600 hover:text-white transition-all tracking-widest shadow-sm border border-indigo-100">
+                                <i class="fa-solid fa-user-pen mr-1"></i> Editar Perfil / Salario
+                            </button>
                         </div>
                         <hr class="my-4 border-gray-100">
                         <div class="text-sm space-y-3">
@@ -109,7 +115,7 @@
                             </div>
                             <div class="bg-green-50 p-4 rounded-xl border border-green-100 shadow-sm shadow-green-50">
                                 <span class="block text-[10px] text-green-600 uppercase font-black tracking-widest mb-1 text-center">Patrimonio Ahorrado</span>
-                                <span class="block text-2xl font-black text-green-800 font-mono text-center leading-none">RD$ {{ number_format($totalAhorradoGlobal ?? 0, 2) }}</span>
+                                <span class="block text-2xl font-black text-green-800 font-mono text-center leading-none">RD$ {{ number_format($socio->cuentas->sum('balance'), 2) }}</span>
                             </div>
                         </div>
                     </div>
@@ -118,7 +124,7 @@
                 {{-- COLUMNA DERECHA: DESGLOSE DE DESCUENTOS Y OPERACIONES --}}
                 <div class="md:col-span-2 space-y-6">
 
-                    {{-- DETALLE DE DESCUENTOS DE NÓMINA (CORREGIDO Y DESGLOSADO) --}}
+                    {{-- DETALLE DE DESCUENTOS DE NÓMINA --}}
                     <div class="bg-gray-900 text-white p-6 rounded-2xl shadow-xl overflow-hidden relative">
                         <div class="absolute top-0 right-0 p-4 opacity-10 text-6xl">📝</div>
 
@@ -136,26 +142,22 @@
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-gray-800 pt-4">
-
-                            {{-- Bloque: Ahorro Normal --}}
                             <div class="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
                                 <span class="block text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1 italic">Ahorro Normal</span>
                                 <div class="flex items-baseline gap-2">
-                                    <span class="text-lg font-bold text-white font-mono">RD$ {{ number_format($cuentaAportacion->recurring_amount, 2) }}</span>
+                                    <span class="text-lg font-bold text-white font-mono">RD$ {{ number_format($socio->cuentas->firstWhere('saving_type_id', 1)->recurring_amount ?? 0, 2) }}</span>
                                 </div>
                                 <p class="text-[9px] text-green-500 font-bold uppercase mt-1">Patrimonio (AP)</p>
                             </div>
 
-                            {{-- Bloque: Ahorro Retirable --}}
                             <div class="bg-gray-800/50 p-3 rounded-lg border border-gray-700 {{ $cuentaVoluntario->recurring_amount <= 0 ? 'opacity-40' : '' }}">
                                 <span class="block text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1 italic">Ahorro Retirable</span>
                                 <div class="flex items-baseline gap-2">
-                                    <span class="text-lg font-bold text-white font-mono">RD$ {{ number_format($cuentaVoluntario->recurring_amount, 2) }}</span>
+                                    <span class="text-lg font-bold text-white font-mono">RD$ {{ number_format($socio->cuentas->firstWhere('saving_type_id', 2)->recurring_amount ?? 0, 2) }}</span>
                                 </div>
                                 <p class="text-[9px] text-yellow-500 font-bold uppercase mt-1">Disponible (RT)</p>
                             </div>
 
-                            {{-- Bloque: Préstamos --}}
                             @php
                                 $cuotasPrestamosCalculadas = $compromisosActuales - ($cuentaAportacion->recurring_amount + $cuentaVoluntario->recurring_amount);
                             @endphp
@@ -263,7 +265,6 @@
                         </div>
 
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            {{-- APORTACIÓN --}}
                             <div class="border border-blue-100 rounded-2xl bg-blue-50/30 overflow-hidden shadow-sm">
                                 <div class="p-4 border-b border-blue-100 bg-blue-50 flex justify-between items-center">
                                     <h4 class="font-black text-blue-900 text-xs uppercase tracking-widest">Aportación</h4>
@@ -282,12 +283,16 @@
                                             <tr class="hover:bg-blue-50 transition">
                                                 <td class="px-4 py-2 font-black text-gray-400 uppercase text-[10px]">{{ \Carbon\Carbon::create()->month($mesNum)->locale('es')->monthName }}</td>
                                                 <td class="px-4 py-2 text-right">
-                                                    <button onclick='gestionarMes(@json($data["transacciones"]), "{{ $cuentaAportacion->id }}", "{{ $anioSeleccionado }}", "{{ $mesNum }}", "deposit")' class="w-full text-right font-black text-green-700 font-mono hover:underline">
+                                                    <button onclick='gestionarMes(@json($data["transacciones"]), "{{ $cuentaAportacion->id }}", "{{ $anioSeleccionado }}", "{{ $mesNum }}", "deposit")'
+                                                            class="w-full text-right font-black text-green-700 font-mono hover:underline"
+                                                            title="{{ count($data['transacciones']) > 0 ? collect($data['transacciones'])->whereIn('type', ['deposit', 'interest'])->pluck('description')->filter()->implode(' | ') : 'Sin comentarios' }}">
                                                         {{ $data['aporte'] > 0 ? number_format($data['aporte'], 2) : '-' }}
                                                     </button>
                                                 </td>
                                                 <td class="px-4 py-2 text-right font-bold text-red-400 font-mono">
-                                                    <button onclick='gestionarMes(@json($data["transacciones"]), "{{ $cuentaAportacion->id }}", "{{ $anioSeleccionado }}", "{{ $mesNum }}", "withdrawal")' class="w-full text-right hover:underline italic opacity-50 hover:opacity-100 transition">
+                                                    <button onclick='gestionarMes(@json($data["transacciones"]), "{{ $cuentaAportacion->id }}", "{{ $anioSeleccionado }}", "{{ $mesNum }}", "withdrawal")'
+                                                            class="w-full text-right hover:underline italic opacity-50 hover:opacity-100 transition"
+                                                            title="{{ count($data['transacciones']) > 0 ? collect($data['transacciones'])->where('type', 'withdrawal')->pluck('description')->filter()->implode(' | ') : 'Sin comentarios' }}">
                                                         {{ $data['retiro'] > 0 ? number_format($data['retiro'], 2) : '-' }}
                                                     </button>
                                                 </td>
@@ -298,7 +303,6 @@
                                 </div>
                             </div>
 
-                            {{-- RETIRABLE --}}
                             <div class="border border-yellow-100 rounded-2xl bg-yellow-50/30 overflow-hidden shadow-sm">
                                 <div class="p-4 border-b border-yellow-100 bg-yellow-50 flex justify-between items-center">
                                     <h4 class="font-black text-yellow-900 text-xs uppercase tracking-widest">Retirable</h4>
@@ -317,12 +321,16 @@
                                             <tr class="hover:bg-yellow-50 transition">
                                                 <td class="px-4 py-2 font-black text-gray-400 uppercase text-[10px]">{{ \Carbon\Carbon::create()->month($mesNum)->locale('es')->monthName }}</td>
                                                 <td class="px-4 py-2 text-right">
-                                                    <button onclick='gestionarMes(@json($data["transacciones"]), "{{ $cuentaVoluntario->id }}", "{{ $anioSeleccionado }}", "{{ $mesNum }}", "deposit")' class="w-full text-right font-black text-green-700 font-mono hover:underline">
+                                                    <button onclick='gestionarMes(@json($data["transacciones"]), "{{ $cuentaVoluntario->id }}", "{{ $anioSeleccionado }}", "{{ $mesNum }}", "deposit")'
+                                                            class="w-full text-right font-black text-green-700 font-mono hover:underline"
+                                                            title="{{ count($data['transacciones']) > 0 ? collect($data['transacciones'])->whereIn('type', ['deposit', 'interest'])->pluck('description')->filter()->implode(' | ') : 'Sin comentarios' }}">
                                                         {{ $data['aporte'] > 0 ? number_format($data['aporte'], 2) : '-' }}
                                                     </button>
                                                 </td>
                                                 <td class="px-4 py-2 text-right font-bold text-red-400 font-mono">
-                                                    <button onclick='gestionarMes(@json($data["transacciones"]), "{{ $cuentaVoluntario->id }}", "{{ $anioSeleccionado }}", "{{ $mesNum }}", "withdrawal")' class="w-full text-right hover:underline italic opacity-50 hover:opacity-100 transition">
+                                                    <button onclick='gestionarMes(@json($data["transacciones"]), "{{ $cuentaVoluntario->id }}", "{{ $anioSeleccionado }}", "{{ $mesNum }}", "withdrawal")'
+                                                            class="w-full text-right hover:underline italic opacity-50 hover:opacity-100 transition"
+                                                            title="{{ count($data['transacciones']) > 0 ? collect($data['transacciones'])->where('type', 'withdrawal')->pluck('description')->filter()->implode(' | ') : 'Sin comentarios' }}">
                                                         {{ $data['retiro'] > 0 ? number_format($data['retiro'], 2) : '-' }}
                                                     </button>
                                                 </td>
@@ -338,9 +346,59 @@
                 </div>
             </div>
         </div>
+
+        {{-- MODAL DE EDICIÓN DE PERFIL Y SALARIO --}}
+        <div x-show="openEdit"
+             class="fixed inset-0 z-60 flex items-center justify-center bg-gray-900/90 backdrop-blur-sm p-4"
+             x-cloak
+             style="display: none;">
+            <div class="bg-white rounded-4xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100" @click.away="openEdit = false">
+                <div class="bg-indigo-600 p-6 text-white flex justify-between items-center">
+                    <div>
+                        <h3 class="font-black italic uppercase tracking-tighter text-xl">Editar Datos del Socio</h3>
+                        <p class="text-[10px] text-indigo-200 uppercase font-bold tracking-widest">{{ $socio->cedula }}</p>
+                    </div>
+                    <button @click="openEdit = false" class="text-2xl font-black">&times;</button>
+                </div>
+
+                <form action="{{ route('admin.socios.update', $socio->id) }}" method="POST" class="p-8 space-y-5">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-gray-400 mb-2 tracking-widest italic">Nombres</label>
+                            <input type="text" name="nombres" value="{{ $socio->nombres }}" required class="w-full bg-gray-50 border-none rounded-xl py-3 px-4 font-bold text-gray-700 focus:ring-4 focus:ring-indigo-100 transition shadow-inner">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-gray-400 mb-2 tracking-widest italic">Apellidos</label>
+                            <input type="text" name="apellidos" value="{{ $socio->apellidos }}" required class="w-full bg-gray-50 border-none rounded-xl py-3 px-4 font-bold text-gray-700 focus:ring-4 focus:ring-indigo-100 transition shadow-inner">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-black uppercase text-gray-400 mb-2 tracking-widest italic">Salario Real Mensual (RD$)</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-black text-indigo-300 italic">RD$</span>
+                            <input type="number" step="0.01" name="salario" value="{{ $socio->salario }}" required class="w-full pl-14 pr-4 py-4 bg-gray-50 border-none rounded-2xl font-black text-2xl text-indigo-600 focus:ring-4 focus:ring-indigo-100 transition shadow-inner">
+                        </div>
+                        <p class="text-[9px] text-gray-400 mt-2 italic">* Esto actualizará automáticamente la capacidad de crédito disponible.</p>
+                    </div>
+
+                    <div class="flex flex-col gap-3 pt-4">
+                        <button type="submit" class="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all transform hover:-translate-y-1">
+                            💾 Guardar Cambios
+                        </button>
+                        <button type="button" @click="openEdit = false" class="w-full py-3 text-gray-400 font-black uppercase tracking-widest text-[10px] hover:text-gray-600 transition">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
-    {{-- MODALES Y SCRIPTS (IGUAL QUE TU ARCHIVO ORIGINAL) --}}
+    {{-- OTROS MODALES EXISTENTES --}}
     <div id="modal-cuota" class="fixed inset-0 bg-gray-900 bg-opacity-80 hidden z-50 items-center justify-center backdrop-blur-sm">
         <div class="bg-white rounded-3xl shadow-2xl w-96 p-8">
             <h3 class="text-xl font-black text-gray-800 mb-6 flex items-center gap-2 uppercase tracking-wide border-b pb-3" id="modal-titulo-texto">Editar Cuota</h3>
@@ -465,6 +523,7 @@
     </script>
 
     <style>
+        [x-cloak] { display: none !important; }
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 20px; }

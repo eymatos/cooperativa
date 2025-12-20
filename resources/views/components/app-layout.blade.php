@@ -65,8 +65,18 @@
 
                                         {{-- Enlace de Excedentes para Admin --}}
                                         <a href="{{ route('admin.excedentes.informe') }}"
-                                        class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('admin.excedentes.*') ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-500' }} text-sm font-bold leading-5 hover:text-gray-700 hover:border-gray-300 focus:outline-none transition duration-150 ease-in-out uppercase tracking-wider ml-4">
+                                           class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('admin.excedentes.*') ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-500' }} text-sm font-bold leading-5 hover:text-gray-700 hover:border-gray-300 focus:outline-none transition duration-150 ease-in-out uppercase tracking-wider ml-4">
                                             <i class="fa-solid fa-coins mr-2 text-yellow-500"></i> Excedentes
+                                        </a>
+
+                                        {{-- NUEVO: Enlace de Importación para Admin --}}
+                                       <a href="{{ route('admin.importar.index') }}"
+                                           class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('admin.importar.*') ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-500' }} text-sm font-bold leading-5 hover:text-gray-700 hover:border-gray-300 focus:outline-none transition duration-150 ease-in-out uppercase tracking-wider ml-4">
+                                            <i class="fa-solid fa-file-import mr-2 text-green-500"></i> Importar Data
+                                        </a>
+                                       <a href="{{ route('admin.importar.historial') }}" class="...">
+                                            <i class="fa-solid fa-clock-rotate-left mr-2"></i>
+                                            <span>Migrar Historial</span>
                                         </a>
                                     @endif
                                 @endauth

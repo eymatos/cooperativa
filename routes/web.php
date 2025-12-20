@@ -12,6 +12,7 @@ use App\Http\Controllers\SolicitudController;
 use App\Http\Controllers\Admin\ExcedenteController;
 use App\Exports\NominaExport;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Http\Controllers\Admin\HistorialAhorrosController;
 
 /* --------------------------------------------------------------------------
    RUTAS PÚBLICAS
@@ -46,7 +47,7 @@ Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(fun
         $user = Auth::user();
         return ($user->tipo == 2) ? redirect()->route('admin.dashboard') : redirect()->route('socio.dashboard');
     })->name('dashboard');
-
+});
     Route::post('prestamos/simular', [PrestamoController::class, 'simular'])->name('prestamos.simular');
 
     /* --------------------------------------------------------------------------
@@ -120,7 +121,7 @@ Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(fun
         })->name('reportes.nomina');
 
         // Módulo de Excedentes y Cierre Contable (Ley 127-64)
-Route::prefix('excedentes')->name('excedentes.')->group(function () {
+    Route::prefix('excedentes')->name('excedentes.')->group(function () {
     // Informe Final y Cierre
     Route::get('/informe', [ExcedenteController::class, 'informe'])->name('informe');
     Route::get('/', [ExcedenteController::class, 'index'])->name('index');
@@ -131,5 +132,11 @@ Route::prefix('excedentes')->name('excedentes.')->group(function () {
     Route::post('/gastos', [ExcedenteController::class, 'gastosStore'])->name('gastos.store');
     Route::delete('/gastos/{gasto}', [ExcedenteController::class, 'gastosDestroy'])->name('gastos.destroy');
 });
-    });
+// Rutas para el Importador Maestro
+Route::get('/importar-socios', [App\Http\Controllers\Admin\ImportacionController::class, 'index'])->name('importar.index');
+Route::post('/importar-socios', [App\Http\Controllers\Admin\ImportacionController::class, 'store'])->name('importar.store');
+// ... dentro de tu grupo de rutas admin ...
+Route::get('importar/historial', [HistorialAhorrosController::class, 'index'])->name('importar.historial');
+    Route::post('importar/historial', [HistorialAhorrosController::class, 'store'])->name('importar.historial.store');
 });
+
