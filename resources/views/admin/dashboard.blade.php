@@ -8,28 +8,45 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
-            {{-- TARJETAS SUPERIORES --}}
+            {{-- TARJETAS SUPERIORES ACTUALIZADAS CON DESGLOSE --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center group hover:shadow-lg transition-all">
-                    <div class="p-3 bg-blue-100 rounded-full mr-4">
-                        <span class="text-2xl">📋</span>
+                {{-- Bloque Préstamos --}}
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 group hover:shadow-lg transition-all">
+                    <div class="flex items-center mb-4">
+                        <div class="p-3 bg-blue-100 rounded-full mr-4 text-2xl">📋</div>
+                        <span class="block text-gray-500 text-xs font-black uppercase tracking-wider">Cartera de Préstamos</span>
                     </div>
-                    <div>
-                        <span class="block text-gray-500 text-xs font-black uppercase tracking-wider">Préstamos Activos</span>
-                        <span class="block text-2xl font-bold text-blue-600">{{ \App\Models\Prestamo::where('estado', '!=', 'pagado')->count() }}</span>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center group hover:shadow-lg transition-all">
-                    <div class="p-3 bg-indigo-100 rounded-full mr-4">
-                        <span class="text-2xl">👥</span>
-                    </div>
-                    <div>
-                        <span class="block text-gray-500 text-xs font-black uppercase tracking-wider">Total Socios</span>
-                        <span class="block text-2xl font-bold text-indigo-600">{{ \App\Models\User::where('tipo', 0)->count() }}</span>
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <span class="block text-2xl font-bold text-blue-600">{{ \App\Models\Prestamo::where('estado', 'activo')->count() }}</span>
+                            <span class="text-[10px] text-gray-400 uppercase font-black italic">Vigentes</span>
+                        </div>
+                        <div class="text-right border-l pl-4 border-gray-100">
+                            <span class="block text-sm font-bold text-gray-500">{{ \App\Models\Prestamo::where('estado', 'pagado')->count() }}</span>
+                            <span class="text-[9px] text-gray-400 uppercase font-black">Pagados</span>
+                        </div>
                     </div>
                 </div>
 
+                {{-- Bloque Socios --}}
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 group hover:shadow-lg transition-all">
+                    <div class="flex items-center mb-4">
+                        <div class="p-3 bg-indigo-100 rounded-full mr-4 text-2xl">👥</div>
+                        <span class="block text-gray-500 text-xs font-black uppercase tracking-wider">Membresía General</span>
+                    </div>
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <span class="block text-2xl font-bold text-indigo-600">{{ \App\Models\Socio::where('activo', true)->count() }}</span>
+                            <span class="text-[10px] text-green-500 uppercase font-black italic">Activos</span>
+                        </div>
+                        <div class="text-right border-l pl-4 border-gray-100">
+                            <span class="block text-sm font-bold text-red-400">{{ \App\Models\Socio::where('activo', false)->count() }}</span>
+                            <span class="text-[9px] text-gray-400 uppercase font-black">Inactivos</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Bloque Capital --}}
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center group hover:shadow-lg transition-all">
                     <div class="p-3 bg-green-100 rounded-full mr-4">
                         <span class="text-2xl">💰</span>
@@ -116,7 +133,7 @@
 
             const labels = @json($meses);
             const dataAhorros = @json($ahorros);
-            const dataPrestamos = @json($prestamos);
+            const dataPrestamos = @json($prestamosData ?? $prestamos); // Se ajusta para evitar error de variable indefinida
 
             new Chart(ctx, {
                 type: 'line',
