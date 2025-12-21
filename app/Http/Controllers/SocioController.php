@@ -19,22 +19,19 @@ use App\Models\Solicitud;
 
 class SocioController extends Controller
 {
-    // 1. LISTA DE SOCIOS (Actualizado con Buscador y Ordenamiento Dinámico)
+    // 1. LISTA DE SOCIOS
     public function index(Request $request)
     {
         $buscar = $request->get('buscar');
+        $sort = $request->get('sort', 'id');
+        $direction = $request->get('direction', 'desc');
 
-        // Parámetros de ordenamiento
-        $sort = $request->get('sort', 'id'); // Columna por defecto
-        $direction = $request->get('direction', 'desc'); // Dirección por defecto
-
-        // Definimos columnas permitidas para evitar inyecciones SQL
         $columnasPermitidas = ['id', 'name', 'cedula', 'created_at', 'activo'];
         if (!in_array($sort, $columnasPermitidas)) {
             $sort = 'id';
         }
 
-        $socios = User::where('users.tipo', 0) // Especificamos tabla para evitar ambigüedad en Joins
+        $socios = User::where('users.tipo', 0)
             ->with(['socio.cuentas.type'])
             ->when($buscar, function ($query) use ($buscar) {
                 return $query->where(function ($q) use ($buscar) {
@@ -46,7 +43,6 @@ class SocioController extends Controller
                       });
                 });
             })
-            // Lógica para ordenar: Si es por "activo" usamos el Join con la tabla socios
             ->when($sort == 'activo', function($query) use ($direction) {
                 return $query->leftJoin('socios', 'users.id', '=', 'socios.user_id')
                              ->orderBy('socios.activo', $direction)
@@ -56,7 +52,6 @@ class SocioController extends Controller
             })
             ->paginate(10);
 
-        // Adjuntamos los parámetros a los links de paginación para que no se pierdan al cambiar de página
         $socios->appends([
             'buscar' => $buscar,
             'sort' => $sort,
@@ -71,7 +66,6 @@ class SocioController extends Controller
         return view('admin.socios.create');
     }
 
-    // MÉTODO STORE ACTUALIZADO: Contraseña por defecto coo123perativa
     public function store(Request $request)
     {
         $request->validate([
@@ -89,7 +83,7 @@ class SocioController extends Controller
                     'name'     => $request->nombres . ' ' . $request->apellidos,
                     'email'    => $request->email,
                     'cedula'   => $request->cedula,
-                    'password' => Hash::make('coo123perativa'),
+                    'password' => Hash::make('coo123procon'),
                     'tipo'     => 0,
                 ]);
 
@@ -106,14 +100,14 @@ class SocioController extends Controller
                 ]);
 
                 return redirect()->route('admin.socios.index')
-                    ->with('success', 'Socio registrado exitosamente con clave: coo123perativa');
+                    ->with('success', 'Socio registrado exitosamente con clave: coo123procon');
             });
         } catch (\Exception $e) {
             return back()->with('error', 'Error: ' . $e->getMessage())->withInput();
         }
     }
 
-    // 2. PERFIL 360 DEL SOCIO
+    // PERFIL 360 DEL SOCIO (VISTA ADMINISTRADOR)
     public function show(Request $request, $id)
     {
         $socio = Socio::with(['user', 'prestamos.cuotas', 'cuentas.type'])->findOrFail($id);
@@ -140,9 +134,11 @@ class SocioController extends Controller
         $totalAhorradoGlobal = $totalAportaciones + $totalRetirable;
 
         $salario = (float) ($socio->salario ?? 0);
-        $maximoCreditoPosible = $totalAhorradoGlobal * 1.5;
+
+        // REGLA DEL 40% SOBRE EL SALARIO
         $limiteMensualDescuento = $salario * 0.40;
 
+        // SUMA DE CUOTAS DE PRÉSTAMOS ACTIVOS
         $cuotasPrestamosMes = $socio->prestamos()
             ->where('estado', 'activo')
             ->get()
@@ -151,13 +147,22 @@ class SocioController extends Controller
                 return $cuota ? $cuota->monto_total : 0;
             });
 
+        // SUMA DE AHORROS RECURRENTES
         $ahorrosFijosMes = (float) ($cuentaAportacion->recurring_amount + $cuentaVoluntario->recurring_amount);
+
+        // TOTAL COMPROMISOS (CUOTAS + AHORROS)
         $compromisosActuales = $cuotasPrestamosMes + $ahorrosFijosMes;
+
+        // CAPACIDAD DISPONIBLE DEL 40% TRAS DESCUENTOS
         $capacidadDisponibleMensual = $limiteMensualDescuento - $compromisosActuales;
 
         $prestamosActivos = $socio->prestamos()->where('estado', '!=', 'pagado')->get();
         $prestamosInactivos = $socio->prestamos()->where('estado', 'pagado')->get();
-        $totalDeuda = $prestamosActivos->sum('saldo_capital');
+        $totalDeudaActual = $prestamosActivos->sum('saldo_capital');
+
+        // REGLA DE GARANTÍA DINÁMICA 1.5x
+        $limiteGarantiaTotal = $totalAportaciones * 1.5;
+        $cupoGarantiaDisponible = $limiteGarantiaTotal - $totalDeudaActual;
 
         $cuentasIds = [$cuentaAportacion->id, $cuentaVoluntario->id];
         $aniosBD = SavingsTransaction::whereIn('savings_account_id', $cuentasIds)
@@ -166,14 +171,24 @@ class SocioController extends Controller
         rsort($aniosDisponibles);
         $anioSeleccionado = $request->get('anio_ahorro', (string)date('Y'));
 
-        $armarMatriz = function($cuenta) use ($anioSeleccionado) {
+        $totalesAnuales = [
+            'aportacion' => ['ingresos' => 0, 'egresos' => 0],
+            'voluntario'  => ['ingresos' => 0, 'egresos' => 0]
+        ];
+
+        $armarMatriz = function($cuenta, $tipoClave) use ($anioSeleccionado, &$totalesAnuales) {
             $meses = [];
             for ($i = 1; $i <= 12; $i++) { $meses[$i] = ['aporte' => 0, 'retiro' => 0, 'transacciones' => []]; }
             $txs = $cuenta->transactions()->whereYear('date', $anioSeleccionado)->get();
             foreach ($txs as $tx) {
                 $m = $tx->date->month;
-                if (in_array($tx->type, ['deposit', 'interest', 'deposito'])) $meses[$m]['aporte'] += (float)$tx->amount;
-                else $meses[$m]['retiro'] += (float)$tx->amount;
+                if (in_array($tx->type, ['deposit', 'interest', 'deposito'])) {
+                    $meses[$m]['aporte'] += (float)$tx->amount;
+                    $totalesAnuales[$tipoClave]['ingresos'] += (float)$tx->amount;
+                } else {
+                    $meses[$m]['retiro'] += (float)$tx->amount;
+                    $totalesAnuales[$tipoClave]['egresos'] += (float)$tx->amount;
+                }
                 $meses[$m]['transacciones'][] = $tx;
             }
             return $meses;
@@ -181,7 +196,7 @@ class SocioController extends Controller
 
         return view('admin.socios.show', [
             'socio' => $socio,
-            'totalDeuda' => $totalDeuda,
+            'totalDeuda' => $totalDeudaActual,
             'prestamosActivos' => $prestamosActivos,
             'prestamosInactivos' => $prestamosInactivos,
             'totalAportaciones' => $totalAportaciones,
@@ -193,13 +208,15 @@ class SocioController extends Controller
             'cuotasPrestamos' => $cuotasPrestamosMes,
             'ahorrosFijos' => $ahorrosFijosMes,
             'capacidadDisponible' => $capacidadDisponibleMensual,
-            'maximoCredito' => $maximoCreditoPosible,
+            'limiteGarantiaTotal' => $limiteGarantiaTotal,
+            'cupoGarantiaDisponible' => $cupoGarantiaDisponible,
             'aniosDisponibles' => $aniosDisponibles,
             'anioSeleccionado' => $anioSeleccionado,
-            'matrizAportacion' => $armarMatriz($cuentaAportacion),
-            'matrizVoluntario' => $armarMatriz($cuentaVoluntario),
+            'matrizAportacion' => $armarMatriz($cuentaAportacion, 'aportacion'),
+            'matrizVoluntario' => $armarMatriz($cuentaVoluntario, 'voluntario'),
             'cuentaAportacion' => $cuentaAportacion,
             'cuentaVoluntario' => $cuentaVoluntario,
+            'totalesAnuales' => $totalesAnuales
         ]);
     }
 
@@ -312,7 +329,12 @@ class SocioController extends Controller
     public function adminDashboard()
     {
         $totalAhorrado = SavingsAccount::sum('balance');
-        $totalPrestado = Prestamo::where('estado', 'activo')->sum('saldo_capital');
+        $totalPrestado = DB::table('cuotas')
+            ->join('prestamos', 'cuotas.prestamo_id', '=', 'prestamos.id')
+            ->where('prestamos.estado', 'activo')
+            ->where('cuotas.estado', 'pendiente')
+            ->sum('cuotas.capital');
+
         $sociosActivos = Socio::where('activo', true)->count();
 
         $meses = []; $ahorros = []; $prestamos = [];
@@ -353,6 +375,7 @@ class SocioController extends Controller
         return view('admin.logs.index', compact('logs'));
     }
 
+    // DASHBOARD DEL SOCIO
     public function dashboardSocio(Request $request)
     {
         $user = auth()->user();
@@ -368,37 +391,74 @@ class SocioController extends Controller
             return in_array(strtoupper($c->type->code), ['RET', 'VOLUNTARIO', 'AHORRO']);
         })->first();
 
-        $anioSeleccionado = $request->get('anio_ahorro', date('Y'));
+        $totalAportacionesSocio = (float)($cuentaAportacion->balance ?? 0);
+        $totalVoluntarioSocio = (float)($cuentaVoluntario->balance ?? 0);
 
-        $armarMatriz = function($cuenta) use ($anioSeleccionado) {
+        $anioSeleccionado = $request->get('anio_ahorro', date('Y'));
+        $totalesAnuales = [
+            'aportacion' => ['ingresos' => 0, 'egresos' => 0],
+            'voluntario'  => ['ingresos' => 0, 'egresos' => 0]
+        ];
+
+        $armarMatriz = function($cuenta, $tipoClave) use ($anioSeleccionado, &$totalesAnuales) {
             $meses = [];
-            for ($i = 1; $i <= 12; $i++) { $meses[$i] = ['aporte' => 0, 'retiro' => 0]; }
+            for ($i = 1; $i <= 12; $i++) {
+                $meses[$i] = [
+                    'aporte' => 0,
+                    'retiro' => 0,
+                    'transacciones' => []
+                ];
+            }
             if ($cuenta) {
                 $txs = $cuenta->transactions()->whereYear('date', $anioSeleccionado)->get();
                 foreach ($txs as $tx) {
                     $m = \Carbon\Carbon::parse($tx->date)->month;
-                    if (in_array($tx->type, ['deposit', 'interest', 'deposito'])) $meses[$m]['aporte'] += (float)$tx->amount;
-                    else $meses[$m]['retiro'] += (float)$tx->amount;
+                    if (in_array($tx->type, ['deposit', 'interest', 'deposito'])) {
+                        $meses[$m]['aporte'] += (float)$tx->amount;
+                        $totalesAnuales[$tipoClave]['ingresos'] += (float)$tx->amount;
+                    } else {
+                        $meses[$m]['retiro'] += (float)$tx->amount;
+                        $totalesAnuales[$tipoClave]['egresos'] += (float)$tx->amount;
+                    }
+                    $meses[$m]['transacciones'][] = $tx;
                 }
             }
             return $meses;
         };
 
+        $prestamosActivosSocio = $socio->prestamos()->where('estado', 'activo')->get();
+        $totalDeudaSocio = $prestamosActivosSocio->sum('saldo_capital');
+
+        // REGLA 1.5x DINÁMICA PARA EL SOCIO
+        $limiteGarantiaTotalSocio = $totalAportacionesSocio * 1.5;
+        $maximoCreditoSocio = $limiteGarantiaTotalSocio - $totalDeudaSocio;
+
+        $aniosBD = SavingsTransaction::whereIn('savings_account_id', $socio->cuentas->pluck('id'))
+                    ->selectRaw('YEAR(date) as anio')
+                    ->distinct()
+                    ->pluck('anio')
+                    ->toArray();
+
+        $aniosDisponibles = array_unique(array_merge($aniosBD, [(int)date('Y')]));
+        rsort($aniosDisponibles);
+
         return view('socio.dashboard', [
             'socio' => $socio,
-            'prestamosActivos' => $socio->prestamos()->where('estado', 'activo')->get(),
-            'totalAhorradoGlobal' => ($cuentaAportacion->balance ?? 0) + ($cuentaVoluntario->balance ?? 0),
-            'maximoCredito' => (($cuentaAportacion->balance ?? 0) + ($cuentaVoluntario->balance ?? 0)) * 1.5,
-            'capacidadDisponible' => ($socio->salario * 0.40) - ($socio->prestamos()->where('estado', 'activo')->get()->sum(function($p){
+            'prestamosActivos' => $prestamosActivosSocio,
+            'totalAhorradoGlobal' => $totalAportacionesSocio + $totalVoluntarioSocio,
+            'maximoCredito' => $maximoCreditoSocio,
+            'limiteGarantiaTotal' => $limiteGarantiaTotalSocio,
+            'capacidadDisponible' => ($socio->salario * 0.40) - ($prestamosActivosSocio->sum(function($p){
                  $c = $p->cuotas()->where('estado', 'pendiente')->orderBy('numero_cuota', 'asc')->first();
                  return $c ? $c->monto_total : 0;
             }) + ($cuentaAportacion->recurring_amount ?? 0) + ($cuentaVoluntario->recurring_amount ?? 0)),
-            'matrizAportacion' => $armarMatriz($cuentaAportacion),
-            'matrizVoluntario' => $armarMatriz($cuentaVoluntario),
+            'matrizAportacion' => $armarMatriz($cuentaAportacion, 'aportacion'),
+            'matrizVoluntario' => $armarMatriz($cuentaVoluntario, 'voluntario'),
             'cuentaApo' => $cuentaAportacion,
             'cuentaVol' => $cuentaVoluntario,
             'anioSeleccionado' => $anioSeleccionado,
-            'aniosDisponibles' => [date('Y'), date('Y')-1]
+            'aniosDisponibles' => $aniosDisponibles,
+            'totalesAnuales' => $totalesAnuales
         ]);
     }
 

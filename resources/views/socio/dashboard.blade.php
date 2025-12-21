@@ -1,18 +1,14 @@
 <x-app-layout>
-    {{-- BLOQUE DE CÁLCULO INICIAL (Motor de Datos del Socio) --}}
+    {{-- BLOQUE DE CÁLCULO INICIAL --}}
     @php
-        // 1. Cálculo de compromisos de préstamos (cuota más cercana pendiente)
         $cuotasPrestamosSocio = $prestamosActivos->sum(function($p) {
             $cuota = $p->cuotas()->where('estado', 'pendiente')->orderBy('numero_cuota', 'asc')->first();
             return $cuota ? $cuota->monto_total : 0;
         });
 
-        // 2. Ahorros desglosados
         $montoAportacion = $cuentaApo->recurring_amount ?? 0;
         $montoRetirable = $cuentaVol->recurring_amount ?? 0;
         $totalAhorrosMensuales = $montoAportacion + $montoRetirable;
-
-        // 3. Total que se descontará en la siguiente nómina
         $totalDescuentoSocio = $cuotasPrestamosSocio + $totalAhorrosMensuales;
     @endphp
 
@@ -33,7 +29,7 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
-            {{-- 1. INDICADORES DE INTELIGENCIA FINANCIERA --}}
+            {{-- 1. INDICADORES --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-8 relative overflow-hidden">
                     <div class="absolute top-0 right-0 p-4 opacity-5 text-6xl font-black">🏦</div>
@@ -53,90 +49,151 @@
                     <div class="absolute top-0 right-0 p-4 opacity-5 text-6xl font-black">💵</div>
                     <p class="text-[10px] uppercase font-black text-gray-400 tracking-[0.2em] mb-4">Margen de Descuento Libre</p>
                     <h3 class="text-3xl font-black text-green-700 font-mono">RD$ {{ number_format($capacidadDisponible, 2) }}</h3>
-                    <p class="text-[9px] text-gray-400 mt-2 italic font-bold">Capacidad mensual disponible para nuevos créditos</p>
+                    <p class="text-[9px] text-gray-400 mt-2 italic font-bold">Capacidad disponible para nuevos créditos</p>
                 </div>
             </div>
 
-            {{-- 2. MATRIZ DE AHORROS MENSUAL --}}
-            <div class="bg-white p-8 rounded-4xl shadow-sm border border-gray-100">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <h3 class="text-lg font-black text-gray-800 uppercase tracking-tighter flex items-center gap-2 italic font-sans">
-                        <span class="p-2 bg-blue-50 rounded-xl text-blue-600 text-sm">📅</span> Seguimiento Mensual de Ahorros
+            {{-- 2. CONTROL DE AHORROS CON RESUMEN ANUAL --}}
+            <div class="bg-white shadow-sm rounded-2xl p-6 border border-gray-100">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-gray-50 pb-4">
+                    <h3 class="text-lg font-black text-gray-800 flex items-center gap-2 uppercase tracking-wide italic">
+                        <span class="p-1 bg-yellow-100 rounded text-xs text-yellow-600">🏦</span> Seguimiento de mis Ahorros
                     </h3>
-
-                    <form action="{{ route('socio.dashboard') }}" method="GET" class="flex items-center gap-2">
-                        <select name="anio_ahorro" onchange="this.form.submit()" class="text-xs font-black uppercase tracking-widest border-gray-200 rounded-xl focus:ring-blue-500 bg-gray-50 px-4 py-2">
-                            @foreach($aniosDisponibles as $a)
-                                <option value="{{ $a }}" {{ $anioSeleccionado == $a ? 'selected' : '' }}>Año {{ $a }}</option>
+                    <form action="{{ route('socio.dashboard') }}" method="GET" class="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200">
+                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">Ver Historial:</label>
+                        <select name="anio_ahorro" onchange="this.form.submit()" class="border-none bg-transparent rounded py-0 font-black text-indigo-600 text-sm focus:ring-0 cursor-pointer">
+                            @foreach($aniosDisponibles as $anio)
+                                <option value="{{ $anio }}" {{ ($anioSeleccionado == $anio) ? 'selected' : '' }}>{{ $anio }}</option>
                             @endforeach
                         </select>
                     </form>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b font-mono">
-                                <th class="pb-4 pr-4">Tipo de Ahorro</th>
-                                @foreach(['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'] as $mes)
-                                    <th class="pb-4 px-2 text-center">{{ $mes }}</th>
-                                @endforeach
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-50 font-mono">
-                            <tr class="group hover:bg-gray-50/50 transition-colors">
-                                <td class="py-6 pr-4">
-                                    <span class="block text-xs font-black text-gray-700 uppercase italic leading-none">Aportación</span>
-                                    <span class="text-[9px] text-gray-400 font-bold tracking-tighter italic font-sans">Ahorro Normal</span>
-                                </td>
-                                @foreach($matrizAportacion as $mes => $data)
-                                    <td class="px-1 text-center">
-                                        @if($data['aporte'] > 0)
-                                            <div class="relative group/val inline-block">
-                                                <div class="h-10 w-6 bg-blue-500 rounded-md mx-auto shadow-sm shadow-blue-200 hover:scale-110 transition-transform cursor-help"></div>
-                                                <span class="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[9px] font-bold px-2 py-1 rounded opacity-0 group-hover/val:opacity-100 transition-opacity whitespace-nowrap z-10 font-mono italic">
-                                                    RD$ {{ number_format($data['aporte'], 0) }}
-                                                </span>
-                                            </div>
-                                        @else
-                                            <div class="h-10 w-6 bg-gray-100 rounded-md mx-auto opacity-30"></div>
-                                        @endif
-                                    </td>
-                                @endforeach
-                            </tr>
-                            <tr class="group hover:bg-gray-50/50 transition-colors">
-                                <td class="py-6 pr-4 border-t border-gray-50">
-                                    <span class="block text-xs font-black text-orange-600 uppercase italic leading-none">Retirable</span>
-                                    <span class="text-[9px] text-gray-400 font-bold tracking-tighter italic font-sans">Voluntario</span>
-                                </td>
-                                @foreach($matrizVoluntario as $mes => $data)
-                                    <td class="px-1 text-center border-t border-gray-50">
-                                        @if($data['aporte'] > 0)
-                                            <div class="relative group/val inline-block">
-                                                <div class="h-8 w-6 bg-orange-400 rounded-md mx-auto shadow-sm shadow-orange-100 hover:scale-110 transition-transform cursor-help"></div>
-                                                <span class="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[9px] font-bold px-2 py-1 rounded opacity-0 group-hover/val:opacity-100 transition-opacity whitespace-nowrap z-10 font-mono italic">
-                                                    RD$ {{ number_format($data['aporte'], 0) }}
-                                                </span>
-                                            </div>
-                                        @else
-                                            <div class="h-8 w-6 bg-gray-100 rounded-md mx-auto opacity-30"></div>
-                                        @endif
-                                    </td>
-                                @endforeach
-                            </tr>
-                        </tbody>
-                    </table>
+                {{-- TARJETAS DE RESUMEN ANUAL DINÁMICO (EL PLUS) --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    {{-- Resumen Aportaciones --}}
+                    <div class="bg-blue-600 p-5 rounded-3xl text-white shadow-lg relative overflow-hidden">
+                        <div class="absolute -right-2 -top-2 opacity-10 text-6xl italic font-black">A</div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-blue-100 mb-3 italic">Balance Aportación {{ $anioSeleccionado }}</p>
+                        <div class="flex justify-between items-end">
+                            <div class="space-y-1">
+                                <p class="text-[10px] font-bold text-green-300 flex items-center gap-1 font-mono">
+                                    + RD$ {{ number_format($totalesAnuales['aportacion']['ingresos'], 2) }}
+                                </p>
+                                <p class="text-[10px] font-bold text-red-200 flex items-center gap-1 font-mono">
+                                    - RD$ {{ number_format($totalesAnuales['aportacion']['egresos'], 2) }}
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[9px] font-black uppercase text-blue-200 tracking-tighter italic leading-none">Resultado Neto</p>
+                                <p class="text-2xl font-black font-mono">RD$ {{ number_format($totalesAnuales['aportacion']['ingresos'] - $totalesAnuales['aportacion']['egresos'], 2) }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Resumen Retirables --}}
+                    <div class="bg-gray-800 p-5 rounded-3xl text-white shadow-lg relative overflow-hidden border-b-4 border-yellow-500">
+                        <div class="absolute -right-2 -top-2 opacity-10 text-6xl italic font-black">V</div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-3 italic">Balance Retirable {{ $anioSeleccionado }}</p>
+                        <div class="flex justify-between items-end">
+                            <div class="space-y-1">
+                                <p class="text-[10px] font-bold text-green-400 flex items-center gap-1 font-mono">
+                                    + RD$ {{ number_format($totalesAnuales['voluntario']['ingresos'], 2) }}
+                                </p>
+                                <p class="text-[10px] font-bold text-red-300 flex items-center gap-1 font-mono">
+                                    - RD$ {{ number_format($totalesAnuales['voluntario']['egresos'], 2) }}
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[9px] font-black uppercase text-yellow-500 tracking-tighter italic leading-none">Resultado Neto</p>
+                                <p class="text-2xl font-black font-mono">RD$ {{ number_format($totalesAnuales['voluntario']['ingresos'] - $totalesAnuales['voluntario']['egresos'], 2) }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {{-- TABLA APORTACIÓN (NORMAL) --}}
+                    <div class="border border-blue-100 rounded-2xl bg-blue-50/30 overflow-hidden shadow-sm">
+                        <div class="p-4 border-b border-blue-100 bg-blue-50 flex justify-between items-center">
+                            <h4 class="font-black text-blue-900 text-xs uppercase tracking-widest italic">Ahorro Aportación</h4>
+                            <span class="text-[10px] font-black text-blue-700 bg-white px-2 py-1 rounded-lg border border-blue-200 font-mono">Cuota: RD$ {{ number_format($cuentaApo->recurring_amount ?? 0, 0) }}</span>
+                        </div>
+                        <div class="bg-white">
+                            <table class="min-w-full text-xs">
+                                <thead class="bg-gray-50 border-b border-gray-100 font-black text-[9px] text-gray-400 uppercase">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left tracking-tighter">Mes</th>
+                                        <th class="px-4 py-2 text-right">Aporte</th>
+                                        <th class="px-4 py-2 text-right text-red-400 italic">Retiro</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50">
+                                    @foreach($matrizAportacion as $mesNum => $data)
+                                    <tr class="hover:bg-blue-50 transition">
+                                        <td class="px-4 py-2 font-black text-gray-400 uppercase text-[10px]">{{ \Carbon\Carbon::create()->month($mesNum)->locale('es')->monthName }}</td>
+                                        <td class="px-4 py-2 text-right font-black text-green-700 font-mono">
+                                            <span title="{{ collect($data['transacciones'])->whereIn('type', ['deposit', 'interest', 'deposito'])->pluck('description')->filter()->implode(' | ') }}">
+                                                {{ $data['aporte'] > 0 ? number_format($data['aporte'], 2) : '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-2 text-right font-bold text-red-400 font-mono">
+                                            <span title="{{ collect($data['transacciones'])->where('type', 'withdrawal')->pluck('description')->filter()->implode(' | ') }}">
+                                                {{ $data['retiro'] > 0 ? number_format($data['retiro'], 2) : '-' }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {{-- TABLA RETIRABLE (VOLUNTARIO) --}}
+                    <div class="border border-yellow-100 rounded-2xl bg-yellow-50/30 overflow-hidden shadow-sm">
+                        <div class="p-4 border-b border-yellow-100 bg-yellow-50 flex justify-between items-center">
+                            <h4 class="font-black text-yellow-900 text-xs uppercase tracking-widest italic">Ahorro Retirable</h4>
+                            <span class="text-[10px] font-black text-yellow-700 bg-white px-2 py-1 rounded-lg border border-yellow-200 font-mono">Cuota: RD$ {{ number_format($cuentaVol->recurring_amount ?? 0, 0) }}</span>
+                        </div>
+                        <div class="bg-white">
+                            <table class="min-w-full text-xs">
+                                <thead class="bg-gray-50 border-b border-gray-100 font-black text-[9px] text-gray-400 uppercase">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left tracking-tighter">Mes</th>
+                                        <th class="px-4 py-2 text-right">Aporte</th>
+                                        <th class="px-4 py-2 text-right text-red-400 italic">Retiro</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50">
+                                    @foreach($matrizVoluntario as $mesNum => $data)
+                                    <tr class="hover:bg-yellow-50 transition">
+                                        <td class="px-4 py-2 font-black text-gray-400 uppercase text-[10px]">{{ \Carbon\Carbon::create()->month($mesNum)->locale('es')->monthName }}</td>
+                                        <td class="px-4 py-2 text-right font-black text-green-700 font-mono">
+                                            <span title="{{ collect($data['transacciones'])->whereIn('type', ['deposit', 'interest', 'deposito'])->pluck('description')->filter()->implode(' | ') }}">
+                                                {{ $data['aporte'] > 0 ? number_format($data['aporte'], 2) : '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-2 text-right font-bold text-red-400 font-mono">
+                                            <span title="{{ collect($data['transacciones'])->where('type', 'withdrawal')->pluck('description')->filter()->implode(' | ') }}">
+                                                {{ $data['retiro'] > 0 ? number_format($data['retiro'], 2) : '-' }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {{-- 3. PRÓXIMO DESCUENTO (Estimado de Nómina) --}}
+            {{-- 3. PRÓXIMO DESCUENTO --}}
             <div class="bg-gray-900 text-white p-8 rounded-[2.5rem] shadow-xl relative overflow-hidden border-b-8 border-orange-500">
                 <div class="absolute top-0 right-0 p-6 opacity-10 text-8xl font-black">📊</div>
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <div>
-                        <h3 class="text-xl font-black text-white uppercase tracking-wider flex items-center gap-2 italic">
-                            <span class="w-2 h-8 bg-orange-500 rounded-full"></span>
-                            Estimado de Próxima Nómina
+                        <h3 class="text-xl font-black text-white uppercase tracking-wider italic flex items-center gap-2">
+                            <span class="w-2 h-8 bg-orange-500 rounded-full"></span> Estimado de Próxima Nómina
                         </h3>
                         <p class="text-[11px] text-gray-500 font-bold uppercase mt-1 tracking-widest italic font-mono">Deducción total prevista</p>
                     </div>
@@ -145,10 +202,7 @@
                     </div>
                 </div>
 
-                {{-- DESGLOSE DE DEDUCCIONES --}}
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-gray-800 pt-8 italic font-sans text-xs">
-
-                    {{-- Cuotas de Préstamo --}}
                     <div class="bg-gray-800/40 p-4 rounded-2xl border border-gray-800 flex justify-between items-center group transition-all hover:bg-gray-800/60">
                         <div>
                             <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1 italic">Deducción Préstamos</p>
@@ -157,7 +211,6 @@
                         <span class="text-xl opacity-30 group-hover:opacity-100 transition-opacity">💳</span>
                     </div>
 
-                    {{-- Ahorro Normal --}}
                     <div class="bg-blue-900/20 p-4 rounded-2xl border border-blue-900/30 flex justify-between items-center group transition-all hover:bg-blue-900/30">
                         <div>
                             <p class="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1 italic">Ahorro Normal (Aport.)</p>
@@ -166,7 +219,6 @@
                         <span class="text-xl opacity-30 group-hover:opacity-100 transition-opacity text-blue-400">🛡️</span>
                     </div>
 
-                    {{-- Ahorro Retirable --}}
                     <div class="bg-orange-900/20 p-4 rounded-2xl border border-orange-900/30 flex justify-between items-center group transition-all hover:bg-orange-900/30">
                         <div>
                             <p class="text-[9px] font-black text-orange-400 uppercase tracking-widest mb-1 italic">Ahorro Retirable (Vol.)</p>
@@ -174,7 +226,6 @@
                         </div>
                         <span class="text-xl opacity-30 group-hover:opacity-100 transition-opacity text-orange-400">💰</span>
                     </div>
-
                 </div>
             </div>
 
@@ -236,7 +287,6 @@
                     </div>
                 @endif
             </div>
-
         </div>
     </div>
 </x-app-layout>

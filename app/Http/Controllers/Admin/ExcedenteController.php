@@ -7,12 +7,11 @@ use App\Models\Socio;
 use App\Models\Cuota;
 use App\Models\SavingsAccount;
 use App\Models\GastoAdministrativo;
-use App\Models\CierreAnual; // <--- IMPORTACIÓN AGREGADA
+use App\Models\CierreAnual;
 use Illuminate\Http\Request;
 
 class ExcedenteController extends Controller
 {
-    // Muestra el Informe Final (Estado de Situación y Distribución)
     public function informe(Request $request)
     {
         $anio = $request->anio ?? date('Y');
@@ -28,8 +27,14 @@ class ExcedenteController extends Controller
         $mensual_ingresos = [];
         $mensual_gastos = [];
         for ($m = 1; $m <= 12; $m++) {
-            $mensual_ingresos[] = Cuota::whereYear('fecha_vencimiento', $anio)->whereMonth('fecha_vencimiento', $m)->whereIn('estado', ['pagado', 'pagada'])->sum('interes');
-            $mensual_gastos[] = GastoAdministrativo::whereYear('fecha', $anio)->whereMonth('fecha', $m)->sum('monto');
+            $mensual_ingresos[] = Cuota::whereYear('fecha_vencimiento', $anio)
+                ->whereMonth('fecha_vencimiento', $m)
+                ->whereIn('estado', ['pagado', 'pagada'])
+                ->sum('interes');
+
+            $mensual_gastos[] = GastoAdministrativo::whereYear('fecha', $anio)
+                ->whereMonth('fecha', $m)
+                ->sum('monto');
         }
 
         // 3. RETENCIONES LEGALES
@@ -43,31 +48,48 @@ class ExcedenteController extends Controller
         $excedenteNetoADistribuir = $excedenteBase - ($ret_educacion + $ret_legal + $ret_incobrables);
         if($excedenteNetoADistribuir < 0) $excedenteNetoADistribuir = 0;
 
-        // 4. NUEVA LÓGICA 50-50
+        // 4. LÓGICA 50-50
         $fondoPatrocinio = $excedenteNetoADistribuir * 0.50;
         $fondoCapitalizacion = $excedenteNetoADistribuir * 0.50;
 
         $factorPatrocinio = $ingresosBrutos > 0 ? ($fondoPatrocinio / $ingresosBrutos) : 0;
 
-        $socios = Socio::with('user')->where('activo', true)->get();
-        $totalAhorrosGeneral = $socios->sum('ahorro_total');
+        // --- LÓGICA DE PERMANENCIA (SOLO SOCIOS CON AHORRO EN DICIEMBRE) ---
+        $socios = Socio::with('user')
+            ->withSum('cuentas as ahorro_total_real', 'balance')
+            ->where('activo', true)
+            ->whereHas('cuentas.transactions', function ($query) use ($anio) {
+                $query->whereYear('date', $anio)
+                      ->whereMonth('date', 12)
+                      ->whereIn('type', ['deposit', 'interest', 'deposito']);
+            })
+            ->get();
+
+        // Sumamos el total de ahorros solo de los socios que calificaron (los que están en diciembre)
+        $totalAhorrosGeneral = $socios->sum('ahorro_total_real') ?: 0;
+
+        // Calculamos el factor de capitalización basado en el ahorro de los socios calificados
         $factorCapitalizacion = $totalAhorrosGeneral > 0 ? ($fondoCapitalizacion / $totalAhorrosGeneral) : 0;
 
         $reporte = [];
         foreach ($socios as $socio) {
+            // Intereses pagados por el socio en el año
             $interesesSocio = Cuota::whereHas('prestamo', fn($q) => $q->where('socio_id', $socio->id))
                 ->whereYear('fecha_vencimiento', $anio)
                 ->whereIn('estado', ['pagado', 'pagada'])
                 ->sum('interes');
 
+            // Obtenemos el balance real
+            $ahorroRealSocio = (float) ($socio->ahorro_total_real ?? 0);
+
             $monto_pat = $interesesSocio * $factorPatrocinio;
-            $monto_cap = $socio->ahorro_total * $factorCapitalizacion;
+            $monto_cap = $ahorroRealSocio * $factorCapitalizacion;
 
             $reporte[] = [
-                'nombre' => $socio->user->name,
-                'cedula' => $socio->user->cedula,
+                'nombre' => $socio->user->name ?? 'Socio sin usuario',
+                'cedula' => $socio->user->cedula ?? 'N/A',
                 'base_intereses' => $interesesSocio,
-                'base_ahorros' => $socio->ahorro_total,
+                'base_ahorros' => $ahorroRealSocio,
                 'monto_pat' => $monto_pat,
                 'monto_cap' => $monto_cap,
                 'total_socio' => $monto_pat + $monto_cap
@@ -113,12 +135,14 @@ class ExcedenteController extends Controller
     {
         $request->validate(['anio' => 'required|integer']);
 
-        // Cambiado de \App\Models\CierreAnual a CierreAnual (porque ya está importado)
         if (CierreAnual::where('anio', $request->anio)->exists()) {
             return back()->with('error', 'El año ' . $request->anio . ' ya ha sido cerrado oficialmente.');
         }
 
-        $ingresosBrutos = Cuota::whereYear('fecha_vencimiento', $request->anio)->whereIn('estado', ['pagado', 'pagada'])->sum('interes');
+        $ingresosBrutos = Cuota::whereYear('fecha_vencimiento', $request->anio)
+            ->whereIn('estado', ['pagado', 'pagada'])
+            ->sum('interes');
+
         $gastosTotales = GastoAdministrativo::whereYear('fecha', $request->anio)->sum('monto');
 
         $excedenteBruto = $ingresosBrutos - $gastosTotales;
