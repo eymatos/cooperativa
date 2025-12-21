@@ -69,7 +69,7 @@
                     </form>
                 </div>
 
-                {{-- TARJETAS DE RESUMEN ANUAL DINÁMICO (EL PLUS) --}}
+                {{-- TARJETAS DE RESUMEN ANUAL DINÁMICO --}}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     {{-- Resumen Aportaciones --}}
                     <div class="bg-blue-600 p-5 rounded-3xl text-white shadow-lg relative overflow-hidden">
@@ -113,7 +113,7 @@
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {{-- TABLA APORTACIÓN (NORMAL) --}}
+                    {{-- TABLA APORTACIÓN --}}
                     <div class="border border-blue-100 rounded-2xl bg-blue-50/30 overflow-hidden shadow-sm">
                         <div class="p-4 border-b border-blue-100 bg-blue-50 flex justify-between items-center">
                             <h4 class="font-black text-blue-900 text-xs uppercase tracking-widest italic">Ahorro Aportación</h4>
@@ -133,14 +133,10 @@
                                     <tr class="hover:bg-blue-50 transition">
                                         <td class="px-4 py-2 font-black text-gray-400 uppercase text-[10px]">{{ \Carbon\Carbon::create()->month($mesNum)->locale('es')->monthName }}</td>
                                         <td class="px-4 py-2 text-right font-black text-green-700 font-mono">
-                                            <span title="{{ collect($data['transacciones'])->whereIn('type', ['deposit', 'interest', 'deposito'])->pluck('description')->filter()->implode(' | ') }}">
-                                                {{ $data['aporte'] > 0 ? number_format($data['aporte'], 2) : '-' }}
-                                            </span>
+                                            <span>{{ $data['aporte'] > 0 ? number_format($data['aporte'], 2) : '-' }}</span>
                                         </td>
                                         <td class="px-4 py-2 text-right font-bold text-red-400 font-mono">
-                                            <span title="{{ collect($data['transacciones'])->where('type', 'withdrawal')->pluck('description')->filter()->implode(' | ') }}">
-                                                {{ $data['retiro'] > 0 ? number_format($data['retiro'], 2) : '-' }}
-                                            </span>
+                                            <span>{{ $data['retiro'] > 0 ? number_format($data['retiro'], 2) : '-' }}</span>
                                         </td>
                                     </tr>
                                     @endforeach
@@ -149,7 +145,7 @@
                         </div>
                     </div>
 
-                    {{-- TABLA RETIRABLE (VOLUNTARIO) --}}
+                    {{-- TABLA RETIRABLE --}}
                     <div class="border border-yellow-100 rounded-2xl bg-yellow-50/30 overflow-hidden shadow-sm">
                         <div class="p-4 border-b border-yellow-100 bg-yellow-50 flex justify-between items-center">
                             <h4 class="font-black text-yellow-900 text-xs uppercase tracking-widest italic">Ahorro Retirable</h4>
@@ -169,14 +165,10 @@
                                     <tr class="hover:bg-yellow-50 transition">
                                         <td class="px-4 py-2 font-black text-gray-400 uppercase text-[10px]">{{ \Carbon\Carbon::create()->month($mesNum)->locale('es')->monthName }}</td>
                                         <td class="px-4 py-2 text-right font-black text-green-700 font-mono">
-                                            <span title="{{ collect($data['transacciones'])->whereIn('type', ['deposit', 'interest', 'deposito'])->pluck('description')->filter()->implode(' | ') }}">
-                                                {{ $data['aporte'] > 0 ? number_format($data['aporte'], 2) : '-' }}
-                                            </span>
+                                            <span>{{ $data['aporte'] > 0 ? number_format($data['aporte'], 2) : '-' }}</span>
                                         </td>
                                         <td class="px-4 py-2 text-right font-bold text-red-400 font-mono">
-                                            <span title="{{ collect($data['transacciones'])->where('type', 'withdrawal')->pluck('description')->filter()->implode(' | ') }}">
-                                                {{ $data['retiro'] > 0 ? number_format($data['retiro'], 2) : '-' }}
-                                            </span>
+                                            <span>{{ $data['retiro'] > 0 ? number_format($data['retiro'], 2) : '-' }}</span>
                                         </td>
                                     </tr>
                                     @endforeach
@@ -229,7 +221,7 @@
                 </div>
             </div>
 
-            {{-- 4. MIS COMPROMISOS (PRÉSTAMOS) --}}
+            {{-- 4. MIS COMPROMISOS (PRÉSTAMOS VIGENTES) --}}
             <div class="bg-white p-8 rounded-4xl shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between mb-8">
                     <h3 class="text-lg font-black text-gray-800 uppercase tracking-tighter flex items-center gap-2 italic">
@@ -266,7 +258,6 @@
                                         </div>
                                     </div>
                                 </div>
-
                                 <div class="relative pt-1">
                                     <div class="flex mb-2 items-center justify-between">
                                         <span class="text-[10px] font-black uppercase rounded-full text-indigo-600 italic tracking-tighter">Estado de Amortización</span>
@@ -276,7 +267,6 @@
                                         <div style="width:{{ $porcentaje }}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-indigo-500 transition-all duration-1000"></div>
                                     </div>
                                 </div>
-
                                 <div class="flex justify-end mt-4 italic font-sans">
                                     <a href="{{ route('socio.prestamos.show_socio', $p->id) }}" class="text-[10px] font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-800 underline decoration-2 underline-offset-4 flex items-center gap-1 transition-all">
                                         Detalle de Cuotas <span class="text-sm">→</span>
@@ -287,6 +277,54 @@
                     </div>
                 @endif
             </div>
+
+            {{-- 5. HISTORIAL DE PRÉSTAMOS FINALIZADOS (NUEVA SECCIÓN) --}}
+            <div class="bg-white p-8 rounded-4xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between mb-8">
+                    <h3 class="text-lg font-black text-gray-400 uppercase tracking-tighter flex items-center gap-2 italic">
+                        <span class="p-2 bg-gray-50 rounded-xl text-gray-400 text-sm italic">✓</span> Historial de Préstamos Pagados
+                    </h3>
+                </div>
+
+                @if($prestamosInactivos->isEmpty())
+                    <p class="text-center py-6 text-gray-400 text-xs italic uppercase font-bold tracking-widest">No tienes préstamos finalizados en tu historial.</p>
+                @else
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left italic border-separate border-spacing-y-2">
+                            <thead>
+                                <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                    <th class="px-4 py-2">Tipo / Número</th>
+                                    <th class="px-4 py-2">Monto Original</th>
+                                    <th class="px-4 py-2">Fecha Inicio</th>
+                                    <th class="px-4 py-2 text-right">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($prestamosInactivos as $pi)
+                                    <tr class="bg-gray-50/50 hover:bg-white hover:shadow-md transition-all group">
+                                        <td class="px-4 py-4 rounded-l-2xl">
+                                            <p class="text-xs font-black text-gray-700 uppercase">{{ $pi->tipoPrestamo->nombre ?? 'Crédito' }}</p>
+                                            <p class="text-[9px] font-bold text-gray-400 italic tracking-widest">#{{ $pi->numero_prestamo }}</p>
+                                        </td>
+                                        <td class="px-4 py-4 font-mono font-bold text-gray-600 text-xs">
+                                            RD$ {{ number_format($pi->monto, 2) }}
+                                        </td>
+                                        <td class="px-4 py-4 text-xs font-bold text-gray-500 uppercase italic">
+                                            {{ $pi->fecha_inicio ? \Carbon\Carbon::parse($pi->fecha_inicio)->format('d/m/Y') : 'N/A' }}
+                                        </td>
+                                        <td class="px-4 py-4 text-right rounded-r-2xl">
+                                            <a href="{{ route('socio.prestamos.show_socio', $pi->id) }}" class="text-[10px] font-black text-indigo-400 group-hover:text-indigo-600 uppercase transition-colors">
+                                                Ver Detalle →
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            </div>
+
         </div>
     </div>
 </x-app-layout>

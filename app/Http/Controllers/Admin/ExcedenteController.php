@@ -6,18 +6,30 @@ use App\Http\Controllers\Controller;
 use App\Models\Socio;
 use App\Models\Cuota;
 use App\Models\SavingsAccount;
+use App\Models\SavingsTransaction;
 use App\Models\GastoAdministrativo;
 use App\Models\CierreAnual;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class ExcedenteController extends Controller
 {
+    /**
+     * Genera el informe de excedentes basado en la actividad anual.
+     * Toma en cuenta el balance histórico (Saldo inicial + depósitos del año)
+     * de solo Ahorros Normales (ID 1).
+     */
     public function informe(Request $request)
     {
         $anio = $request->anio ?? date('Y');
 
+        $inicioAnio = $anio . '-01-01';
+        $finAnio = $anio . '-12-31';
+
         // 1. INGRESOS Y GASTOS TOTALES
-        $ingresosBrutos = Cuota::whereYear('fecha_vencimiento', $anio)
+        $ingresosBrutos = Cuota::whereDate('fecha_vencimiento', '>=', $inicioAnio)
+            ->whereDate('fecha_vencimiento', '<=', $finAnio)
             ->whereIn('estado', ['pagado', 'pagada'])
             ->sum('interes');
 
@@ -54,46 +66,68 @@ class ExcedenteController extends Controller
 
         $factorPatrocinio = $ingresosBrutos > 0 ? ($fondoPatrocinio / $ingresosBrutos) : 0;
 
-        // --- LÓGICA DE PERMANENCIA (SOLO SOCIOS CON AHORRO EN DICIEMBRE) ---
+        // --- LÓGICA DE PERMANENCIA (BALANCE HISTÓRICO REAL) ---
+        // Obtenemos socios que tengan o hayan tenido cuenta Normal (saving_type_id = 1)
         $socios = Socio::with('user')
-            ->withSum('cuentas as ahorro_total_real', 'balance')
-            ->where('activo', true)
-            ->whereHas('cuentas.transactions', function ($query) use ($anio) {
-                $query->whereYear('date', $anio)
-                      ->whereMonth('date', 12)
-                      ->whereIn('type', ['deposit', 'interest', 'deposito']);
+            ->whereHas('cuentas', function ($q) {
+                $q->where('saving_type_id', 1);
             })
             ->get();
 
-        // Sumamos el total de ahorros solo de los socios que calificaron (los que están en diciembre)
-        $totalAhorrosGeneral = $socios->sum('ahorro_total_real') ?: 0;
-
-        // Calculamos el factor de capitalización basado en el ahorro de los socios calificados
-        $factorCapitalizacion = $totalAhorrosGeneral > 0 ? ($fondoCapitalizacion / $totalAhorrosGeneral) : 0;
-
         $reporte = [];
+        $totalAhorrosGeneralCalculado = 0;
+
         foreach ($socios as $socio) {
-            // Intereses pagados por el socio en el año
+            // PASO A: Calcular el balance que traía el socio ANTES del inicio del año fiscal
+            $balanceAnterior = SavingsTransaction::whereHas('account', function($q) use ($socio) {
+                    $q->where('socio_id', $socio->id)->where('saving_type_id', 1);
+                })
+                ->whereDate('date', '<', $inicioAnio)
+                ->selectRaw("SUM(CASE WHEN type IN ('deposit', 'interest', 'deposito') THEN amount ELSE -amount END) as total")
+                ->value('total') ?? 0;
+
+            // PASO B: Calcular las ENTRADAS (depósitos) realizadas DENTRO del año fiscal
+            $entradasAnio = SavingsTransaction::whereHas('account', function($q) use ($socio) {
+                    $q->where('socio_id', $socio->id)->where('saving_type_id', 1);
+                })
+                ->whereYear('date', $anio)
+                ->whereIn('type', ['deposit', 'interest', 'deposito'])
+                ->sum('amount');
+
+            // La base de excedente es el Balance Anterior + Entradas del Año
+            // (Ignoramos los retiros/salidas para que si se retiró al final, su base sea la máxima ahorrada)
+            $ahorroBaseCalculado = max($balanceAnterior + $entradasAnio, 0);
+
+            $socio->ahorro_historico_base = $ahorroBaseCalculado;
+            $totalAhorrosGeneralCalculado += $ahorroBaseCalculado;
+        }
+
+        $factorCapitalizacion = $totalAhorrosGeneralCalculado > 0 ? ($fondoCapitalizacion / $totalAhorrosGeneralCalculado) : 0;
+
+        // 5. GENERAR REPORTE FINAL
+        foreach ($socios as $socio) {
             $interesesSocio = Cuota::whereHas('prestamo', fn($q) => $q->where('socio_id', $socio->id))
-                ->whereYear('fecha_vencimiento', $anio)
+                ->whereDate('fecha_vencimiento', '>=', $inicioAnio)
+                ->whereDate('fecha_vencimiento', '<=', $finAnio)
                 ->whereIn('estado', ['pagado', 'pagada'])
                 ->sum('interes');
 
-            // Obtenemos el balance real
-            $ahorroRealSocio = (float) ($socio->ahorro_total_real ?? 0);
+            $ahorroBaseSocio = (float) $socio->ahorro_historico_base;
 
             $monto_pat = $interesesSocio * $factorPatrocinio;
-            $monto_cap = $ahorroRealSocio * $factorCapitalizacion;
+            $monto_cap = $ahorroBaseSocio * $factorCapitalizacion;
 
-            $reporte[] = [
-                'nombre' => $socio->user->name ?? 'Socio sin usuario',
-                'cedula' => $socio->user->cedula ?? 'N/A',
-                'base_intereses' => $interesesSocio,
-                'base_ahorros' => $ahorroRealSocio,
-                'monto_pat' => $monto_pat,
-                'monto_cap' => $monto_cap,
-                'total_socio' => $monto_pat + $monto_cap
-            ];
+            if ($interesesSocio > 0 || $ahorroBaseSocio > 0) {
+                $reporte[] = [
+                    'nombre' => $socio->user->name ?? ($socio->nombres . ' ' . $socio->apellidos),
+                    'cedula' => $socio->user->cedula ?? 'N/A',
+                    'base_intereses' => $interesesSocio,
+                    'base_ahorros' => $ahorroBaseSocio,
+                    'monto_pat' => $monto_pat,
+                    'monto_cap' => $monto_cap,
+                    'total_socio' => $monto_pat + $monto_cap
+                ];
+            }
         }
 
         return view('admin.excedentes.informe', compact(
@@ -139,7 +173,11 @@ class ExcedenteController extends Controller
             return back()->with('error', 'El año ' . $request->anio . ' ya ha sido cerrado oficialmente.');
         }
 
-        $ingresosBrutos = Cuota::whereYear('fecha_vencimiento', $request->anio)
+        $inicioAnio = $request->anio . '-01-01';
+        $finAnio = $request->anio . '-12-31';
+
+        $ingresosBrutos = Cuota::whereDate('fecha_vencimiento', '>=', $inicioAnio)
+            ->whereDate('fecha_vencimiento', '<=', $finAnio)
             ->whereIn('estado', ['pagado', 'pagada'])
             ->sum('interes');
 

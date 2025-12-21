@@ -38,8 +38,9 @@
                 <div class="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
                     <h3 class="font-black text-gray-800 uppercase italic tracking-tighter text-lg leading-none">📅 Calendario de Cuotas y Pagos</h3>
                     <div class="flex gap-2">
+                        {{-- ARREGLO: Contadores flexibles para reconocer 'pagado' o 'pagada' --}}
                          <span class="px-4 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase italic border border-green-200">
-                            {{ $prestamo->cuotas->where('estado', 'pagada')->count() }} Pagadas
+                            {{ $prestamo->cuotas->whereIn('estado', ['pagada', 'pagado'])->count() }} Pagadas
                         </span>
                         <span class="px-4 py-1 bg-indigo-100 text-indigo-600 rounded-full text-[10px] font-black uppercase italic border border-indigo-200">
                             {{ $prestamo->cuotas->where('estado', 'pendiente')->count() }} Pendientes
@@ -61,7 +62,11 @@
                         </thead>
                         <tbody class="divide-y divide-gray-100 font-mono text-sm">
                             @foreach($prestamo->cuotas as $cuota)
-                                <tr class="{{ $cuota->estado == 'pagada' ? 'bg-green-50/20' : 'hover:bg-gray-50' }} transition-colors">
+                                @php
+                                    // Normalizamos la validación para evitar errores por una letra
+                                    $esPagada = in_array($cuota->estado, ['pagada', 'pagado']);
+                                @endphp
+                                <tr class="{{ $esPagada ? 'bg-green-50/20' : 'hover:bg-gray-50' }} transition-colors">
                                     <td class="py-4 px-6 font-black text-gray-400 italic">#{{ $cuota->numero_cuota }}</td>
                                     <td class="py-4 px-6 text-xs font-bold text-gray-600 uppercase italic">
                                         {{ \Carbon\Carbon::parse($cuota->fecha_vencimiento)->translatedFormat('d M Y') }}
@@ -70,7 +75,8 @@
                                     <td class="py-4 px-6 text-right font-bold text-gray-400">RD$ {{ number_format($cuota->interes, 2) }}</td>
                                     <td class="py-4 px-6 text-right font-black text-indigo-600 italic">RD$ {{ number_format($cuota->monto_total, 2) }}</td>
                                     <td class="py-4 px-6 text-center">
-                                        @if($cuota->estado == 'pagada')
+                                        {{-- ARREGLO: Validación corregida --}}
+                                        @if($esPagada)
                                             <span class="inline-flex items-center gap-1 text-[9px] font-black text-green-600 uppercase bg-green-50 px-2 py-1 rounded-md border border-green-200">
                                                 ✓ Pagada
                                             </span>

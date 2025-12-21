@@ -122,11 +122,54 @@ class PrestamoController extends Controller
             ->with('success', 'Préstamo creado correctamente.');
     }
 
+    public function confirmarLiquidacion($id)
+    {
+        $prestamo = Prestamo::with(['socio.user', 'tipoPrestamo'])->findOrFail($id);
+        $datosLiquidacion = $this->amortizacion->calcularLiquidacion($prestamo);
+
+        return view('admin.prestamos.liquidar_confirm', compact('prestamo', 'datosLiquidacion'));
+    }
+
+    public function procesarLiquidacion(Request $request, $id)
+    {
+        $prestamo = Prestamo::findOrFail($id);
+
+        DB::transaction(function () use ($prestamo) {
+            $cuotas = $prestamo->cuotas()->where('estado', 'pendiente')->orderBy('numero_cuota', 'asc')->get();
+
+            if ($cuotas->isEmpty()) return;
+
+            $cuotaActual = $cuotas->shift();
+            $cuotaActual->update([
+                'estado' => 'pagado',
+                'pagado' => $cuotaActual->monto_total,
+                'abonado' => $cuotaActual->monto_total,
+            ]);
+
+            foreach ($cuotas as $cuota) {
+                $cuota->update([
+                    'interes'     => 0,
+                    'monto_total' => $cuota->capital,
+                    'pagado'      => $cuota->capital,
+                    'abonado'     => $cuota->capital,
+                    'estado'      => 'pagado'
+                ]);
+            }
+
+            $prestamo->update([
+                'estado'        => 'pagado',
+                'saldo_capital' => 0
+            ]);
+        });
+
+        return redirect()->route('admin.prestamos.show', $prestamo->id)
+            ->with('success', 'El préstamo ha sido liquidado exitosamente.');
+    }
+
     // --- MÉTODOS DE SOCIO Y DETALLES ---
 
     public function misPrestamos()
     {
-        // Corregido: Obtenemos los préstamos a través de la relación del socio
         $socio = Auth::user()->socio;
         $prestamos = $socio ? $socio->prestamos()->with('tipoPrestamo')->latest()->get() : collect();
 
@@ -137,17 +180,26 @@ class PrestamoController extends Controller
     {
         $prestamo = Prestamo::with(['socio.user', 'cuotas', 'tipoPrestamo'])->findOrFail($id);
 
-        // Lógica inteligente: Si el usuario es tipo 0 (Socio), mostrar vista de socio
         if (Auth::user()->tipo == 0) {
-            // Seguridad: Un socio no puede ver préstamos de otros
             if ($prestamo->socio_id !== Auth::user()->socio->id) {
                 abort(403, 'No tienes permiso para ver este préstamo.');
             }
             return view('socio.prestamos.show', compact('prestamo'));
         }
 
-        // Si es Admin (Tipo 2), mostrar vista de admin
-        return view('admin.prestamos.show', compact('prestamo'));
+        // Inicializar datos para evitar el Error 500 en la vista
+        $datosLiquidacion = [
+            'total_a_pagar' => 0,
+            'capital_pendiente' => 0,
+            'interes_vigente' => 0,
+            'cuotas_count' => 0
+        ];
+
+        if ($prestamo->estado == 'activo') {
+            $datosLiquidacion = $this->amortizacion->calcularLiquidacion($prestamo);
+        }
+
+        return view('admin.prestamos.show', compact('prestamo', 'datosLiquidacion'));
     }
 
     public function edit($id)
@@ -194,7 +246,7 @@ class PrestamoController extends Controller
         });
 
         return redirect()->route('admin.socios.show', $prestamo->socio_id)
-            ->with('success', 'Préstamo actualizado y tabla regenerada.');
+            ->with('success', 'Préstamo actualizado correctamente.');
     }
 
     public function reporteVencimientos()
@@ -225,8 +277,9 @@ class PrestamoController extends Controller
 
         return view('admin.prestamos.morosidad', compact('cuotasVencidas'));
     }
+
     public function calculadoraSocio()
-{
-    return view('socio.calculadora');
-}
+    {
+        return view('socio.calculadora');
+    }
 }

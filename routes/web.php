@@ -81,12 +81,18 @@ Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(fun
 
         Route::get('/', [SocioController::class, 'adminDashboard'])->name('dashboard');
 
-        // Gestión de Socios y Préstamos
+        // Gestión de Socios
         Route::resource('socios', SocioController::class);
-        Route::resource('prestamos', PrestamoController::class);
         Route::patch('/socios/{socio}/toggle-status', [SocioController::class, 'toggleStatus'])->name('socios.toggle_status');
         Route::get('socios/{socio}/prestamos/historial-pagados', [SocioController::class, 'showHistorialPrestamos'])->name('socios.historial.prestamos');
         Route::delete('/socios/limpiar-usuario/{id}', [SocioController::class, 'destroyUser'])->name('socios.limpiar');
+
+        // RUTAS ESPECÍFICAS DE PRÉSTAMOS (Deben ir antes del resource para evitar conflictos)
+        Route::get('/prestamos/{id}/liquidar/confirmar', [PrestamoController::class, 'confirmarLiquidacion'])->name('prestamos.liquidar.confirm');
+        Route::post('/prestamos/{id}/liquidar/procesar', [PrestamoController::class, 'procesarLiquidacion'])->name('prestamos.liquidar.procesar');
+
+        // Gestión de Préstamos Resource
+        Route::resource('prestamos', PrestamoController::class);
 
         // Solicitudes Administrativas
         Route::get('/solicitudes', [SolicitudController::class, 'indexAdmin'])->name('solicitudes.index');
@@ -120,26 +126,22 @@ Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(fun
             return Excel::download(new NominaExport($tipo), $nombre);
         })->name('reportes.nomina');
 
-        // Módulo de Excedentes y Cierre Contable (Ley 127-64)
-    Route::prefix('excedentes')->name('excedentes.')->group(function () {
-    // Informe Final y Cierre
-    Route::get('/informe', [ExcedenteController::class, 'informe'])->name('informe');
-    Route::get('/', [ExcedenteController::class, 'index'])->name('index');
-    Route::post('/', [ExcedenteController::class, 'store'])->name('store');
+        // Módulo de Excedentes y Cierre Contable
+        Route::prefix('excedentes')->name('excedentes.')->group(function () {
+            Route::get('/informe', [ExcedenteController::class, 'informe'])->name('informe');
+            Route::get('/', [ExcedenteController::class, 'index'])->name('index');
+            Route::post('/', [ExcedenteController::class, 'store'])->name('store');
 
-    // Gestión de Gastos Operativos (Nómina, Banco, Eventos, etc.)
-    Route::get('/gastos', [ExcedenteController::class, 'gastosIndex'])->name('gastos.index');
-    Route::post('/gastos', [ExcedenteController::class, 'gastosStore'])->name('gastos.store');
-    Route::delete('/gastos/{gasto}', [ExcedenteController::class, 'gastosDestroy'])->name('gastos.destroy');
-});
-// Rutas para el Importador Maestro
-Route::get('/importar-socios', [App\Http\Controllers\Admin\ImportacionController::class, 'index'])->name('importar.index');
-Route::post('/importar-socios', [App\Http\Controllers\Admin\ImportacionController::class, 'store'])->name('importar.store');
-// ... dentro de tu grupo de rutas admin ...
-Route::get('importar/historial', [HistorialAhorrosController::class, 'index'])->name('importar.historial');
-    Route::post('importar/historial', [HistorialAhorrosController::class, 'store'])->name('importar.historial.store');
-// Rutas para el Importador de Préstamos
-Route::get('importar/prestamos', [App\Http\Controllers\Admin\ImportacionPrestamosController::class, 'index'])->name('importar.prestamos');
-Route::post('importar/prestamos', [App\Http\Controllers\Admin\ImportacionPrestamosController::class, 'store'])->name('importar.prestamos.store');
-});
+            Route::get('/gastos', [ExcedenteController::class, 'gastosIndex'])->name('gastos.index');
+            Route::post('/gastos', [ExcedenteController::class, 'gastosStore'])->name('gastos.store');
+            Route::delete('/gastos/{gasto}', [ExcedenteController::class, 'gastosDestroy'])->name('gastos.destroy');
+        });
 
+        // Importadores
+        Route::get('/importar-socios', [App\Http\Controllers\Admin\ImportacionController::class, 'index'])->name('importar.index');
+        Route::post('/importar-socios', [App\Http\Controllers\Admin\ImportacionController::class, 'store'])->name('importar.store');
+        Route::get('importar/historial', [HistorialAhorrosController::class, 'index'])->name('importar.historial');
+        Route::post('importar/historial', [HistorialAhorrosController::class, 'store'])->name('importar.historial.store');
+        Route::get('importar/prestamos', [App\Http\Controllers\Admin\ImportacionPrestamosController::class, 'index'])->name('importar.prestamos');
+        Route::post('importar/prestamos', [App\Http\Controllers\Admin\ImportacionPrestamosController::class, 'store'])->name('importar.prestamos.store');
+    });

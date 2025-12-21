@@ -107,7 +107,7 @@ class SocioController extends Controller
         }
     }
 
-    // PERFIL 360 DEL SOCIO (VISTA ADMINISTRADOR)
+    // PERFIL 360 DEL SOCIO (VISTA ADMINISTRADOR) - ACTUALIZADO
     public function show(Request $request, $id)
     {
         $socio = Socio::with(['user', 'prestamos.cuotas', 'cuentas.type'])->findOrFail($id);
@@ -138,7 +138,7 @@ class SocioController extends Controller
         // REGLA DEL 40% SOBRE EL SALARIO
         $limiteMensualDescuento = $salario * 0.40;
 
-        // SUMA DE CUOTAS DE PRÉSTAMOS ACTIVOS
+        // SUMA DE CUOTAS DE PRÉSTAMOS ACTIVOS (Solo cuotas pendientes reales)
         $cuotasPrestamosMes = $socio->prestamos()
             ->where('estado', 'activo')
             ->get()
@@ -156,8 +156,14 @@ class SocioController extends Controller
         // CAPACIDAD DISPONIBLE DEL 40% TRAS DESCUENTOS
         $capacidadDisponibleMensual = $limiteMensualDescuento - $compromisosActuales;
 
-        $prestamosActivos = $socio->prestamos()->where('estado', '!=', 'pagado')->get();
-        $prestamosInactivos = $socio->prestamos()->where('estado', 'pagado')->get();
+        $prestamosActivos = $socio->prestamos()->where('estado', 'activo')->get();
+
+        // ACTUALIZACIÓN: Cargamos explícitamente los préstamos inactivos (pagados/reenganchados)
+        $prestamosInactivos = $socio->prestamos()
+            ->where('estado', 'pagado')
+            ->orderBy('fecha_inicio', 'desc')
+            ->get();
+
         $totalDeudaActual = $prestamosActivos->sum('saldo_capital');
 
         // REGLA DE GARANTÍA DINÁMICA 1.5x
@@ -198,7 +204,7 @@ class SocioController extends Controller
             'socio' => $socio,
             'totalDeuda' => $totalDeudaActual,
             'prestamosActivos' => $prestamosActivos,
-            'prestamosInactivos' => $prestamosInactivos,
+            'prestamosInactivos' => $prestamosInactivos, // Ahora se envía correctamente
             'totalAportaciones' => $totalAportaciones,
             'totalRetirable' => $totalRetirable,
             'totalAhorradoGlobal' => $totalAhorradoGlobal,
@@ -375,7 +381,6 @@ class SocioController extends Controller
         return view('admin.logs.index', compact('logs'));
     }
 
-    // DASHBOARD DEL SOCIO
     public function dashboardSocio(Request $request)
     {
         $user = auth()->user();
@@ -427,9 +432,10 @@ class SocioController extends Controller
         };
 
         $prestamosActivosSocio = $socio->prestamos()->where('estado', 'activo')->get();
+        $prestamosInactivosSocio = $socio->prestamos()->where('estado', 'pagado')->orderBy('fecha_inicio', 'desc')->get();
+
         $totalDeudaSocio = $prestamosActivosSocio->sum('saldo_capital');
 
-        // REGLA 1.5x DINÁMICA PARA EL SOCIO
         $limiteGarantiaTotalSocio = $totalAportacionesSocio * 1.5;
         $maximoCreditoSocio = $limiteGarantiaTotalSocio - $totalDeudaSocio;
 
@@ -445,6 +451,7 @@ class SocioController extends Controller
         return view('socio.dashboard', [
             'socio' => $socio,
             'prestamosActivos' => $prestamosActivosSocio,
+            'prestamosInactivos' => $prestamosInactivosSocio,
             'totalAhorradoGlobal' => $totalAportacionesSocio + $totalVoluntarioSocio,
             'maximoCredito' => $maximoCreditoSocio,
             'limiteGarantiaTotal' => $limiteGarantiaTotalSocio,

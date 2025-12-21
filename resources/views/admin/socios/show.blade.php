@@ -97,7 +97,7 @@
                         <div class="text-sm space-y-3">
                             <div class="flex justify-between border-b border-gray-50 pb-1">
                                 <span class="text-gray-500 font-medium italic">Cédula:</span>
-                                <span class="text-gray-800 font-bold">{{ $socio->cedula }}</span>
+                                <span class="text-gray-800 font-bold">{{ $socio->user->cedula }}</span>
                             </div>
                             <div class="flex justify-between border-b border-gray-50 pb-1">
                                 <span class="text-gray-500 font-medium italic">Teléfono:</span>
@@ -210,6 +210,53 @@
                                                 </div>
                                             </td>
                                         </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
+
+                    {{-- BLOQUE NUEVO: HISTORIAL DE PRÉSTAMOS (REENGANCHES Y PAGADOS) --}}
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-black text-gray-400 uppercase tracking-tighter flex items-center gap-2 italic">
+                                <span class="p-1 bg-gray-50 rounded text-xs text-gray-400">✓</span> Historial de Préstamos
+                            </h3>
+                        </div>
+
+                        @if($prestamosInactivos->isEmpty())
+                            <p class="text-center py-6 text-gray-400 text-[10px] italic uppercase font-bold tracking-widest border-2 border-dashed border-gray-50 rounded-2xl">No hay registros de préstamos anteriores.</p>
+                        @else
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left italic border-separate border-spacing-y-2">
+                                    <thead>
+                                        <tr class="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                                            <th class="px-4 py-2">Tipo / Referencia</th>
+                                            <th class="px-4 py-2 text-right">Monto Original</th>
+                                            <th class="px-4 py-2 text-center">Estado</th>
+                                            <th class="px-4 py-2 text-right">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-50">
+                                        @foreach($prestamosInactivos as $pi)
+                                            <tr class="bg-gray-50/50 hover:bg-white transition-all">
+                                                <td class="px-4 py-3 rounded-l-xl">
+                                                    <p class="text-[11px] font-black text-gray-700 uppercase leading-none mb-1">{{ $pi->tipoPrestamo->nombre ?? 'Crédito' }}</p>
+                                                    <p class="text-[9px] font-bold text-gray-400 font-mono italic">#{{ $pi->numero_prestamo }}</p>
+                                                </td>
+                                                <td class="px-4 py-3 text-right font-mono font-bold text-gray-600 text-[11px]">
+                                                    RD$ {{ number_format($pi->monto, 2) }}
+                                                </td>
+                                                <td class="px-4 py-3 text-center">
+                                                    <span class="text-[8px] font-black bg-green-100 text-green-600 px-2 py-0.5 rounded-full border border-green-200 uppercase">Saldado</span>
+                                                </td>
+                                                <td class="px-4 py-3 text-right rounded-r-xl">
+                                                    <a href="{{ route('admin.prestamos.show', $pi->id) }}" class="inline-flex items-center p-1.5 bg-white border border-gray-200 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition shadow-sm" title="Ver Detalle">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                                                    </a>
+                                                </td>
+                                            </tr>
                                         @endforeach
                                     </tbody>
                                 </table>
