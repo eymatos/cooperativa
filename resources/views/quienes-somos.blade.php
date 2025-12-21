@@ -14,8 +14,8 @@
 <body class="bg-gray-50 text-gray-800 antialiased">
     <div class="max-w-4xl mx-auto px-6 py-12">
         <div class="text-center mb-12">
-            <div class="inline-flex items-center justify-center w-20 h-20 bg-green-600 rounded-4xl shadow-xl mb-6 transform -rotate-6">
-                <span class="text-white text-4xl font-black italic">C</span>
+            <div class="inline-flex items-center justify-center mb-6">
+                <img src="{{ asset('assets/img/logo-coop.png') }}" alt="Logo COOPROCON" class="h-28 w-auto drop-shadow-xl transform hover:scale-105 transition-transform duration-300">
             </div>
             <h1 class="text-4xl font-black text-gray-900 uppercase tracking-tighter italic">COOPROCON</h1>
             <p class="text-gray-500 font-bold mt-2 uppercase tracking-widest text-xs italic">Solidaridad y Ahorro</p>
@@ -28,7 +28,7 @@
                 <h2 class="text-2xl font-black mb-4 flex items-center gap-3 text-indigo-600 italic">
                     <i class="fa-solid fa-users text-xl"></i> ¿Quiénes somos?
                 </h2>
-                <p class="text-gray-600 leading-relaxed font-medium text-lg">
+                <p class="text-gray-600 leading-relaxed font-medium text-lg text-justify">
                     La Cooperativa de Ahorros, Créditos y Servicios Múltiples de los Empleados del Instituto Nacional de los Derechos del Consumidor, <span class="font-black text-gray-800">COOPROCON</span>, es una entidad que surge con el objetivo de promover y fortalecer el ejercicio de la solidaridad entre los socios y sus familias, así como también fomentar una cultura de ahorro y colaborar para que los asociados, empleados de Pro Consumidor, puedan atender necesidades individuales o familiares de carácter financiero, al tipo de interés más razonable posible.
                 </p>
             </section>
@@ -77,13 +77,11 @@
 
             <div class="mt-12 text-center border-t border-gray-50 pt-8">
                 @auth
-                    {{-- Si el usuario está conectado --}}
                     <a href="{{ Auth::user()->tipo == 2 ? route('admin.dashboard') : route('socio.dashboard') }}"
                        class="inline-flex items-center gap-3 bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100">
                         <i class="fa-solid fa-house"></i> Volver a mi Panel
                     </a>
                 @else
-                    {{-- Si es un visitante externo --}}
                     <a href="{{ route('login') }}"
                        class="inline-flex items-center gap-3 bg-gray-900 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-green-600 transition-all shadow-xl shadow-gray-200">
                         <i class="fa-solid fa-arrow-left"></i> Ir al Acceso
