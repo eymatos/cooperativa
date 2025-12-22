@@ -19,44 +19,59 @@ class NominaExport implements FromCollection, WithHeadings, WithMapping, WithSty
     protected $tipo;
     protected $rowNumber = 0;
     protected $rosado = 'FFFFD9E1';
+    protected $inicioVentana;
+    protected $finVentana;
 
     public function __construct($tipo) {
         $this->tipo = $tipo;
+
+        $hoy = Carbon::now();
+
+        /**
+         * LÓGICA DE VENTANA DE NOVEDADES (25 al 17):
+         * Los cambios son "novedad" desde el 25 del mes anterior hasta el 17 del mes actual.
+         * Si hoy es 21 de Dic (ya pasó el 17), la ventana actual apunta al futuro:
+         * Inicio: 25 de Diciembre / Fin: 17 de Enero.
+         */
+        if ($hoy->day >= 18) {
+            $this->inicioVentana = Carbon::now()->day(25)->startOfDay();
+            $this->finVentana = Carbon::now()->addMonth()->day(17)->endOfDay();
+        } else {
+            $this->inicioVentana = Carbon::now()->subMonth()->day(25)->startOfDay();
+            $this->finVentana = Carbon::now()->day(17)->endOfDay();
+        }
     }
 
-    public function collection()
-{
-    // Definimos el límite de 31 días atrás
-    $fechaLimiteInactivos = \Carbon\Carbon::now()->subDays(31);
-
-    return Socio::with(['user', 'cuentas.type', 'prestamos.cuotas'])
-        ->where('tipo_contrato', $this->tipo) // Filtra Fijo o Contratado
-        ->where(function ($query) use ($fechaLimiteInactivos) {
-            $query->where('activo', 1) // REGLA 1: Si está activo, aparece SIEMPRE
-                  ->orWhere(function ($q) use ($fechaLimiteInactivos) {
-                      // REGLA 2: Si está inactivo (0), solo aparece si su fecha
-                      // de desactivación es menor a 31 días
-                      $q->where('activo', 0)
-                        ->where('updated_at', '>=', $fechaLimiteInactivos);
-                  });
-        })
-        ->orderBy('id', 'asc')
-        ->get();
-}
+    public function collection() {
+        return Socio::with(['user', 'cuentas.type', 'prestamos.cuotas'])
+            ->where('tipo_contrato', $this->tipo)
+            ->where(function ($query) {
+                $query->where('activo', 1)
+                      ->orWhere(function ($q) {
+                          // Salidas de socios dentro de la ventana de visibilidad
+                          $q->where('activo', 0)
+                            ->where('updated_at', '>=', $this->inicioVentana);
+                      });
+            })
+            ->orderBy('nombres', 'asc')
+            ->get();
+    }
 
     public function headings(): array {
-        $mesAnio = Carbon::now()->translatedFormat('F Y');
+        // Determinamos el mes de cobro (Enero si estamos en Diciembre)
+        $mesCobro = Carbon::now()->addMonth()->translatedFormat('F Y');
         return [
-            ['Descuentos Cooprocon Empleados ' . ucfirst($this->tipo) . ' ' . $mesAnio],
+            ['Descuentos Cooprocon Empleados ' . ucfirst($this->tipo) . ' - Cobro en ' . $mesCobro],
             ['No.', 'Nombre y apellido', 'Cédula', 'inscripción', 'Aporte a Capital', 'Ahorro', 'Ahorro retirable', 'Préstamo normal', 'Préstamo útiles escolares', 'Préstamo educativo', 'Préstamo Express', 'Préstamo vacacional', 'Total Ahorros', 'Total Préstamos', 'Total Descuentos']
         ];
     }
 
     public function map($socio): array {
         $this->rowNumber++;
-        $esNuevo = $socio->created_at->isCurrentMonth();
 
-        // Limpieza de datos (Null coalescing to zero)
+        // Es nuevo si su created_at cae dentro de la ventana activa
+        $esNuevo = $socio->created_at->between($this->inicioVentana, $this->finVentana);
+
         $inscripcion = (float)($esNuevo ? 200.00 : 0.00);
         $aporte = (float)($esNuevo ? 250.00 : 0.00);
 
@@ -64,111 +79,97 @@ class NominaExport implements FromCollection, WithHeadings, WithMapping, WithSty
         $ahorroRetirable = 0.00;
 
         foreach ($socio->cuentas as $cuenta) {
-            $monto = floatval($cuenta->recurring_amount);
-            if ($cuenta->type && in_array($cuenta->type->code, ['APO', 'aportacion'])) {
-                $ahorroNormal = $monto;
-            }
-            if ($cuenta->type && in_array($cuenta->type->code, ['RET', 'voluntario'])) {
-                $ahorroRetirable = $monto;
+            $monto = (float)($cuenta->recurring_amount ?? 0);
+            if ($cuenta->type) {
+                $codigo = strtoupper($cuenta->type->code);
+                if (in_array($codigo, ['APO', 'APORTACION'])) $ahorroNormal = $monto;
+                if (in_array($codigo, ['RET', 'VOLUNTARIO'])) $ahorroRetirable = $monto;
             }
         }
 
-        $pNormal = 0.00; $pUtiles = 0.00; $pEdu = 0.00; $pVac = 0.00; $pExp = 0.00;
+        $p = [1=>0, 2=>0, 3=>0, 4=>0, 5=>0];
         foreach ($socio->prestamos as $prestamo) {
-            $cuota = $prestamo->cuotas->where('estado', 'pendiente')->first();
-            if ($cuota) {
-                $montoCuota = floatval($cuota->capital) + floatval($cuota->interes);
-                switch ($prestamo->tipo_prestamo_id) {
-                    case 1: $pNormal += $montoCuota; break;
-                    case 2: $pUtiles += $montoCuota; break;
-                    case 3: $pEdu += $montoCuota; break;
-                    case 4: $pVac += $montoCuota; break;
-                    case 5: $pExp += $montoCuota; break;
+            if ($prestamo->estado === 'activo') {
+                $cuota = $prestamo->cuotas->where('estado', 'pendiente')->first();
+                if ($cuota) {
+                    $montoCuota = (float)($cuota->capital ?? 0) + (float)($cuota->interes ?? 0);
+                    if (isset($p[$prestamo->tipo_prestamo_id])) $p[$prestamo->tipo_prestamo_id] += $montoCuota;
                 }
             }
         }
 
-        $totalAhorros = $ahorroNormal + $ahorroRetirable;
-        $totalPrestamos = $pNormal + $pUtiles + $pEdu + $pExp;
-        $totalDescuentos = $inscripcion + $aporte + $totalAhorros + $totalPrestamos + $pVac;
-
-        // TRUCO FINAL: Si el valor es 0, lo enviamos como el string "0.00"
-        // para que Excel no lo oculte como celda vacía.
-        $formatear = function($valor) {
-            return $valor == 0 ? "0.00" : (float)$valor;
-        };
+        $formatear = fn($v) => $v == 0 ? "0.00" : (float)$v;
 
         return [
             $this->rowNumber,
-            mb_strtoupper($socio->nombres . ' ' . $socio->apellidos),
-            $socio->user->cedula,
+            mb_strtoupper(($socio->nombres ?? '') . ' ' . ($socio->apellidos ?? '')),
+            $socio->user->cedula ?? 'S/C',
             $formatear($inscripcion),
             $formatear($aporte),
             $formatear($ahorroNormal),
             $formatear($ahorroRetirable),
-            $formatear($pNormal),
-            $formatear($pUtiles),
-            $formatear($pEdu),
-            $formatear($pExp),
-            $formatear($pVac),
-            $formatear($totalAhorros),
-            $formatear($totalPrestamos),
-            $formatear($totalDescuentos)
+            $formatear($p[1]), $formatear($p[2]), $formatear($p[3]), $formatear($p[5]), $formatear($p[4]),
+            $formatear($ahorroNormal + $ahorroRetirable),
+            $formatear(array_sum($p)),
+            $formatear($inscripcion + $aporte + $ahorroNormal + $ahorroRetirable + array_sum($p))
         ];
     }
 
     public function columnFormats(): array {
-        // Formato numérico estándar con dos decimales
-        return [
-            'D:O' => '0.00',
-        ];
+        return ['D:O' => '0.00'];
     }
 
     public function styles(Worksheet $sheet) {
-    $sheet->mergeCells('A1:O1');
-    $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-    $sheet->getStyle('A1:O2')->getFont()->setBold(true);
-    $sheet->getStyle('A2:O2')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFCCCCCC');
+        $sheet->mergeCells('A1:O1');
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A1:O2')->getFont()->setBold(true);
+        $sheet->getStyle('A2:O2')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFCCCCCC');
 
-    $socios = $this->collection();
-    $mesActual = Carbon::now()->format('Y-m');
+        $socios = $this->collection();
 
-    foreach ($socios as $index => $socio) {
-        $fila = $index + 3;
+        foreach ($socios as $index => $socio) {
+            $fila = $index + 3;
 
-        // A. FILA COMPLETA: Solo si el socio es nuevo o está inactivo
-        if ($socio->created_at->format('Y-m') === $mesActual || !$socio->activo) {
-            $sheet->getStyle("A{$fila}:O{$fila}")->getFill()
-                ->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB($this->rosado);
-            continue;
-        }
+            // 1. FILA COMPLETA: Socio Nuevo o Salida dentro de la ventana activa
+            if ($socio->created_at->between($this->inicioVentana, $this->finVentana) ||
+               (!$socio->activo && $socio->updated_at->between($this->inicioVentana, $this->finVentana))) {
+                $sheet->getStyle("A{$fila}:O{$fila}")->getFill()
+                    ->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB($this->rosado);
+                continue;
+            }
 
-        // B. CELDAS DE PRÉSTAMOS: Solo si el préstamo se creó este mes
-        foreach ($socio->prestamos as $prestamo) {
-            if ($prestamo->created_at->format('Y-m') === $mesActual) {
-                $col = match($prestamo->tipo_prestamo_id) {
-                    1 => 'H', 2 => 'I', 3 => 'J', 5 => 'K', 4 => 'L', default => null
-                };
-                if ($col) {
-                    $sheet->getStyle("{$col}{$fila}")->getFill()
-                        ->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB($this->rosado);
+            // 2. PRÉSTAMOS: Rosado si se creó dentro de la ventana activa o se saldó en ella
+            foreach ($socio->prestamos as $prestamo) {
+                $esNuevoP = $prestamo->created_at->between($this->inicioVentana, $this->finVentana);
+                $fueSaldado = ($prestamo->estado === 'pagado' && $prestamo->updated_at->between($this->inicioVentana, $this->finVentana));
+
+                if ($esNuevoP || $fueSaldado) {
+                    $col = match((int)$prestamo->tipo_prestamo_id) {
+                        1 => 'H', 2 => 'I', 3 => 'J', 5 => 'K', 4 => 'L', default => null
+                    };
+                    if ($col) {
+                        $sheet->getStyle("{$col}{$fila}")->getFill()
+                            ->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB($this->rosado);
+                    }
                 }
             }
-        }
 
-        // C. CELDAS DE AHORRO: Solo si se modificaron este mes
-        foreach ($socio->cuentas as $cuenta) {
-            if ($cuenta->updated_at->format('Y-m') === $mesActual) {
-                $colAhorro = null;
-                if (in_array($cuenta->type->code, ['APO', 'aportacion'])) $colAhorro = 'F';
-                if (in_array($cuenta->type->code, ['RET', 'voluntario'])) $colAhorro = 'G';
+            // 3. AHORROS: Rosado si el cambio manual fue dentro de la ventana activa
+            foreach ($socio->cuentas as $cuenta) {
+                if ($cuenta->manual_change_at && $cuenta->manual_change_at->between($this->inicioVentana, $this->finVentana)) {
+                    $codigo = strtoupper($cuenta->type->code ?? '');
+                    $colAhorro = match($codigo) {
+                        'APO', 'APORTACION' => 'F',
+                        'RET', 'VOLUNTARIO' => 'G',
+                        default => null
+                    };
 
-                if ($colAhorro) {
-                    $sheet->getStyle("{$colAhorro}{$fila}")->getFill()
-                        ->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB($this->rosado);
+                    if ($colAhorro) {
+                        $sheet->getStyle("{$colAhorro}{$fila}")->getFill()
+                            ->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB($this->rosado);
+                    }
                 }
             }
         }
     }
-}
 }
