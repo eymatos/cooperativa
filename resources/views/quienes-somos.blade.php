@@ -35,24 +35,24 @@
 
             <div class="grid md:grid-cols-2 gap-8">
                 <section>
-                    <h2 class="text-xl font-black mb-4 flex items-center gap-3 text-indigo-600 italic">
-                        <i class="fa-solid fa-file-invoice"></i> Documentación
-                    </h2>
-                    <ul class="space-y-3 font-bold text-sm">
-                        <li>
-                            <a href="#" class="group flex items-center gap-2 text-blue-600 hover:text-indigo-800 transition-colors">
-                                <span class="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100">📄</span>
-                                Estatutos Sociales
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" class="group flex items-center gap-2 text-blue-600 hover:text-indigo-800 transition-colors">
-                                <span class="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100">👥</span>
-                                Directivos de la Cooperativa
-                            </a>
-                        </li>
-                    </ul>
-                </section>
+    <h2 class="text-xl font-black mb-4 flex items-center gap-3 text-indigo-600 italic">
+        <i class="fa-solid fa-file-invoice"></i> Documentación
+    </h2>
+    <ul class="space-y-3 font-bold text-sm">
+        <li>
+            <a href="{{ asset('documentos/estatutos-sociales.pdf') }}" target="_blank" class="group flex items-center gap-2 text-blue-600 hover:text-indigo-800 transition-colors">
+                <span class="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100">📄</span>
+                Estatutos Sociales
+            </a>
+        </li>
+        <li>
+            <a href="{{ asset('documentos/directivos.pdf') }}" target="_blank" class="group flex items-center gap-2 text-blue-600 hover:text-indigo-800 transition-colors">
+                <span class="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100">👥</span>
+                Directivos de la Cooperativa
+            </a>
+        </li>
+    </ul>
+</section>
 
                 <section>
                     <h2 class="text-xl font-black mb-4 flex items-center gap-3 text-indigo-600 italic">
