@@ -53,13 +53,15 @@ class PrestamoController extends Controller
             'tasa_interes' => 'required|numeric',
             'plazo' => 'required|integer|min:1',
             'fecha_inicio' => 'required|date',
+            'fecha_primer_pago' => 'nullable|date', // Añadido para simulación exacta
         ]);
 
         $tabla = $this->amortizacion->calcularCuotas(
             $request->monto,
             $request->tasa_interes,
             $request->plazo,
-            $request->fecha_inicio
+            $request->fecha_inicio,
+            $request->fecha_primer_pago // Pasamos la fecha personalizada al servicio
         );
 
         return response()->json($tabla);
@@ -74,6 +76,7 @@ class PrestamoController extends Controller
             'tasa_interes' => 'required|numeric',
             'plazo' => 'required|integer|min:1',
             'fecha_inicio' => 'required|date',
+            'fecha_primer_pago' => 'nullable|date', // Nueva columna validada
         ]);
 
         $socio = \App\Models\Socio::where('user_id', $request->user_id)->firstOrFail();
@@ -103,14 +106,17 @@ class PrestamoController extends Controller
                 'saldo_capital'    => $request->monto,
                 'fecha_solicitud'  => now(),
                 'fecha_inicio'     => $request->fecha_inicio,
+                'fecha_primer_pago' => $request->fecha_primer_pago, // Guardamos en la nueva columna
                 'estado'           => 'activo'
             ]);
 
+            // Generamos la tabla usando la fecha de primer pago si existe
             $tabla = $this->amortizacion->calcularCuotas(
                 $request->monto,
                 $request->tasa_interes,
                 $request->plazo,
-                $request->fecha_inicio
+                $request->fecha_inicio,
+                $request->fecha_primer_pago
             );
 
             foreach ($tabla as $fila) {
@@ -122,27 +128,24 @@ class PrestamoController extends Controller
             ->with('success', 'Préstamo creado correctamente.');
     }
 
-    // --- NUEVO: MÉTODO PARA CERRAR PRÉSTAMO DESDE VENCIMIENTOS ---
     public function marcarPagado($id)
     {
         $prestamo = Prestamo::findOrFail($id);
 
         DB::transaction(function () use ($prestamo) {
-            // 1. Ponemos todas las cuotas pendientes como pagadas
             $prestamo->cuotas()->where('estado', 'pendiente')->update([
                 'estado' => 'pagado',
                 'pagado' => DB::raw('monto_total'),
                 'abonado' => DB::raw('monto_total')
             ]);
 
-            // 2. Cerramos el préstamo
             $prestamo->update([
                 'estado' => 'pagado',
                 'saldo_capital' => 0
             ]);
         });
 
-        return back()->with('success', '✅ El préstamo #' . $prestamo->numero_prestamo . ' ha sido marcado como pagado y retirado de la lista de activos.');
+        return back()->with('success', '✅ El préstamo #' . $prestamo->numero_prestamo . ' ha sido marcado como pagado.');
     }
 
     public function confirmarLiquidacion($id)
@@ -188,8 +191,6 @@ class PrestamoController extends Controller
         return redirect()->route('admin.prestamos.show', $prestamo->id)
             ->with('success', 'El préstamo ha sido liquidado exitosamente.');
     }
-
-    // --- MÉTODOS DE SOCIO Y DETALLES ---
 
     public function misPrestamos()
     {
@@ -239,6 +240,7 @@ class PrestamoController extends Controller
             'tasa_interes' => 'required|numeric',
             'plazo' => 'required|integer|min:1',
             'fecha_inicio' => 'required|date',
+            'fecha_primer_pago' => 'nullable|date', // Soporte para actualización
         ]);
 
         $prestamo = Prestamo::findOrFail($id);
@@ -250,6 +252,7 @@ class PrestamoController extends Controller
                 'tasa_interes'     => $request->tasa_interes,
                 'plazo'            => $request->plazo,
                 'fecha_inicio'     => $request->fecha_inicio,
+                'fecha_primer_pago' => $request->fecha_primer_pago,
                 'saldo_capital'    => $request->monto,
             ]);
 
@@ -259,7 +262,8 @@ class PrestamoController extends Controller
                 $request->monto,
                 $request->tasa_interes,
                 $request->plazo,
-                $request->fecha_inicio
+                $request->fecha_inicio,
+                $request->fecha_primer_pago
             );
 
             foreach ($tabla as $fila) {

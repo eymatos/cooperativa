@@ -77,7 +77,7 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vencimiento</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vencimiento / Detalle</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cuota Total</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Abonado</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Interés</th>
@@ -88,44 +88,70 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @foreach($prestamo->cuotas as $cuota)
-                                <tr class="{{ $cuota->estado == 'pagado' ? 'bg-green-50' : '' }}">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $cuota->numero_cuota }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ \Carbon\Carbon::parse($cuota->fecha_vencimiento)->format('d/m/Y') }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">RD$ {{ number_format($cuota->monto_total, 2) }}</td>
-
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">
-                                        @if($cuota->abonado > 0)
-                                            RD$ {{ number_format($cuota->abonado, 2) }}
-                                        @else
-                                            -
-                                        @endif
-                                    </td>
-
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">{{ number_format($cuota->interes, 2) }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">{{ number_format($cuota->capital, 2) }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ number_format($cuota->saldo_restante, 2) }}</td>
-
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        @if($cuota->estado == 'pagado')
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                                Pagado
-                                            </span>
-                                        @elseif($cuota->abonado > 0)
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                                Parcial
-                                            </span>
-                                        @else
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                                Pendiente
-                                            </span>
-                                        @endif
-                                    </td>
-                                </tr>
+                                    {{-- Identificamos abono si el número es 0 O si es un abono extraordinario (interés 0 y capital alto) --}}
+                                    @if($cuota->numero_cuota == 0 || ($cuota->interes == 0 && $cuota->estado == 'pagado' && $cuota->monto_total > 0))
+                                        {{-- FILA RESALTADA DE ABONO A CAPITAL --}}
+                                        <tr class="bg-blue-50 border-l-4 border-blue-500">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-800 uppercase italic">Abono</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-900">
+                                                {{ \Carbon\Carbon::parse($cuota->fecha_vencimiento)->format('d/m/Y') }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-black text-blue-800">
+                                                RD$ {{ number_format($cuota->monto_total, 2) }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-800">
+                                                RD$ {{ number_format($cuota->abonado, 2) }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">0.00</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-700">
+                                                {{ number_format($cuota->capital, 2) }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-900">
+                                                {{ number_format($cuota->saldo_restante, 2) }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-md bg-blue-600 text-white uppercase shadow-sm">
+                                                    Abono Capital
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    @else
+                                        {{-- FILA DE CUOTA NORMAL --}}
+                                        <tr class="{{ ($cuota->estado == 'pagado' || $cuota->estado == 'Pagado') ? 'bg-green-50' : '' }} hover:bg-gray-50 transition-colors">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $cuota->numero_cuota }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {{ \Carbon\Carbon::parse($cuota->fecha_vencimiento)->format('d/m/Y') }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                                                RD$ {{ number_format($cuota->monto_total, 2) }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">
+                                                {{ $cuota->abonado > 0 ? 'RD$ '.number_format($cuota->abonado, 2) : '-' }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium">{{ number_format($cuota->interes, 2) }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">{{ number_format($cuota->capital, 2) }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ number_format($cuota->saldo_restante, 2) }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                                @if($cuota->estado == 'pagado' || $cuota->estado == 'Pagado')
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                        Pagado
+                                                    </span>
+                                                @elseif($cuota->abonado > 0)
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                        Parcial
+                                                    </span>
+                                                @else
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                        Pendiente
+                                                    </span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endif
                                 @endforeach
                             </tbody>
                         </table>
                     </div>
-
                 </div>
             </div>
         </div>

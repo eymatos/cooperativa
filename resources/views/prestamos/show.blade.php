@@ -39,7 +39,7 @@
                     <h3 class="font-black text-gray-800 uppercase italic tracking-tighter text-lg">📅 Calendario de Pagos</h3>
                     <div class="flex gap-2">
                         <span class="px-4 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase italic border border-green-200">
-                            {{ $prestamo->cuotas->where('estado', 'pagada')->count() }} Pagadas
+                            {{ $prestamo->cuotas->where('estado', 'pagado')->count() }} Pagadas
                         </span>
                         <span class="px-4 py-1 bg-indigo-100 text-indigo-600 rounded-full text-[10px] font-black uppercase italic border border-indigo-200">
                             {{ $prestamo->cuotas->where('estado', 'pendiente')->count() }} Pendientes
@@ -61,26 +61,46 @@
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                             @foreach($prestamo->cuotas as $cuota)
-                                <tr class="{{ $cuota->estado == 'pagada' ? 'bg-green-50/20' : '' }} hover:bg-gray-50 transition-colors">
-                                    <td class="py-4 px-6 font-black text-gray-400 italic">#{{ $cuota->numero_cuota }}</td>
-                                    <td class="py-4 px-6 text-xs font-bold text-gray-600 uppercase italic">
-                                        {{ \Carbon\Carbon::parse($cuota->fecha_vencimiento)->translatedFormat('d M Y') }}
-                                    </td>
-                                    <td class="py-4 px-6 text-right font-bold text-gray-700">RD$ {{ number_format($cuota->capital, 2) }}</td>
-                                    <td class="py-4 px-6 text-right font-bold text-gray-400">RD$ {{ number_format($cuota->interes, 2) }}</td>
-                                    <td class="py-4 px-6 text-right font-black text-indigo-600 italic">RD$ {{ number_format($cuota->monto_total, 2) }}</td>
-                                    <td class="py-4 px-6 text-center">
-                                        @if($cuota->estado == 'pagada')
-                                            <span class="inline-flex items-center gap-1 text-[9px] font-black text-green-600 uppercase bg-green-50 px-2 py-1 rounded-md border border-green-200">
-                                                ✓ Pagada
+                                {{-- Lógica para filas de Abono a Capital (Cuota 0) --}}
+                                @if($cuota->numero_cuota == 0)
+                                    <tr class="bg-blue-50/50 hover:bg-blue-50 transition-colors border-l-4 border-blue-400">
+                                        <td class="py-4 px-6 font-black text-blue-600 italic">ABONO</td>
+                                        <td class="py-4 px-6 text-xs font-bold text-blue-800 uppercase italic">
+                                            {{ \Carbon\Carbon::parse($cuota->fecha_vencimiento)->translatedFormat('d M Y') }}
+                                        </td>
+                                        <td class="py-4 px-6 text-right font-bold text-green-700">RD$ {{ number_format($cuota->capital, 2) }}</td>
+                                        <td class="py-4 px-6 text-right font-bold text-gray-400">RD$ 0.00</td>
+                                        <td class="py-4 px-6 text-right font-black text-blue-700 italic">RD$ {{ number_format($cuota->monto_total, 2) }}</td>
+                                        <td class="py-4 px-6 text-center">
+                                            <span class="inline-flex items-center gap-1 text-[9px] font-black text-blue-600 uppercase bg-blue-100 px-2 py-1 rounded-md border border-blue-200 shadow-sm">
+                                                💎 Abono Directo
                                             </span>
-                                        @else
-                                            <span class="inline-flex items-center gap-1 text-[9px] font-black text-orange-600 uppercase bg-orange-50 px-2 py-1 rounded-md border border-orange-200">
-                                                ● Pendiente
-                                            </span>
-                                        @endif
-                                    </td>
-                                </tr>
+                                        </td>
+                                    </tr>
+                                @else
+                                    <tr class="{{ $cuota->estado == 'pagado' ? 'bg-green-50/20' : '' }} hover:bg-gray-50 transition-colors">
+                                        <td class="py-4 px-6 font-black text-gray-400 italic">#{{ $cuota->numero_cuota }}</td>
+                                        <td class="py-4 px-6 text-xs font-bold text-gray-600 uppercase italic">
+                                            {{ \Carbon\Carbon::parse($cuota->fecha_vencimiento)->translatedFormat('d M Y') }}
+                                        </td>
+                                        <td class="py-4 px-6 text-right font-bold text-gray-700">RD$ {{ number_format($cuota->capital, 2) }}</td>
+                                        <td class="py-4 px-6 text-right font-bold {{ $cuota->interes == 0 ? 'text-green-500 font-black' : 'text-gray-400' }}">
+                                            RD$ {{ number_format($cuota->interes, 2) }}
+                                        </td>
+                                        <td class="py-4 px-6 text-right font-black text-indigo-600 italic">RD$ {{ number_format($cuota->monto_total, 2) }}</td>
+                                        <td class="py-4 px-6 text-center">
+                                            @if($cuota->estado == 'pagado')
+                                                <span class="inline-flex items-center gap-1 text-[9px] font-black text-green-600 uppercase bg-green-50 px-2 py-1 rounded-md border border-green-200">
+                                                    ✓ Pagada
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center gap-1 text-[9px] font-black text-orange-600 uppercase bg-orange-50 px-2 py-1 rounded-md border border-orange-200">
+                                                    ● Pendiente
+                                                </span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endif
                             @endforeach
                         </tbody>
                     </table>
@@ -92,8 +112,8 @@
                 <div class="flex items-center gap-4">
                     <span class="text-3xl italic">🛡️</span>
                     <div>
-                        <p class="text-[10px] font-black uppercase tracking-widest text-indigo-300">Aviso del Sistema</p>
-                        <p class="text-sm italic font-medium">Los pagos se procesan automáticamente mediante descuento de nómina.</p>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-indigo-300">Información de Tabla</p>
+                        <p class="text-sm italic font-medium">Al realizar abonos directos al capital, su cuota e intereses mensuales se reducen automáticamente.</p>
                     </div>
                 </div>
             </div>

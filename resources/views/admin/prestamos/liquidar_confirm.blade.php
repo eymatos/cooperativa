@@ -14,7 +14,7 @@
                     <div class="bg-gray-50 rounded-lg p-6 mb-6">
                         <div class="grid grid-cols-2 gap-4 text-sm">
                             <div class="text-gray-600">Socio:</div>
-                            <div class="font-bold text-right">{{ $prestamo->socio->nombres }} {{ $prestamo->socio->apellidos }}</div>
+                            <div class="font-bold text-right">{{ $prestamo->socio->user->name }}</div>
 
                             <div class="text-gray-600">Préstamo:</div>
                             <div class="font-bold text-right">{{ $prestamo->numero_prestamo }}</div>
@@ -22,12 +22,9 @@
                             <div class="border-t border-gray-200 col-span-2 my-2"></div>
 
                             <div class="text-gray-600">Capital Pendiente (Total):</div>
-                            <div class="font-bold text-right text-gray-900">RD$ {{ number_format($datosLiquidacion['capital_pendiente'], 2) }}</div>
+                            <div class="font-bold text-right text-gray-900 text-lg">RD$ {{ number_format($datosLiquidacion['capital_pendiente'], 2) }}</div>
 
-                            <div class="text-gray-600">Interés Cuota Vigente:</div>
-                            <div class="font-bold text-right text-red-600">RD$ {{ number_format($datosLiquidacion['interes_vigente'], 2) }}</div>
-
-                            <div class="text-gray-500 italic">Intereses Futuros:</div>
+                            <div class="text-gray-500 italic">Intereses (Vigentes y Futuros):</div>
                             <div class="font-bold text-right text-green-600">RD$ 0.00 (Anulados)</div>
 
                             <div class="border-t-2 border-gray-300 col-span-2 my-2"></div>
@@ -46,7 +43,7 @@
                             </div>
                             <div class="ml-3">
                                 <p class="text-sm text-amber-700">
-                                    Esta acción marcará las <strong>{{ $datosLiquidacion['cuotas_count'] }} cuotas</strong> pendientes como pagadas. El sistema no generará excedentes sobre los intereses futuros de este préstamo a partir de este momento.
+                                    Al procesar esta liquidación, se marcarán las <strong>{{ $datosLiquidacion['cuotas_count'] }} cuotas</strong> restantes como pagadas. Según la política de saldo anticipado, el socio solo paga el capital adeudado y se ahorra el 100% de los intereses restantes.
                                 </p>
                             </div>
                         </div>

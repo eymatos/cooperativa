@@ -14,17 +14,13 @@
                         @csrf
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-
                             <div class="mb-4">
                                 <label class="block font-bold text-gray-700 mb-2">Socio Solicitante</label>
                                 <select name="user_id" class="w-full border-gray-300 rounded shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                     <option value="">-- Seleccione Socio --</option>
                                     @foreach($socios as $usuario)
                                         <option value="{{ $usuario->id }}"
-                                            {{-- AQUÍ ESTÁ LA LÓGICA DE PRE-SELECCIÓN --}}
                                             {{ (isset($socioPreseleccionado) && $socioPreseleccionado == $usuario->id) ? 'selected' : '' }}>
-
-                                            {{-- Mostramos Nombre del Socio y Cédula del Usuario --}}
                                             {{ $usuario->socio->nombres ?? $usuario->name }} {{ $usuario->socio->apellidos ?? '' }} ({{ $usuario->cedula }})
                                         </option>
                                     @endforeach
@@ -49,12 +45,18 @@
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
                             <div>
-                                <label class="block font-medium text-sm text-gray-700 mb-1">Fecha Inicio</label>
+                                <label class="block font-medium text-sm text-gray-700 mb-1">Fecha Inicio (Desembolso)</label>
                                 <input type="date" name="fecha_inicio" id="fecha_inicio"
                                        value="{{ date('Y-m-d') }}"
                                        class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
+                            </div>
+
+                            <div class="bg-blue-50 p-2 rounded-md border border-blue-100">
+                                <label class="block font-bold text-sm text-blue-700 mb-1">Fecha del Primer Pago</label>
+                                <input type="date" name="fecha_primer_pago" id="fecha_primer_pago"
+                                       class="w-full border-blue-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm">
+                                <p class="text-[10px] text-blue-500 mt-1">* Opcional. Úselo para diferir el cobro (ej: de Marzo a Mayo).</p>
                             </div>
 
                             <div>
@@ -69,7 +71,6 @@
                                 <input type="number" name="tasa_interes" id="tasa_interes" step="0.01"
                                        class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm bg-gray-50"
                                        placeholder="Se llena automático..." required>
-                                <p class="text-xs text-gray-500 mt-1">* Se auto-completa según el tipo, pero es editable.</p>
                             </div>
 
                             <div>
@@ -81,11 +82,11 @@
                         </div>
 
                         <div class="mt-8 flex gap-4">
-                            <button type="button" onclick="simularPrestamo()" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:outline-none focus:ring ring-blue-300 transition ease-in-out duration-150">
+                            <button type="button" onclick="simularPrestamo()" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
                                 🔄 Calcular Tabla
                             </button>
 
-                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:outline-none focus:ring ring-green-300 transition ease-in-out duration-150">
+                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700">
                                 💾 Guardar Préstamo
                             </button>
                         </div>
@@ -118,31 +119,25 @@
     </div>
 
     <script>
-        // 1. FUNCIÓN PARA AUTO-COMPLETAR TASA Y PLAZO
         function actualizarValores() {
             const select = document.getElementById('tipo_prestamo');
             const opcion = select.options[select.selectedIndex];
-
             const inputTasa = document.getElementById('tasa_interes');
             const inputPlazo = document.getElementById('plazo');
 
-            // Leer atributos data
             const tasa = opcion.getAttribute('data-tasa');
             const plazo = opcion.getAttribute('data-plazo');
 
             if (tasa) inputTasa.value = tasa;
-            else inputTasa.value = '';
-
             if (plazo) inputPlazo.value = plazo;
-            else inputPlazo.value = ''; // Si es abierto (null), lo limpia para escribir manual
         }
 
-        // 2. FUNCIÓN PARA SIMULAR TABLA (AJAX)
         async function simularPrestamo() {
             const monto = document.getElementById('monto').value;
             const tasa = document.getElementById('tasa_interes').value;
             const plazo = document.getElementById('plazo').value;
             const fecha = document.getElementById('fecha_inicio').value;
+            const fecha_pago = document.getElementById('fecha_primer_pago').value; // NUEVO
 
             if (!monto || !tasa || !plazo) {
                 alert("Completa todos los campos para calcular.");
@@ -153,7 +148,8 @@
                 monto: monto,
                 tasa_interes: tasa,
                 plazo: plazo,
-                fecha_inicio: fecha
+                fecha_inicio: fecha,
+                fecha_primer_pago: fecha_pago // ENVIAR AL CONTROLADOR
             };
 
             try {
@@ -166,8 +162,6 @@
                     body: JSON.stringify(datos)
                 });
 
-                if (!response.ok) throw new Error("Error en cálculo");
-
                 const tabla = await response.json();
                 const tbody = document.getElementById('tabla-body');
                 tbody.innerHTML = "";
@@ -176,7 +170,7 @@
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">${fila.numero_cuota}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${fila.fecha_vencimiento}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600">${fila.fecha_vencimiento}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">${fila.monto_total}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">${fila.interes}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">${fila.capital}</td>
@@ -188,8 +182,7 @@
                 document.getElementById('resultado-simulacion').classList.remove('hidden');
 
             } catch (error) {
-                console.error(error);
-                alert("Error al simular. Revisa la consola.");
+                alert("Error al simular.");
             }
         }
     </script>
