@@ -85,11 +85,14 @@ Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(fun
         Route::resource('socios', SocioController::class);
         Route::patch('/socios/{socio}/toggle-status', [SocioController::class, 'toggleStatus'])->name('socios.toggle_status');
         Route::get('socios/{socio}/prestamos/historial-pagados', [SocioController::class, 'showHistorialPrestamos'])->name('socios.historial.prestamos');
+        // Ruta para borrar usuario
         Route::delete('/socios/limpiar-usuario/{id}', [SocioController::class, 'destroyUser'])->name('socios.limpiar');
 
-        // RUTAS ESPECÍFICAS DE PRÉSTAMOS (Deben ir antes del resource para evitar conflictos)
+        // RUTAS ESPECÍFICAS DE PRÉSTAMOS
         Route::get('/prestamos/{id}/liquidar/confirmar', [PrestamoController::class, 'confirmarLiquidacion'])->name('prestamos.liquidar.confirm');
         Route::post('/prestamos/{id}/liquidar/procesar', [PrestamoController::class, 'procesarLiquidacion'])->name('prestamos.liquidar.procesar');
+        // NUEVA RUTA: Marcar como pagado desde vencimientos
+        Route::patch('/prestamos/{id}/marcar-pagado', [PrestamoController::class, 'marcarPagado'])->name('prestamos.marcar-pagado');
 
         // Gestión de Préstamos Resource
         Route::resource('prestamos', PrestamoController::class);

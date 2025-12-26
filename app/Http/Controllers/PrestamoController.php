@@ -122,6 +122,29 @@ class PrestamoController extends Controller
             ->with('success', 'Préstamo creado correctamente.');
     }
 
+    // --- NUEVO: MÉTODO PARA CERRAR PRÉSTAMO DESDE VENCIMIENTOS ---
+    public function marcarPagado($id)
+    {
+        $prestamo = Prestamo::findOrFail($id);
+
+        DB::transaction(function () use ($prestamo) {
+            // 1. Ponemos todas las cuotas pendientes como pagadas
+            $prestamo->cuotas()->where('estado', 'pendiente')->update([
+                'estado' => 'pagado',
+                'pagado' => DB::raw('monto_total'),
+                'abonado' => DB::raw('monto_total')
+            ]);
+
+            // 2. Cerramos el préstamo
+            $prestamo->update([
+                'estado' => 'pagado',
+                'saldo_capital' => 0
+            ]);
+        });
+
+        return back()->with('success', '✅ El préstamo #' . $prestamo->numero_prestamo . ' ha sido marcado como pagado y retirado de la lista de activos.');
+    }
+
     public function confirmarLiquidacion($id)
     {
         $prestamo = Prestamo::with(['socio.user', 'tipoPrestamo'])->findOrFail($id);
@@ -187,7 +210,6 @@ class PrestamoController extends Controller
             return view('socio.prestamos.show', compact('prestamo'));
         }
 
-        // Inicializar datos para evitar el Error 500 en la vista
         $datosLiquidacion = [
             'total_a_pagar' => 0,
             'capital_pendiente' => 0,

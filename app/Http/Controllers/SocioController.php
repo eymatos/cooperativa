@@ -38,7 +38,7 @@ class SocioController extends Controller
         // Datos para el gráfico
         $meses = [];
         $ahorros = [];
-        $prestamos = []; // <-- Cambiado de $prestamosData a $prestamos
+        $prestamos = [];
 
         for ($i = 11; $i >= 0; $i--) {
             $fecha = now()->subMonths($i);
@@ -49,7 +49,7 @@ class SocioController extends Controller
             $ahorros[] = SavingsTransaction::whereIn('type', ['deposit', 'interest', 'deposito'])
                 ->whereBetween('date', [$start, $end])->sum('amount');
 
-            $prestamos[] = Prestamo::whereBetween('fecha_inicio', [$start, $end])->sum('monto'); // <-- Cambiado aquí también
+            $prestamos[] = Prestamo::whereBetween('fecha_inicio', [$start, $end])->sum('monto');
         }
 
         return view('admin.dashboard', compact(
@@ -61,7 +61,7 @@ class SocioController extends Controller
             'capitalEnCalle',
             'meses',
             'ahorros',
-            'prestamos' // <-- Enviamos la variable correcta
+            'prestamos'
         ));
     }
 
@@ -336,20 +336,19 @@ class SocioController extends Controller
     }
 
     public function updateCuota(Request $request, $id)
-{
-    $request->validate(['recurring_amount' => 'required|numeric|min:0']);
-    $cuenta = SavingsAccount::findOrFail($id);
+    {
+        $request->validate(['recurring_amount' => 'required|numeric|min:0']);
+        $cuenta = SavingsAccount::findOrFail($id);
 
-    // Solo si el monto es diferente al actual, marcamos la fecha de cambio manual
-    if ($cuenta->recurring_amount != $request->recurring_amount) {
-        $cuenta->manual_change_at = now();
+        if ($cuenta->recurring_amount != $request->recurring_amount) {
+            $cuenta->manual_change_at = now();
+        }
+
+        $cuenta->recurring_amount = $request->recurring_amount;
+        $cuenta->save();
+
+        return back()->with('success', 'Cuota actualizada correctamente.');
     }
-
-    $cuenta->recurring_amount = $request->recurring_amount;
-    $cuenta->save();
-
-    return back()->with('success', 'Cuota actualizada correctamente.');
-}
 
     public function toggleStatus($id)
     {
@@ -372,27 +371,28 @@ class SocioController extends Controller
     }
 
     public function variacionNomina()
-{
-    $hoy = now();
-    // Determinamos el inicio del ciclo (el 25 anterior)
-    $inicioCiclo = ($hoy->day <= 25)
-        ? now()->subMonth()->day(25)->startOfDay()
-        : now()->day(25)->startOfDay();
+    {
+        $hoy = now();
+        $inicioCiclo = ($hoy->day <= 25)
+            ? now()->subMonth()->day(25)->startOfDay()
+            : now()->day(25)->startOfDay();
 
-    $finCiclo = $inicioCiclo->copy()->addMonth()->day(25)->endOfDay();
+        $finCiclo = $inicioCiclo->copy()->addMonth()->day(25)->endOfDay();
 
-    $ahorrosActuales = SavingsAccount::sum('recurring_amount');
-    $cuotasMes = Cuota::where('estado', 'pendiente')
-        ->whereBetween('fecha_pago', [$inicioCiclo, $finCiclo])
-        ->sum(DB::raw('capital + interes'));
+        $ahorrosActuales = SavingsAccount::sum('recurring_amount');
 
-    return view('admin.reportes.variacion', [
-        'total' => $ahorrosActuales + $cuotasMes,
-        'ahorros' => $ahorrosActuales,
-        'prestamos' => $cuotasMes,
-        'mes' => $hoy->translatedFormat('F Y')
-    ]);
-}
+        // CORRECCIÓN: Se utiliza 'fecha_vencimiento' según la imagen de la estructura de la tabla cuotas
+        $cuotasMes = Cuota::where('estado', 'pendiente')
+            ->whereBetween('fecha_vencimiento', [$inicioCiclo, $finCiclo])
+            ->sum(DB::raw('capital + interes'));
+
+        return view('admin.reportes.variacion', [
+            'total' => $ahorrosActuales + $cuotasMes,
+            'ahorros' => $ahorrosActuales,
+            'prestamos' => $cuotasMes,
+            'mes' => $hoy->translatedFormat('F Y')
+        ]);
+    }
 
     public function logs()
     {

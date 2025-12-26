@@ -8,6 +8,12 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
+            @if(session('success'))
+                <div class="mb-6 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 shadow-sm" role="alert">
+                    {{ session('success') }}
+                </div>
+            @endif
+
             @if($prestamosVenciendo->isEmpty())
                 <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 shadow-md">
                     No hay préstamos programados para finalizar en los próximos 45 días.
@@ -28,7 +34,7 @@
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">No. Préstamo</th>
                                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Monto Original</th>
                                         <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Fecha Final</th>
-                                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Estado</th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
@@ -55,8 +61,16 @@
                                                     ({{ $diasRestantes }} días)
                                                 </span>
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-center">
-                                                <a href="{{ route('admin.prestamos.show', $p->id) }}" class="text-indigo-600 hover:text-indigo-900 text-xs font-bold uppercase"> Ver Detalle</a>
+                                            <td class="px-6 py-4 whitespace-nowrap text-center space-x-2">
+                                                <a href="{{ route('admin.prestamos.show', $p->id) }}" class="text-indigo-600 hover:text-indigo-900 text-xs font-bold uppercase mr-2"> Ver Detalle</a>
+
+                                                <form action="{{ route('admin.prestamos.marcar-pagado', $p->id) }}" method="POST" class="inline-block form-pagar">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <button type="submit" class="bg-green-100 text-green-700 hover:bg-green-200 px-3 py-1 rounded text-xs font-bold uppercase transition">
+                                                        Marcar Pagado
+                                                    </button>
+                                                </form>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -66,7 +80,16 @@
                     </div>
                 @endforeach
             @endif
-
         </div>
     </div>
+
+    <script>
+        document.querySelectorAll('.form-pagar').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                if (!confirm('¿Está seguro de marcar este préstamo como PAGADO? Esto pondrá el saldo en cero y lo quitará de la lista de préstamos activos.')) {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
 </x-app-layout>
