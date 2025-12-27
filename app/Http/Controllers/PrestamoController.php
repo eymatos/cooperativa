@@ -53,7 +53,7 @@ class PrestamoController extends Controller
             'tasa_interes' => 'required|numeric',
             'plazo' => 'required|integer|min:1',
             'fecha_inicio' => 'required|date',
-            'fecha_primer_pago' => 'nullable|date', // Añadido para simulación exacta
+            'fecha_primer_pago' => 'nullable|date',
         ]);
 
         $tabla = $this->amortizacion->calcularCuotas(
@@ -61,7 +61,7 @@ class PrestamoController extends Controller
             $request->tasa_interes,
             $request->plazo,
             $request->fecha_inicio,
-            $request->fecha_primer_pago // Pasamos la fecha personalizada al servicio
+            $request->fecha_primer_pago
         );
 
         return response()->json($tabla);
@@ -72,45 +72,32 @@ class PrestamoController extends Controller
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'tipo_prestamo_id' => 'required|exists:tipo_prestamos,id',
+            'numero_prestamo' => 'required|string|unique:prestamos,numero_prestamo', // Validación manual y única
             'monto' => 'required|numeric|min:100',
             'tasa_interes' => 'required|numeric',
             'plazo' => 'required|integer|min:1',
             'fecha_inicio' => 'required|date',
-            'fecha_primer_pago' => 'nullable|date', // Nueva columna validada
+            'fecha_primer_pago' => 'nullable|date',
         ]);
 
         $socio = \App\Models\Socio::where('user_id', $request->user_id)->firstOrFail();
 
         DB::transaction(function () use ($request, $socio) {
-            $anioInicio = \Carbon\Carbon::parse($request->fecha_inicio)->year;
-            $ultimoPrestamo = Prestamo::where('numero_prestamo', 'LIKE', "$anioInicio-%")
-                                    ->orderBy('id', 'desc')
-                                    ->first();
-
-            if ($ultimoPrestamo) {
-                $partes = explode('-', $ultimoPrestamo->numero_prestamo);
-                $secuencia = intval(end($partes)) + 1;
-            } else {
-                $secuencia = 1;
-            }
-
-            $codigoGenerado = $anioInicio . '-' . str_pad($secuencia, 3, '0', STR_PAD_LEFT);
-
+            // Se crea el préstamo usando el numero_prestamo recibido del formulario
             $prestamo = Prestamo::create([
                 'socio_id'         => $socio->id,
                 'tipo_prestamo_id' => $request->tipo_prestamo_id,
-                'numero_prestamo'  => $codigoGenerado,
+                'numero_prestamo'  => $request->numero_prestamo, // Asignación manual
                 'monto'            => $request->monto,
                 'tasa_interes'     => $request->tasa_interes,
                 'plazo'            => $request->plazo,
                 'saldo_capital'    => $request->monto,
                 'fecha_solicitud'  => now(),
                 'fecha_inicio'     => $request->fecha_inicio,
-                'fecha_primer_pago' => $request->fecha_primer_pago, // Guardamos en la nueva columna
+                'fecha_primer_pago' => $request->fecha_primer_pago,
                 'estado'           => 'activo'
             ]);
 
-            // Generamos la tabla usando la fecha de primer pago si existe
             $tabla = $this->amortizacion->calcularCuotas(
                 $request->monto,
                 $request->tasa_interes,
@@ -125,7 +112,7 @@ class PrestamoController extends Controller
         });
 
         return redirect()->route('admin.socios.show', $socio->id)
-            ->with('success', 'Préstamo creado correctamente.');
+            ->with('success', 'Préstamo #' . $request->numero_prestamo . ' creado correctamente.');
     }
 
     public function marcarPagado($id)
@@ -161,20 +148,16 @@ class PrestamoController extends Controller
         $prestamo = Prestamo::findOrFail($id);
 
         DB::transaction(function () use ($prestamo) {
-            $cuotas = $prestamo->cuotas()->where('estado', 'pendiente')->orderBy('numero_cuota', 'asc')->get();
+            $cuotas = $prestamo->cuotas()
+                ->where('estado', 'pendiente')
+                ->orderBy('numero_cuota', 'asc')
+                ->get();
 
             if ($cuotas->isEmpty()) return;
 
-            $cuotaActual = $cuotas->shift();
-            $cuotaActual->update([
-                'estado' => 'pagado',
-                'pagado' => $cuotaActual->monto_total,
-                'abonado' => $cuotaActual->monto_total,
-            ]);
-
             foreach ($cuotas as $cuota) {
                 $cuota->update([
-                    'interes'     => 0,
+                    'interes'     => 0.00,
                     'monto_total' => $cuota->capital,
                     'pagado'      => $cuota->capital,
                     'abonado'     => $cuota->capital,
@@ -189,7 +172,7 @@ class PrestamoController extends Controller
         });
 
         return redirect()->route('admin.prestamos.show', $prestamo->id)
-            ->with('success', 'El préstamo ha sido liquidado exitosamente.');
+            ->with('success', 'El préstamo ha sido liquidado exitosamente sin cobro de intereses futuros.');
     }
 
     public function misPrestamos()
@@ -240,7 +223,7 @@ class PrestamoController extends Controller
             'tasa_interes' => 'required|numeric',
             'plazo' => 'required|integer|min:1',
             'fecha_inicio' => 'required|date',
-            'fecha_primer_pago' => 'nullable|date', // Soporte para actualización
+            'fecha_primer_pago' => 'nullable|date',
         ]);
 
         $prestamo = Prestamo::findOrFail($id);
@@ -277,8 +260,19 @@ class PrestamoController extends Controller
 
     public function reporteVencimientos()
     {
+        // 1. Agrupado por tipo: Préstamos con balance cero pero activos
+        $prestamosPorCerrar = Prestamo::with(['socio.user', 'tipoPrestamo'])
+            ->where('estado', 'activo')
+            ->where('saldo_capital', '<=', 0.5)
+            ->get()
+            ->groupBy(function($item) {
+                return $item->tipoPrestamo->nombre ?? 'Otros';
+            });
+
+        // 2. Agrupado por tipo: Préstamos próximos a vencer cronológicamente (45 días)
         $prestamosVenciendo = Prestamo::with(['socio.user', 'tipoPrestamo', 'cuotas'])
             ->where('estado', 'activo')
+            ->where('saldo_capital', '>', 0.5)
             ->get()
             ->filter(function($prestamo) {
                 $ultimaCuota = $prestamo->cuotas->last();
@@ -290,7 +284,7 @@ class PrestamoController extends Controller
                 return $item->tipoPrestamo->nombre ?? 'Otros';
             });
 
-        return view('admin.prestamos.vencimientos', compact('prestamosVenciendo'));
+        return view('admin.prestamos.vencimientos', compact('prestamosPorCerrar', 'prestamosVenciendo'));
     }
 
     public function reporteMorosidad()

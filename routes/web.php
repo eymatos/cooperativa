@@ -13,9 +13,11 @@ use App\Http\Controllers\Admin\ExcedenteController;
 use App\Exports\NominaExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Http\Controllers\Admin\HistorialAhorrosController;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 /* --------------------------------------------------------------------------
-   RUTAS PÚBLICAS
+    RUTAS PÚBLICAS
 -------------------------------------------------------------------------- */
 Route::get('/', function () {
     return redirect()->route('login');
@@ -39,7 +41,7 @@ Route::get('/formularios/inscripcion', function () {
 })->name('socio.formularios.inscripcion');
 
 /* --------------------------------------------------------------------------
-   RUTAS PROTEGIDAS (AUTH)
+    RUTAS PROTEGIDAS (AUTH)
 -------------------------------------------------------------------------- */
 Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(function () {
 
@@ -48,7 +50,7 @@ Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(fun
         return ($user->tipo == 2) ? redirect()->route('admin.dashboard') : redirect()->route('socio.dashboard');
     })->name('dashboard');
 });
-    Route::post('prestamos/simular', [PrestamoController::class, 'simular'])->name('prestamos.simular');
+
 
     /* --------------------------------------------------------------------------
         AREA DE SOCIOS (Prefijo: socio / Nombre: socio.)
@@ -85,13 +87,11 @@ Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(fun
         Route::resource('socios', SocioController::class);
         Route::patch('/socios/{socio}/toggle-status', [SocioController::class, 'toggleStatus'])->name('socios.toggle_status');
         Route::get('socios/{socio}/prestamos/historial-pagados', [SocioController::class, 'showHistorialPrestamos'])->name('socios.historial.prestamos');
-        // Ruta para borrar usuario
         Route::delete('/socios/limpiar-usuario/{id}', [SocioController::class, 'destroyUser'])->name('socios.limpiar');
-
+        Route::post('prestamos/simular', [PrestamoController::class, 'simular'])->name('prestamos.simular');
         // RUTAS ESPECÍFICAS DE PRÉSTAMOS
         Route::get('/prestamos/{id}/liquidar/confirmar', [PrestamoController::class, 'confirmarLiquidacion'])->name('prestamos.liquidar.confirm');
         Route::post('/prestamos/{id}/liquidar/procesar', [PrestamoController::class, 'procesarLiquidacion'])->name('prestamos.liquidar.procesar');
-        // NUEVA RUTA: Marcar como pagado desde vencimientos
         Route::patch('/prestamos/{id}/marcar-pagado', [PrestamoController::class, 'marcarPagado'])->name('prestamos.marcar-pagado');
 
         // Gestión de Préstamos Resource
@@ -134,7 +134,6 @@ Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(fun
             Route::get('/informe', [ExcedenteController::class, 'informe'])->name('informe');
             Route::get('/', [ExcedenteController::class, 'index'])->name('index');
             Route::post('/', [ExcedenteController::class, 'store'])->name('store');
-
             Route::get('/gastos', [ExcedenteController::class, 'gastosIndex'])->name('gastos.index');
             Route::post('/gastos', [ExcedenteController::class, 'gastosStore'])->name('gastos.store');
             Route::delete('/gastos/{gasto}', [ExcedenteController::class, 'gastosDestroy'])->name('gastos.destroy');
@@ -147,4 +146,62 @@ Route::middleware(['auth', \App\Http\Middleware\LogUserVisit::class])->group(fun
         Route::post('importar/historial', [HistorialAhorrosController::class, 'store'])->name('importar.historial.store');
         Route::get('importar/prestamos', [App\Http\Controllers\Admin\ImportacionPrestamosController::class, 'index'])->name('importar.prestamos');
         Route::post('importar/prestamos', [App\Http\Controllers\Admin\ImportacionPrestamosController::class, 'store'])->name('importar.prestamos.store');
+
+        /**
+         * RUTA DE REPARACIÓN FINAL
+         * 1. Restaura intereses de todas las cuotas hasta Diciembre 2025.
+         * 2. Asegura que las cuotas de Enero 2026 de préstamos saldados tengan interés 0.
+         */
+        Route::get('/mantenimiento/reparacion-final', function() {
+            $conteo = 0;
+
+            DB::transaction(function() use (&$conteo) {
+                // Obtener todas las cuotas
+                $cuotas = DB::table('cuotas')
+                    ->join('prestamos', 'cuotas.prestamo_id', '=', 'prestamos.id')
+                    ->select('cuotas.*', 'prestamos.estado as prestamo_estado', 'prestamos.tasa_interes', 'prestamos.monto as monto_prestamo')
+                    ->get();
+
+                foreach ($cuotas as $c) {
+                    $fecha = Carbon::parse($c->fecha_vencimiento);
+                    $esEnero2026 = ($fecha->year == 2026 && $fecha->month == 1);
+                    $esPasado = $fecha->lte(Carbon::parse('2025-12-31'));
+
+                    // CASO 1: Cuotas del 2025 hacia atrás
+                    if ($esPasado) {
+                        // Si el interés es 0 pero el monto_total es igual al capital,
+                        // significa que fue borrado. Lo recalculamos por tasa.
+                        // Usamos una lógica simplificada para no fallar:
+                        // El interes original = cuota_fija - capital.
+                        // Pero como no tenemos la cuota fija guardada, usaremos la fórmula del service.
+
+                        $tasaMensual = ($c->tasa_interes / 100) / 12;
+                        // Estimamos el saldo anterior basándonos en el saldo_restante + capital
+                        $saldoAnterior = $c->saldo_restante + $c->capital;
+                        $interesCalculado = round($saldoAnterior * $tasaMensual, 2);
+
+                        DB::table('cuotas')->where('id', $c->id)->update([
+                            'interes' => $interesCalculado,
+                            'monto_total' => round($c->capital + $interesCalculado, 2),
+                            'pagado' => round($c->capital + $interesCalculado, 2),
+                            'abonado' => round($c->capital + $interesCalculado, 2),
+                            'estado' => 'pagado' // Forzamos pagado hasta diciembre 2025
+                        ]);
+                    }
+                    // CASO 2: Enero 2026 y el préstamo está pagado
+                    elseif ($esEnero2026 && $c->prestamo_estado == 'pagado') {
+                        DB::table('cuotas')->where('id', $c->id)->update([
+                            'interes' => 0.00,
+                            'monto_total' => $c->capital,
+                            'pagado' => $c->capital,
+                            'abonado' => $c->capital,
+                            'estado' => 'pagado'
+                        ]);
+                    }
+                    $conteo++;
+                }
+            });
+
+            return "Reparación completada. Se han procesado " . $conteo . " cuotas.";
+        });
     });
