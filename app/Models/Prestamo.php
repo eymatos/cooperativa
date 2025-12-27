@@ -19,7 +19,8 @@ class Prestamo extends Model
         'saldo_capital',
         'fecha_solicitud',
         'fecha_inicio',
-        'estado'
+        'estado',
+        'fecha_primer_pago'
     ];
 
     // Relación con el Socio

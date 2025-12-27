@@ -59,11 +59,15 @@
                                     </select>
                                 </div>
 
-                                <div class="bg-blue-50 p-3 rounded-md border border-blue-100">
-                                    <label class="block font-bold text-sm text-blue-700 mb-1">Fecha del Primer Pago</label>
+                                <div class="bg-blue-50 p-3 rounded-md border border-blue-200 shadow-sm">
+                                    <label class="block font-black text-sm text-blue-800 mb-1 uppercase tracking-tighter">Fecha del Primer Pago</label>
                                     <input type="date" name="fecha_primer_pago" id="fecha_primer_pago"
-                                           class="w-full border-blue-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm">
-                                    <p class="text-[10px] text-blue-500 mt-1 font-bold italic">* Opcional. Úselo para diferir el cobro (ej: de Diciembre a Febrero).</p>
+                                           class="w-full border-blue-400 focus:border-blue-600 focus:ring-blue-600 rounded-md shadow-sm font-bold text-blue-700"
+                                           required value="{{ old('fecha_primer_pago') }}">
+                                    <p class="text-[10px] text-blue-600 mt-1 font-black italic uppercase">* Obligatorio: Define cuándo inicia el cobro en nómina.</p>
+                                    @error('fecha_primer_pago')
+                                        <p class="text-red-500 text-xs mt-1 font-bold">{{ $message }}</p>
+                                    @enderror
                                 </div>
                             </div>
                         </div>
@@ -158,8 +162,8 @@
             const fecha = document.getElementById('fecha_inicio').value;
             const fecha_pago = document.getElementById('fecha_primer_pago').value;
 
-            if (!monto || !tasa || !plazo) {
-                alert("Completa monto, tasa y plazo para calcular.");
+            if (!monto || !tasa || !plazo || !fecha_pago) {
+                alert("Completa monto, tasa, plazo y la fecha del primer pago para calcular.");
                 return;
             }
 
@@ -172,8 +176,6 @@
             };
 
             try {
-                // CORRECCIÓN AQUÍ: Se cambió admin.prestamos.simular por admin.admin.prestamos.simular
-                // o simplemente prestamos.simular segun este en tu web.php
                 const response = await fetch("{{ route('admin.prestamos.simular') }}", {
                     method: "POST",
                     headers: {

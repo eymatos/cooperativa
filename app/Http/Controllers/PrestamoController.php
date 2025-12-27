@@ -53,7 +53,7 @@ class PrestamoController extends Controller
             'tasa_interes' => 'required|numeric',
             'plazo' => 'required|integer|min:1',
             'fecha_inicio' => 'required|date',
-            'fecha_primer_pago' => 'nullable|date',
+            'fecha_primer_pago' => 'required|date', // Se cambia a obligatorio en simulación
         ]);
 
         $tabla = $this->amortizacion->calcularCuotas(
@@ -72,22 +72,21 @@ class PrestamoController extends Controller
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'tipo_prestamo_id' => 'required|exists:tipo_prestamos,id',
-            'numero_prestamo' => 'required|string|unique:prestamos,numero_prestamo', // Validación manual y única
+            'numero_prestamo' => 'required|string|unique:prestamos,numero_prestamo',
             'monto' => 'required|numeric|min:100',
             'tasa_interes' => 'required|numeric',
             'plazo' => 'required|integer|min:1',
             'fecha_inicio' => 'required|date',
-            'fecha_primer_pago' => 'nullable|date',
+            'fecha_primer_pago' => 'required|date', // Se cambia a OBLIGATORIO aquí
         ]);
 
         $socio = \App\Models\Socio::where('user_id', $request->user_id)->firstOrFail();
 
         DB::transaction(function () use ($request, $socio) {
-            // Se crea el préstamo usando el numero_prestamo recibido del formulario
             $prestamo = Prestamo::create([
                 'socio_id'         => $socio->id,
                 'tipo_prestamo_id' => $request->tipo_prestamo_id,
-                'numero_prestamo'  => $request->numero_prestamo, // Asignación manual
+                'numero_prestamo'  => $request->numero_prestamo,
                 'monto'            => $request->monto,
                 'tasa_interes'     => $request->tasa_interes,
                 'plazo'            => $request->plazo,
@@ -114,6 +113,8 @@ class PrestamoController extends Controller
         return redirect()->route('admin.socios.show', $socio->id)
             ->with('success', 'Préstamo #' . $request->numero_prestamo . ' creado correctamente.');
     }
+
+    // ... (El resto de métodos permanecen igual)
 
     public function marcarPagado($id)
     {
@@ -223,7 +224,7 @@ class PrestamoController extends Controller
             'tasa_interes' => 'required|numeric',
             'plazo' => 'required|integer|min:1',
             'fecha_inicio' => 'required|date',
-            'fecha_primer_pago' => 'nullable|date',
+            'fecha_primer_pago' => 'required|date', // Se cambia a obligatorio aquí también
         ]);
 
         $prestamo = Prestamo::findOrFail($id);
@@ -260,7 +261,6 @@ class PrestamoController extends Controller
 
     public function reporteVencimientos()
     {
-        // 1. Agrupado por tipo: Préstamos con balance cero pero activos
         $prestamosPorCerrar = Prestamo::with(['socio.user', 'tipoPrestamo'])
             ->where('estado', 'activo')
             ->where('saldo_capital', '<=', 0.5)
@@ -269,7 +269,6 @@ class PrestamoController extends Controller
                 return $item->tipoPrestamo->nombre ?? 'Otros';
             });
 
-        // 2. Agrupado por tipo: Préstamos próximos a vencer cronológicamente (45 días)
         $prestamosVenciendo = Prestamo::with(['socio.user', 'tipoPrestamo', 'cuotas'])
             ->where('estado', 'activo')
             ->where('saldo_capital', '>', 0.5)
